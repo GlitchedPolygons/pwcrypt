@@ -75,7 +75,7 @@ static int encrypt(const char* text, const size_t text_length, const char* passw
 
     if (password_length < 6)
     {
-        fprintf(stderr, "pwcrypt: Password too weak! Please use at least 6 characters, composed of at least 1 lowercase char, 1 lowercase char, 1 number and 1 special character!\n");
+        fprintf(stderr, "pwcrypt: Password too weak! Please use at least 6 characters, composed of at least 1 lowercase char, 1 uppercase char, 1 number and 1 special character!\n");
         return PWCRYPT_ERROR_INVALID_ARGS;
     }
 
