@@ -24,7 +24,7 @@
 #include <mbedtls/gcm.h>
 #include <mbedtls/base64.h>
 
-int pwcrypt_password_strong_enough(const char* password, size_t password_length)
+int pwcrypt_assess_password_strength(const char* password, size_t password_length)
 {
     if (password_length < 6)
     {
@@ -88,7 +88,7 @@ int pwcrypt_password_strong_enough(const char* password, size_t password_length)
 
 int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length)
 {
-    int r = pwcrypt_password_strong_enough(password, password_length);
+    int r = pwcrypt_assess_password_strength(password, password_length);
     if (r != 0)
     {
         return r;
@@ -219,7 +219,6 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    output_length = output_base64_length;
     fprintf(stdout, "%s", output_base64);
 
 exit:

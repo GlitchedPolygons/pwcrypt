@@ -58,7 +58,7 @@ static const uint8_t EMPTY64[64] = {
     0x00, 0x00, 0x00, 0x00, //
 };
 
-#define PWCRYPT_Z_CHUNKSIZE 16384
+#define PWCRYPT_Z_CHUNKSIZE (1024 * 256)
 
 #define PWCRYPT_ARGON2_T_COST 4
 #define PWCRYPT_ARGON2_M_COST (1 << 17)
@@ -72,6 +72,9 @@ static const uint8_t EMPTY64[64] = {
 #define PWCRYPT_ERROR_DECRYPTION_FAILURE 5000
 #define PWCRYPT_ERROR_BASE64_FAILURE 6000
 #define PWCRYPT_ERROR_COMPRESSION_FAILURE 7000
+
+#define PWCRYPT_MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define PWCRYPT_MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 /**
  * (Tries to) read from <c>/dev/urandom</c> (or Windows equivalent, yeah...) filling the given \p output_buffer with \p output_buffer_size random bytes.
@@ -95,7 +98,7 @@ static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffe
     }
 }
 
-int pwcrypt_password_strong_enough(const char* password, size_t password_length);
+int pwcrypt_assess_password_strength(const char* password, size_t password_length);
 
 int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length);
 
