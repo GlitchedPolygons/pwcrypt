@@ -47,18 +47,19 @@ int main(int argc, const char* argv[])
     }
 
     int r = -1;
+    char* output;
 
     switch (*mode)
     {
         case 'e':
-            r = pwcrypt_encrypt(text, text_length, password, password_length, 0, 0, 0);
+            r = pwcrypt_encrypt(text, text_length, password, password_length, 0, 0, 0, &output);
             if (r != 0)
             {
                 fprintf(stderr, "pwcrypt: Encryption failed!\n");
             }
             break;
         case 'd':
-            r = pwcrypt_decrypt(text, text_length, password, password_length);
+            r = pwcrypt_decrypt(text, text_length, password, password_length, &output);
             if (r != 0)
             {
                 fprintf(stderr, "pwcrypt: Decryption failed!\n");
@@ -69,5 +70,8 @@ int main(int argc, const char* argv[])
             return PWCRYPT_ERROR_INVALID_ARGS;
     }
 
+    fprintf(stdout, "%s", output);
+    memset(output, 0x00, strlen(output));
+    free(output);
     return r;
 }

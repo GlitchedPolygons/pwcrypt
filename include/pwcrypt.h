@@ -100,9 +100,9 @@ static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffe
 
 int pwcrypt_assess_password_strength(const char* password, size_t password_length);
 
-int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism);
+int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out);
 
-int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length);
+int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length, char** out);
 
 #ifdef __cplusplus
 } // extern "C"

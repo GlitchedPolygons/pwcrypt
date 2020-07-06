@@ -89,8 +89,13 @@ int pwcrypt_assess_password_strength(const char* password, size_t password_lengt
     return 0;
 }
 
-int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism)
+int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out)
 {
+    if (text == NULL || text_length == 0 || password == NULL || out == NULL)
+    {
+        return PWCRYPT_ERROR_INVALID_ARGS;
+    }
+
     int r = pwcrypt_assess_password_strength(password, password_length);
     if (r != 0)
     {
@@ -106,6 +111,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     size_t output_length = 0;
 
     uint8_t* output_base64 = NULL;
+    size_t output_base64_size = 0;
     size_t output_base64_length = 0;
 
     uint8_t key[32];
@@ -118,8 +124,9 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     memset(&stream, 0x00, sizeof(stream));
 
     size_t compressed_length = mz_compressBound(text_length);
-    uint8_t* compressed = malloc(compressed_length * sizeof(uint8_t));
+    size_t compressed_size = compressed_length * sizeof(uint8_t);
 
+    uint8_t* compressed = malloc(compressed_size);
     if (compressed == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
@@ -167,7 +174,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     assert(sizeof(uint32_t) == 4);
     output_length = (80 + compressed_length);
 
-    output = calloc((output_length), sizeof(uint8_t));
+    output = calloc(output_length, sizeof(uint8_t));
     if (output == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
@@ -231,7 +238,8 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    output_base64 = malloc(output_base64_length * sizeof(uint8_t));
+    output_base64_size = output_base64_length * sizeof(uint8_t);
+    output_base64 = malloc(output_base64_size);
     if (output_base64 == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
@@ -247,7 +255,14 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    fprintf(stdout, "%s", output_base64);
+    *out = calloc(output_base64_length + 1, sizeof(char));
+    if (*out == NULL)
+    {
+        r = PWCRYPT_ERROR_OOM;
+        goto exit;
+    }
+    
+    snprintf(*out, output_base64_length, "%s", output_base64);
 
 exit:
 
@@ -263,21 +278,25 @@ exit:
 
     if (output_base64 != NULL)
     {
-        memset(output_base64, 0x00, output_base64_length);
+        memset(output_base64, 0x00, output_base64_size);
         free(output_base64);
     }
 
     if (compressed != NULL)
     {
-        memset(compressed, 0x00, compressed_length);
+        memset(compressed, 0x00, compressed_size);
         free(compressed);
     }
 
     return r;
 }
 
-int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length)
+int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length, char** out)
 {
-    // TODO: impl
+    if (text == NULL || text_length < 107 || password == NULL || password_length < 6)
+    {
+        return PWCRYPT_ERROR_INVALID_ARGS;
+    }
+
     return 0;
 }
