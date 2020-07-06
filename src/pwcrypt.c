@@ -261,7 +261,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         r = PWCRYPT_ERROR_OOM;
         goto exit;
     }
-    
+
     snprintf(*out, output_base64_length, "%s", output_base64);
 
 exit:
@@ -293,10 +293,96 @@ exit:
 
 int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length, char** out)
 {
-    if (text == NULL || text_length < 107 || password == NULL || password_length < 6)
+    if (text == NULL || text_length < 107 || password == NULL || password_length < 6 || out == NULL)
     {
         return PWCRYPT_ERROR_INVALID_ARGS;
     }
 
-    return 0;
+    int r = -1;
+    size_t b64_decoded_length = 0;
+    mbedtls_base64_decode(NULL, 0, &b64_decoded_length, (uint8_t*)text, text_length);
+
+    if (!b64_decoded_length)
+    {
+        return PWCRYPT_ERROR_INVALID_ARGS;
+    }
+
+    const size_t b64_decoded_size = b64_decoded_length;
+
+    uint8_t* b64_decoded = malloc(b64_decoded_size);
+    if (b64_decoded == NULL)
+    {
+        return PWCRYPT_ERROR_OOM;
+    }
+
+    r = mbedtls_base64_decode(b64_decoded, b64_decoded_length, &b64_decoded_length, (uint8_t*)text, text_length);
+    if (r != 0)
+    {
+        free(b64_decoded);
+        fprintf(stderr, "pwcrypt: Base64-decoding failed! \"mbedtls_base64_decode\" returned: %d\n", r);
+        return PWCRYPT_ERROR_BASE64_FAILURE;
+    }
+
+    uint8_t key[32];
+    memset(key, 0x00, sizeof(key));
+
+    mbedtls_gcm_context aes_ctx;
+    mbedtls_gcm_init(&aes_ctx);
+
+    mz_stream stream;
+    memset(&stream, 0x00, sizeof(stream));
+
+    uint8_t iv[16];
+    uint8_t tag[16];
+    uint8_t salt[32];
+    uint32_t argon2_version_number, argon2_cost_t, argon2_cost_m, argon2_parallelism;
+
+    memcpy(&argon2_version_number, b64_decoded, 4);
+    memcpy(&argon2_cost_t, b64_decoded + 4, 4);
+    memcpy(&argon2_cost_m, b64_decoded + 8, 4);
+    memcpy(&argon2_parallelism, b64_decoded + 12, 4);
+    memcpy(salt, b64_decoded + 16, 32);
+    memcpy(iv, b64_decoded + 48, 16);
+    memcpy(tag, b64_decoded + 64, 16);
+
+    r = argon2_hash(argon2_cost_t, argon2_cost_m, argon2_parallelism, password, password_length, salt, sizeof(salt), key, sizeof(key), NULL, 0, Argon2_id, argon2_version_number);
+    if (r != ARGON2_OK)
+    {
+        r = PWCRYPT_ERROR_ARGON2_FAILURE;
+        fprintf(stderr, "pwcrypt: argon2id failure! \"argon2_hash\" returned: %d\n", r);
+        goto exit;
+    }
+
+    if (memcmp(key, EMPTY64, 32) == 0)
+    {
+        r = PWCRYPT_ERROR_ARGON2_FAILURE;
+        fprintf(stderr, "pwcrypt: AES key derivation failure!\n");
+        goto exit;
+    }
+
+    r = mbedtls_gcm_setkey(&aes_ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
+    if (r != 0)
+    {
+        r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+        fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
+        goto exit;
+    }
+
+exit:
+
+    mz_inflateEnd(&stream);
+    mbedtls_gcm_free(&aes_ctx);
+    memset(key, 0x00, sizeof(key));
+    memset(iv, 0x00, sizeof(iv));
+    memset(tag, 0x00, sizeof(tag));
+    memset(salt, 0x00, sizeof(salt));
+    argon2_version_number = argon2_cost_t = argon2_cost_m = argon2_parallelism = 0;
+
+    if (b64_decoded != NULL)
+    {
+        memset(b64_decoded, 0x00, b64_decoded_size);
+        free(b64_decoded);
+    }
+
+    return r;
 }
