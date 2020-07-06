@@ -195,7 +195,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    r = mbedtls_base64_encode(NULL, 0, &output_base64_length, output, 64 + compressed_length);
+    r = mbedtls_base64_encode(NULL, 0, &output_base64_length, output, output_length);
     if (r != MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
     {
         r = PWCRYPT_ERROR_BASE64_FAILURE;
@@ -211,7 +211,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    r = mbedtls_base64_encode(output_base64, output_base64_length, &output_base64_length, output, 64 + compressed_length);
+    r = mbedtls_base64_encode(output_base64, output_base64_length, &output_base64_length, output, output_length);
     if (r != 0)
     {
         r = PWCRYPT_ERROR_BASE64_FAILURE;
