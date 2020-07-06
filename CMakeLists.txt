@@ -6,8 +6,9 @@ set(CMAKE_C_STANDARD 11)
 option(ENABLE_TESTING "Build MbedTLS tests." OFF)
 option(ENABLE_PROGRAMS "Build MbedTLS example programs." OFF)
 option(USE_SHARED_MBEDTLS_LIBRARY "Statically link MbedTLS if possible." OFF)
+option(PWCRYPT_ONLY_BUILD_LIB "Don't build the pwcrypt executable, but just its library for use in other C projects." OFF)
 
-set(ARGON2_SRC
+set(${PROJECT_NAME}_SRC_FILES
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/blake2/blake2.h
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/blake2/blake2-impl.h
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/blake2/blake2b.c
@@ -21,13 +22,17 @@ set(ARGON2_SRC
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/opt.c
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/thread.c
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/thread.h
+        ${CMAKE_CURRENT_LIST_DIR}/lib/miniz/miniz.c
+        ${CMAKE_CURRENT_LIST_DIR}/lib/miniz/miniz.h
+        ${CMAKE_CURRENT_LIST_DIR}/src/pwcrypt.c
+        ${CMAKE_CURRENT_LIST_DIR}/include/pwcrypt.h
         )
 
 if (NOT TARGET mbedtls)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls mbedtls)
 endif ()
 
-add_executable(${PROJECT_NAME} main.c ${ARGON2_SRC})
+add_library(${PROJECT_NAME} ${${PROJECT_NAME}_SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC mbedtls
@@ -44,6 +49,19 @@ if (WIN32)
 endif ()
 
 target_include_directories(${PROJECT_NAME}
+        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
+        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/miniz
         PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/include
         PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls/include
         )
+
+get_target_property(${PROJECT_NAME}_DEPS_TARGETS ${PROJECT_NAME} LINK_LIBRARIES)
+
+if (NOT PWCRYPT_ONLY_BUILD_LIB)
+    add_executable(${PROJECT_NAME}_cli ${SRC_FILES} main.c)
+
+    target_link_libraries(${PROJECT_NAME}_cli
+            PUBLIC ${${PROJECT_NAME}_DEPS_TARGETS}
+            PUBLIC ${PROJECT_NAME}
+            )
+endif ()
