@@ -307,7 +307,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         return PWCRYPT_ERROR_INVALID_ARGS;
     }
 
-    const size_t b64_decoded_size = b64_decoded_length;
+    const size_t b64_decoded_size = b64_decoded_length * sizeof(uint8_t);
 
     uint8_t* b64_decoded = malloc(b64_decoded_size);
     if (b64_decoded == NULL)
@@ -345,6 +345,15 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     memcpy(iv, b64_decoded + 48, 16);
     memcpy(tag, b64_decoded + 64, 16);
 
+    const size_t decrypted_length = (b64_decoded_length - 80) * sizeof(uint8_t);
+    uint8_t* decrypted = malloc(decrypted_length);
+    if (decrypted == NULL)
+    {
+        r = PWCRYPT_ERROR_OOM;
+        fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
+        goto exit;
+    }
+
     r = argon2_hash(argon2_cost_t, argon2_cost_m, argon2_parallelism, password, password_length, salt, sizeof(salt), key, sizeof(key), NULL, 0, Argon2_id, argon2_version_number);
     if (r != ARGON2_OK)
     {
@@ -363,8 +372,15 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     r = mbedtls_gcm_setkey(&aes_ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
     if (r != 0)
     {
-        r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+        r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
         fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
+        goto exit;
+    }
+
+    r = mbedtls_gcm_auth_decrypt(&aes_ctx, decrypted_length, iv, sizeof(iv), NULL, 0, tag, sizeof(tag), b64_decoded + 80, decrypted);
+    if (r != 0)
+    {
+        fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_auth_decrypt\" returned: %d\n", r);
         goto exit;
     }
 
@@ -382,6 +398,12 @@ exit:
     {
         memset(b64_decoded, 0x00, b64_decoded_size);
         free(b64_decoded);
+    }
+
+    if (decrypted != NULL)
+    {
+        memset(decrypted, 0x00, decrypted_length);
+        free(decrypted);
     }
 
     return r;
