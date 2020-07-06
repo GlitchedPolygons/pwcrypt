@@ -21,6 +21,7 @@
 #include <argon2.h>
 #include <stdlib.h>
 #include <miniz.h>
+#include <assert.h>
 #include <mbedtls/gcm.h>
 #include <mbedtls/base64.h>
 
@@ -96,6 +97,11 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         return r;
     }
 
+    if (text_length < 1)
+    {
+        return PWCRYPT_ERROR_INVALID_ARGS;
+    }
+
     uint8_t* output = NULL;
     size_t output_length = 0;
 
@@ -143,7 +149,6 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     r = mz_deflate(&stream, MZ_FINISH);
     if (r != MZ_STREAM_END)
     {
-        mz_deflateEnd(&stream);
         r = (r == MZ_OK) ? MZ_BUF_ERROR : r;
         goto exit;
     }
@@ -158,6 +163,8 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     // [48 - 63]    (16B) uint8_t[16]: AES-256 GCM IV
     // [64 - 79]    (16B) uint8_t[16]: AES-256 GCM Tag
     // [80 - ...]   Ciphertext
+
+    assert(sizeof(uint32_t) == 4);
     output_length = (80 + compressed_length);
 
     output = calloc((output_length), sizeof(uint8_t));
@@ -244,6 +251,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
 
 exit:
 
+    mz_deflateEnd(&stream);
     mbedtls_gcm_free(&aes_ctx);
     memset(key, 0x00, sizeof(key));
 
