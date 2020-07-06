@@ -61,7 +61,7 @@ static const uint8_t EMPTY64[64] = {
 #define PWCRYPT_Z_CHUNKSIZE (1024 * 256)
 
 #define PWCRYPT_ARGON2_T_COST 4
-#define PWCRYPT_ARGON2_M_COST (1 << 17)
+#define PWCRYPT_ARGON2_M_COST (1024 * 128)
 #define PWCRYPT_ARGON2_PARALLELISM 2
 
 #define PWCRYPT_ERROR_INVALID_ARGS -1
@@ -100,7 +100,7 @@ static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffe
 
 int pwcrypt_assess_password_strength(const char* password, size_t password_length);
 
-int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length);
+int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism);
 
 int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length);
 

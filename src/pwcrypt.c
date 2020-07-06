@@ -24,6 +24,8 @@
 #include <mbedtls/gcm.h>
 #include <mbedtls/base64.h>
 
+static const uint32_t ARGON2_V = (uint32_t)ARGON2_VERSION_NUMBER;
+
 int pwcrypt_assess_password_strength(const char* password, size_t password_length)
 {
     if (password_length < 6)
@@ -86,7 +88,7 @@ int pwcrypt_assess_password_strength(const char* password, size_t password_lengt
     return 0;
 }
 
-int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length)
+int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism)
 {
     int r = pwcrypt_assess_password_strength(password, password_length);
     if (r != 0)
@@ -148,12 +150,17 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
 
     compressed_length = stream.total_out;
 
-    // [0 - 31]     32B Salt
-    // [32 - 47]    16B IV
-    // [48 - 63]    16B Tag
-    // [64 - ...]   Ciphertext
+    // [0 - 3]      (4B) uint32_t: Argon2 Version Number
+    // [4 - 7]      (4B) uint32_t: Argon2 Cost T
+    // [8 - 11]     (4B) uint32_t: Argon2 Cost M
+    // [12 - 15]    (4B) uint32_t: Argon2 Parallelism
+    // [16 - 47]    (32B) uint8_t[32]: Argon2 Salt
+    // [48 - 63]    (16B) uint8_t[16]: AES-256 GCM IV
+    // [64 - 79]    (16B) uint8_t[16]: AES-256 GCM Tag
+    // [80 - ...]   Ciphertext
+    output_length = (80 + compressed_length);
 
-    output = calloc((output_length = (64 + compressed_length)), sizeof(uint8_t));
+    output = calloc((output_length), sizeof(uint8_t));
     if (output == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
@@ -161,10 +168,24 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    // Generate random salt and iv:
-    dev_urandom(output, 32 + 16);
+    if (!argon2_cost_t)
+        argon2_cost_t = PWCRYPT_ARGON2_T_COST;
 
-    r = argon2id_hash_raw(PWCRYPT_ARGON2_T_COST, PWCRYPT_ARGON2_M_COST, PWCRYPT_ARGON2_PARALLELISM, password, password_length, output, 32, key, sizeof(key));
+    if (!argon2_cost_m)
+        argon2_cost_m = PWCRYPT_ARGON2_M_COST;
+
+    if (!argon2_parallelism)
+        argon2_parallelism = PWCRYPT_ARGON2_PARALLELISM;
+
+    memcpy(output, &ARGON2_V, 4);
+    memcpy(output + 4, &argon2_cost_t, 4);
+    memcpy(output + 8, &argon2_cost_m, 4);
+    memcpy(output + 12, &argon2_parallelism, 4);
+
+    // Generate random salt and iv:
+    dev_urandom(output + 16, 32 + 16);
+
+    r = argon2id_hash_raw(argon2_cost_t, argon2_cost_m, argon2_parallelism, password, password_length, output + 16, 32, key, sizeof(key));
     if (r != ARGON2_OK)
     {
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
@@ -187,7 +208,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, compressed_length, output + 32, 16, NULL, 0, compressed, output + 64, 16, output + 48);
+    r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, compressed_length, output + 48, 16, NULL, 0, compressed, output + 80, 16, output + 64);
     if (r != 0)
     {
         r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
