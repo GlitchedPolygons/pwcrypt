@@ -55,9 +55,9 @@ endif ()
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
-        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/miniz
-        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/include
-        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls/include
+        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/miniz
+        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/include
+        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls/include
         )
 
 get_target_property(${PROJECT_NAME}_DEPS_TARGETS ${PROJECT_NAME} LINK_LIBRARIES)
