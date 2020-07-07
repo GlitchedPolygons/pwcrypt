@@ -98,10 +98,60 @@ static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffe
     }
 }
 
+/**
+ * Checks whether a given password is strong enough or not.
+ * @param password Password string to check (does not need to be NUL-terminated; only \p password_length characters will be checked!).
+ * @param password_length Length of the \p password string.
+ * @return <c>0</c> if the password is OK; a non-zero error code if the password is too weak.
+ */
 int pwcrypt_assess_password_strength(const char* password, size_t password_length);
 
+/**
+ * Compresses an array of bytes using deflate.
+ * @param data The data to compress.
+ * @param data_length Length of the \p data array (how many bytes to compress).
+ * @param buffer_size_kib The underlying buffer size to use (in KiB). Especially <c>inflate()</c> profits from a relatively large buffer aka. "chunk" size. A 256KiB buffer works great :)
+ * @param level The level of compression <c>[0-9]</c>. Lower means faster, higher level means better compression (but slower). Default is <c>6</c>. If you pass a value that is out of the allowed range of <c>[0-9]</c>, <c>6</c> will be used!
+ * @param out Pointer to an output buffer. This will be allocated on the heap ONLY on success: if something failed, this is left untouched! Needs to be freed manually by the caller.
+ * @param out_length Where to write the output array's length into.
+ * @return <c>0</c> on success; non-zero error codes if something fails.
+ */
+int pwcrypt_compress(const uint8_t* data, size_t data_length, size_t buffer_size_kib, int level, uint8_t** out, size_t* out_length);
+
+/**
+ * Decompresses a given set of deflated data using inflate.
+ * @param data The compressed bytes to decompress.
+ * @param data_length Length of the \p data array.
+ * @param buffer_size_kib The underlying buffer size to use (in KiB). If available, a buffer size of 256KiB or more is recommended.
+ * @param out Output buffer pointer: this will be allocated and filled with the decompressed data. In case of a failure it's left alone, so you only need to free it if decompression succeeds!
+ * @param out_length Where to write the output array's length into.
+ * @return <c>0</c> on success; non-zero error codes if something fails.
+ */
+int pwcrypt_decompress(const uint8_t* data, size_t data_length, size_t buffer_size_kib, uint8_t** out, size_t* out_length);
+
+/**
+ * TODO: write docs
+ * @param text
+ * @param text_length
+ * @param password
+ * @param password_length
+ * @param argon2_cost_t
+ * @param argon2_cost_m
+ * @param argon2_parallelism
+ * @param out
+ * @return
+ */
 int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out);
 
+/**
+ * TODO: write docs
+ * @param text
+ * @param text_length
+ * @param password
+ * @param password_length
+ * @param out
+ * @return
+ */
 int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length, char** out);
 
 #ifdef __cplusplus

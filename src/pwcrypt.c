@@ -90,6 +90,16 @@ int pwcrypt_assess_password_strength(const char* password, size_t password_lengt
     return 0;
 }
 
+int pwcrypt_compress(const uint8_t* data, const size_t data_length, const size_t buffer_size_kilobytes, uint8_t** out, size_t* out_length)
+{
+    //
+}
+
+int pwcrypt_decompress(const uint8_t* data, const size_t data_length, const size_t buffer_size_kib, uint8_t** out, size_t* out_length)
+{
+    //
+}
+
 int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out)
 {
     if (text == NULL || text_length == 0 || password == NULL || out == NULL)
