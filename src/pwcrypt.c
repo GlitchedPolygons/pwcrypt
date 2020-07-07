@@ -90,14 +90,19 @@ int pwcrypt_assess_password_strength(const char* password, size_t password_lengt
     return 0;
 }
 
-int pwcrypt_compress(const uint8_t* data, const size_t data_length, const size_t buffer_size_kib, const int level, uint8_t** out, size_t* out_length)
+int pwcrypt_compress(const uint8_t* data, const size_t data_length, const size_t buffer_size_kib, int level, uint8_t** out, size_t* out_length)
 {
-    //
+    level = PWCRYPT_CLAMP(level, 0, 9);
 }
 
 int pwcrypt_decompress(const uint8_t* data, const size_t data_length, const size_t buffer_size_kib, uint8_t** out, size_t* out_length)
 {
-    //
+    if (data == NULL || data_length == 0 || out == NULL || out_length == NULL)
+    {
+        return PWCRYPT_ERROR_INVALID_ARGS;
+    }
+
+    // TODO: impl!
 }
 
 int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out)

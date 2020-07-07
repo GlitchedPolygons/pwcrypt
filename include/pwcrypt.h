@@ -95,6 +95,7 @@ static const uint8_t EMPTY64[64] = {
 
 #define PWCRYPT_MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define PWCRYPT_MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define PWCRYPT_CLAMP(n, u, v) ((n < u) ? (u) : ((n > v) ? (v) : (n)))
 
 /**
  * (Tries to) read from <c>/dev/urandom</c> (or Windows equivalent, yeah...) filling the given \p output_buffer with \p output_buffer_size random bytes.
