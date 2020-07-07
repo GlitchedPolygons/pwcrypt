@@ -158,6 +158,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     stream.next_out = zoutbuf;
     stream.avail_out = PWCRYPT_Z_CHUNKSIZE;
 
+    uint8_t* o = compressed;
     size_t remaining = text_length;
 
     for (;;)
@@ -180,7 +181,8 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         {
             const uint32_t n = PWCRYPT_Z_CHUNKSIZE - stream.avail_out;
 
-            memcpy(compressed + stream.total_out, zoutbuf, n);
+            memcpy(o, zoutbuf, n);
+            o += n;
 
             stream.next_out = zoutbuf;
             stream.avail_out = PWCRYPT_Z_CHUNKSIZE;

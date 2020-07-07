@@ -47,7 +47,7 @@ int main(int argc, const char* argv[])
     }
 
     int r = -1;
-    char* output;
+    char* output = NULL;
 
     switch (*mode)
     {
@@ -70,8 +70,12 @@ int main(int argc, const char* argv[])
             return PWCRYPT_ERROR_INVALID_ARGS;
     }
 
-    fprintf(stdout, "%s", output);
-    memset(output, 0x00, strlen(output));
-    free(output);
+    if (r == 0 && output)
+    {
+        fprintf(stdout, "%s", output);
+        memset(output, 0x00, strlen(output));
+        free(output);
+    }
+
     return r;
 }
