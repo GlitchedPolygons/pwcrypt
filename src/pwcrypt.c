@@ -336,8 +336,13 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     chillbuff output_buffer;
     chillbuff_init(&output_buffer, 1024, sizeof(char), CHILLBUFF_GROW_DUPLICATIVE);
 
-    uint8_t zinbuf[PWCRYPT_Z_CHUNKSIZE];
-    uint8_t zoutbuf[PWCRYPT_Z_CHUNKSIZE];
+    uint8_t* zinbuf = malloc(PWCRYPT_Z_CHUNKSIZE * sizeof(uint8_t));
+    uint8_t* zoutbuf = malloc(PWCRYPT_Z_CHUNKSIZE * sizeof(uint8_t));
+
+    stream.next_in = zinbuf;
+    stream.avail_in = 0;
+    stream.next_out = zoutbuf;
+    stream.avail_out = PWCRYPT_Z_CHUNKSIZE;
 
     uint8_t iv[16];
     uint8_t tag[16];
@@ -354,7 +359,8 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
 
     const size_t decrypted_length = (b64_decoded_length - 80) * sizeof(uint8_t);
     uint8_t* decrypted = malloc(decrypted_length);
-    if (decrypted == NULL)
+
+    if (decrypted == NULL || zinbuf == NULL || zoutbuf == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
         fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
@@ -417,9 +423,9 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
 
         if (r == Z_STREAM_END || stream.avail_out == 0)
         {
-            const uint32_t n = PWCRYPT_Z_CHUNKSIZE - stream.avail_out; // TODO: fix this one, it's wrong!g
+            const uint32_t n = PWCRYPT_Z_CHUNKSIZE - stream.avail_out;
 
-            chillbuff_push_back(&output_buffer, (char*)zoutbuf, n);
+            chillbuff_push_back(&output_buffer, zoutbuf, n);
 
             stream.next_out = zoutbuf;
             stream.avail_out = PWCRYPT_Z_CHUNKSIZE;
@@ -444,7 +450,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    memcpy(*out, (char*)output_buffer.array, output_buffer.length);
+    memcpy(*out, (char*)output_buffer.array, output_buffer.length * output_buffer.element_size);
 
 exit:
 
@@ -454,8 +460,6 @@ exit:
     memset(iv, 0x00, sizeof(iv));
     memset(tag, 0x00, sizeof(tag));
     memset(salt, 0x00, sizeof(salt));
-    memset(zinbuf, 0x0, sizeof(zinbuf));
-    memset(zoutbuf, 0x0, sizeof(zoutbuf));
     argon2_version_number = argon2_cost_t = argon2_cost_m = argon2_parallelism = 0;
 
     if (b64_decoded != NULL)
@@ -468,6 +472,18 @@ exit:
     {
         memset(decrypted, 0x00, decrypted_length);
         free(decrypted);
+    }
+
+    if (zinbuf != NULL)
+    {
+        memset(zinbuf, 0x00, PWCRYPT_Z_CHUNKSIZE * sizeof(uint8_t));
+        free(zinbuf);
+    }
+
+    if (zoutbuf != NULL)
+    {
+        memset(zoutbuf, 0x00, PWCRYPT_Z_CHUNKSIZE * sizeof(uint8_t));
+        free(zoutbuf);
     }
 
     chillbuff_free(&output_buffer);
