@@ -131,15 +131,15 @@ int pwcrypt_decompress(const uint8_t* data, size_t data_length, size_t buffer_si
 
 /**
  * TODO: write docs
- * @param text
- * @param text_length
- * @param password
- * @param password_length
- * @param argon2_cost_t
- * @param argon2_cost_m
- * @param argon2_parallelism
- * @param out
- * @return
+ * @param text The text string to encrypt.
+ * @param text_length Length of the \p text string argument.
+ * @param password The password string with which to encrypt the \p text argument (this will be used to derive an AES-256 key using Argon2id).
+ * @param password_length Length of the \p password string argument.
+ * @param argon2_cost_t The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric AES-256 key.
+ * @param argon2_cost_m The Argon2 memory cost parameter (in KiB) to use for AES key derivation.
+ * @param argon2_parallelism Degree of parallelism to use when deriving the symmetric encryption key from the password with Argon2 (number of parallel threads).
+ * @param out Pointer to the output string buffer where to write the encrypted string into (this will be allocated and NUL-terminated on success; if anything fails, this will be left untouched! So you only need to free on successful encryption).
+ * @return <c>0</c> on success; non-zero error codes if something fails.
  */
 int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out);
 
@@ -150,7 +150,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
  * @param password
  * @param password_length
  * @param out
- * @return
+ * @return <c>0</c> on success; non-zero error codes if something fails.
  */
 int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length, char** out);
 
