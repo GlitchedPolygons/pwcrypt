@@ -149,6 +149,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
+    // TODO: use stream instead of all-in-one call here!
     stream.next_in = (uint8_t*)text;
     stream.avail_in = (mz_uint32)text_length;
     stream.next_out = compressed;
@@ -412,14 +413,14 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         {
             const uint32_t n = PWCRYPT_MIN(PWCRYPT_Z_CHUNKSIZE, remaining);
 
-            memcpy(zinbuf, decrypted, n);
+            memcpy(zinbuf, decrypted + stream.total_in, n);
             stream.next_in = zinbuf;
             stream.avail_in = n;
 
             remaining -= n;
         }
 
-        r = inflate(&stream, Z_SYNC_FLUSH);
+        r = mz_inflate(&stream, Z_SYNC_FLUSH);
 
         if (r == Z_STREAM_END || stream.avail_out == 0)
         {
