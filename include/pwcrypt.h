@@ -36,8 +36,14 @@ extern "C" {
 #include <bcrypt.h>
 #endif
 
+/**
+ * Error message for invalid CLI arguments.
+ */
 static const char PWCRYPT_INVALID_ARGS_ERROR_MSG[] = "pwcrypt: Invalid arguments! Please run \"pwcrypt-- help\" to find out how to use this program.\n";
 
+/**
+ * An array of 64 bytes of value 0x00.
+ */
 static const uint8_t EMPTY64[64] = {
     //
     0x00, 0x00, 0x00, 0x00, //
@@ -58,10 +64,24 @@ static const uint8_t EMPTY64[64] = {
     0x00, 0x00, 0x00, 0x00, //
 };
 
+/**
+ * Default chunksize to use for compressing and decompressing buffers.
+ */
 #define PWCRYPT_Z_CHUNKSIZE (1024 * 256)
 
+/**
+ * Default Argon2 time cost parameter to use for key derivation if nothing else was specified.
+ */
 #define PWCRYPT_ARGON2_T_COST 4
+
+/**
+ * Default Argon2 memory cost parameter to use for key derivation if nothing else was specified.
+ */
 #define PWCRYPT_ARGON2_M_COST (1024 * 128)
+
+/**
+ * Default Argon2 degree of parallelism parameter if nothing else was specified.
+ */
 #define PWCRYPT_ARGON2_PARALLELISM 2
 
 #define PWCRYPT_ERROR_INVALID_ARGS -1
@@ -130,26 +150,27 @@ int pwcrypt_compress(const uint8_t* data, size_t data_length, size_t buffer_size
 int pwcrypt_decompress(const uint8_t* data, size_t data_length, size_t buffer_size_kib, uint8_t** out, size_t* out_length);
 
 /**
- * TODO: write docs
+ * Encrypts a text string symmetrically with a password. <p>
+ * The password string is fed into a customizable amount of Argon2id iterations to derive an AES-256 key, with which the text will be encrypted and written into the output buffer.
  * @param text The text string to encrypt.
  * @param text_length Length of the \p text string argument.
  * @param password The password string with which to encrypt the \p text argument (this will be used to derive an AES-256 key using Argon2id).
  * @param password_length Length of the \p password string argument.
- * @param argon2_cost_t The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric AES-256 key.
- * @param argon2_cost_m The Argon2 memory cost parameter (in KiB) to use for AES key derivation.
- * @param argon2_parallelism Degree of parallelism to use when deriving the symmetric encryption key from the password with Argon2 (number of parallel threads).
+ * @param argon2_cost_t The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric AES-256 key. Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_T_COST.
+ * @param argon2_cost_m The Argon2 memory cost parameter (in KiB) to use for AES key derivation.  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_M_COST.
+ * @param argon2_parallelism Degree of parallelism to use when deriving the symmetric encryption key from the password with Argon2 (number of parallel threads).  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_PARALLELISM.
  * @param out Pointer to the output string buffer where to write the encrypted string into (this will be allocated and NUL-terminated on success; if anything fails, this will be left untouched! So you only need to free on successful encryption).
  * @return <c>0</c> on success; non-zero error codes if something fails.
  */
 int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out);
 
 /**
- * TODO: write docs
- * @param text
- * @param text_length
- * @param password
- * @param password_length
- * @param out
+ * Decrypts a string that was encrypted using pwcrypt_encrypt(). <p>
+ * @param text The ciphertext to decrypt.
+ * @param text_length Length of the \p text string argument.
+ * @param password The decryption password.
+ * @param password_length Length of the \p password argument.
+ * @param out Pointer to the output string buffer where to write the decrypted string into (this will be allocated and NUL-terminated automatically on success; if anything fails, this will be left untouched! So you only need to free this if decryption succeeds).
  * @return <c>0</c> on success; non-zero error codes if something fails.
  */
 int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length, char** out);

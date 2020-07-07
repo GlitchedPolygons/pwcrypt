@@ -63,7 +63,11 @@ target_include_directories(${PROJECT_NAME}
 get_target_property(${PROJECT_NAME}_DEPS_TARGETS ${PROJECT_NAME} LINK_LIBRARIES)
 
 if (NOT PWCRYPT_ONLY_BUILD_LIB)
-    add_executable(${PROJECT_NAME}_cli ${SRC_FILES} main.c)
+
+    add_executable(${PROJECT_NAME}_cli
+            ${SRC_FILES}
+            ${CMAKE_CURRENT_LIST_DIR}/src/main.c
+            )
 
     target_link_libraries(${PROJECT_NAME}_cli
             PUBLIC ${${PROJECT_NAME}_DEPS_TARGETS}

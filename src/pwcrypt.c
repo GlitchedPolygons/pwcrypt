@@ -90,7 +90,7 @@ int pwcrypt_assess_password_strength(const char* password, size_t password_lengt
     return 0;
 }
 
-int pwcrypt_compress(const uint8_t* data, const size_t data_length, const size_t buffer_size_kilobytes, uint8_t** out, size_t* out_length)
+int pwcrypt_compress(const uint8_t* data, const size_t data_length, const size_t buffer_size_kib, const int level, uint8_t** out, size_t* out_length)
 {
     //
 }
