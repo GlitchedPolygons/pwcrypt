@@ -32,12 +32,17 @@ if (NOT TARGET mbedtls)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls mbedtls)
 endif ()
 
+if (NOT TARGET chillbuff)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/chillbuff chillbuff)
+endif ()
+
 add_library(${PROJECT_NAME} ${${PROJECT_NAME}_SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC mbedtls
         PUBLIC mbedx509
         PUBLIC mbedcrypto
+        PUBLIC chillbuff
         )
 
 if (UNIX AND NOT APPLE)

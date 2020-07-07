@@ -15,6 +15,7 @@
 */
 
 #include "pwcrypt.h"
+#include "chillbuff.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -332,6 +333,12 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     mz_stream stream;
     memset(&stream, 0x00, sizeof(stream));
 
+    chillbuff output_buffer;
+    chillbuff_init(&output_buffer, 1024, sizeof(char), CHILLBUFF_GROW_DUPLICATIVE);
+
+    uint8_t zinbuf[PWCRYPT_Z_CHUNKSIZE];
+    uint8_t zoutbuf[PWCRYPT_Z_CHUNKSIZE];
+
     uint8_t iv[16];
     uint8_t tag[16];
     uint8_t salt[32];
@@ -384,6 +391,61 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
+    r = mz_inflateInit(&stream);
+    if (r != 0)
+    {
+        fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"mz_inflateInit\" returned: %d\n", r);
+        goto exit;
+    }
+
+    uint32_t remaining = (uint32_t)decrypted_length;
+
+    for (;;)
+    {
+        if (stream.avail_in == 0)
+        {
+            const uint32_t n = PWCRYPT_MIN(PWCRYPT_Z_CHUNKSIZE, remaining);
+
+            memcpy(zinbuf, decrypted, n);
+            stream.next_in = zinbuf;
+            stream.avail_in = n;
+
+            remaining -= n;
+        }
+
+        r = inflate(&stream, Z_SYNC_FLUSH);
+
+        if (r == Z_STREAM_END || stream.avail_out == 0)
+        {
+            const uint32_t n = PWCRYPT_Z_CHUNKSIZE - stream.avail_out; // TODO: fix this one, it's wrong!g
+
+            chillbuff_push_back(&output_buffer, (char*)zoutbuf, n);
+
+            stream.next_out = zoutbuf;
+            stream.avail_out = PWCRYPT_Z_CHUNKSIZE;
+        }
+
+        if (r == Z_STREAM_END)
+        {
+            r = 0;
+            break;
+        }
+        else if (r != 0)
+        {
+            fprintf(stderr, "pwcrypt: inflate() failed with status: %i!\n", r);
+            goto exit;
+        }
+    }
+
+    *out = calloc(output_buffer.length + 1, sizeof(char));
+    if (*out == NULL)
+    {
+        r = PWCRYPT_ERROR_OOM;
+        goto exit;
+    }
+
+    memcpy(*out, (char*)output_buffer.array, output_buffer.length);
+
 exit:
 
     mz_inflateEnd(&stream);
@@ -392,6 +454,8 @@ exit:
     memset(iv, 0x00, sizeof(iv));
     memset(tag, 0x00, sizeof(tag));
     memset(salt, 0x00, sizeof(salt));
+    memset(zinbuf, 0x0, sizeof(zinbuf));
+    memset(zoutbuf, 0x0, sizeof(zoutbuf));
     argon2_version_number = argon2_cost_t = argon2_cost_m = argon2_parallelism = 0;
 
     if (b64_decoded != NULL)
@@ -405,6 +469,8 @@ exit:
         memset(decrypted, 0x00, decrypted_length);
         free(decrypted);
     }
+
+    chillbuff_free(&output_buffer);
 
     return r;
 }
