@@ -207,7 +207,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     // [16 - 47]    (32B) uint8_t[32]: Argon2 Salt
     // [48 - 63]    (16B) uint8_t[16]: AES-256 GCM IV
     // [64 - 79]    (16B) uint8_t[16]: AES-256 GCM Tag
-    // [80 - ...]   Ciphertext
+    // [80 - ...]   Ciphertext (plaintext is first compressed, then encrypted)
 
     assert(sizeof(uint32_t) == 4);
     output_length = (80 + compressed_length);
