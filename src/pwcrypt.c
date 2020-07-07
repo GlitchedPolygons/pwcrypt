@@ -124,11 +124,15 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     mz_stream stream;
     memset(&stream, 0x00, sizeof(stream));
 
+    assert(sizeof(uint8_t) == 1);
+    uint8_t* zinbuf = malloc(PWCRYPT_Z_CHUNKSIZE);
+    uint8_t* zoutbuf = malloc(PWCRYPT_Z_CHUNKSIZE);
+
     size_t compressed_length = mz_compressBound(text_length);
-    size_t compressed_size = compressed_length * sizeof(uint8_t);
+    size_t compressed_size = compressed_length;
 
     uint8_t* compressed = malloc(compressed_size);
-    if (compressed == NULL)
+    if (compressed == NULL || zinbuf == NULL || zoutbuf == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
         fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
@@ -149,17 +153,49 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    // TODO: use stream instead of all-in-one call here!
-    stream.next_in = (uint8_t*)text;
-    stream.avail_in = (mz_uint32)text_length;
-    stream.next_out = compressed;
-    stream.avail_out = (mz_uint32)compressed_length;
+    stream.next_in = zinbuf;
+    stream.avail_in = 0;
+    stream.next_out = zoutbuf;
+    stream.avail_out = PWCRYPT_Z_CHUNKSIZE;
 
-    r = mz_deflate(&stream, MZ_FINISH);
-    if (r != MZ_STREAM_END)
+    size_t remaining = text_length;
+
+    for (;;)
     {
-        r = (r == MZ_OK) ? MZ_BUF_ERROR : r;
-        goto exit;
+        if (stream.avail_in == 0)
+        {
+            const uint32_t n = PWCRYPT_MIN(PWCRYPT_Z_CHUNKSIZE, remaining);
+
+            memcpy(zinbuf, text + stream.total_in, n);
+
+            stream.next_in = zinbuf;
+            stream.avail_in = n;
+
+            remaining -= n;
+        }
+
+        r = deflate(&stream, remaining ? Z_NO_FLUSH : Z_FINISH);
+
+        if (r == Z_STREAM_END || stream.avail_out == 0)
+        {
+            const uint32_t n = PWCRYPT_Z_CHUNKSIZE - stream.avail_out;
+
+            memcpy(compressed + stream.total_out, zoutbuf, n);
+
+            stream.next_out = zoutbuf;
+            stream.avail_out = PWCRYPT_Z_CHUNKSIZE;
+        }
+
+        if (r == Z_STREAM_END)
+        {
+            r = 0;
+            break;
+        }
+        else if (r != 0)
+        {
+            printf("pwcrypt: deflate() failed with status %i!\n", r);
+            goto exit;
+        }
     }
 
     compressed_length = stream.total_out;
@@ -240,7 +276,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    output_base64_size = output_base64_length * sizeof(uint8_t);
+    output_base64_size = output_base64_length;
     output_base64 = malloc(output_base64_size);
     if (output_base64 == NULL)
     {
@@ -290,6 +326,18 @@ exit:
         free(compressed);
     }
 
+    if (zinbuf != NULL)
+    {
+        memset(zinbuf, 0x00, PWCRYPT_Z_CHUNKSIZE);
+        free(zinbuf);
+    }
+
+    if (zoutbuf != NULL)
+    {
+        memset(zoutbuf, 0x00, PWCRYPT_Z_CHUNKSIZE);
+        free(zoutbuf);
+    }
+
     return r;
 }
 
@@ -309,7 +357,8 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         return PWCRYPT_ERROR_INVALID_ARGS;
     }
 
-    const size_t b64_decoded_size = b64_decoded_length * sizeof(uint8_t);
+    assert(sizeof(uint8_t) == 1);
+    const size_t b64_decoded_size = b64_decoded_length;
 
     uint8_t* b64_decoded = malloc(b64_decoded_size);
     if (b64_decoded == NULL)
@@ -337,8 +386,8 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     chillbuff output_buffer;
     chillbuff_init(&output_buffer, 1024, sizeof(char), CHILLBUFF_GROW_DUPLICATIVE);
 
-    uint8_t* zinbuf = malloc(PWCRYPT_Z_CHUNKSIZE * sizeof(uint8_t));
-    uint8_t* zoutbuf = malloc(PWCRYPT_Z_CHUNKSIZE * sizeof(uint8_t));
+    uint8_t* zinbuf = malloc(PWCRYPT_Z_CHUNKSIZE);
+    uint8_t* zoutbuf = malloc(PWCRYPT_Z_CHUNKSIZE);
 
     stream.next_in = zinbuf;
     stream.avail_in = 0;
@@ -358,7 +407,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     memcpy(iv, b64_decoded + 48, 16);
     memcpy(tag, b64_decoded + 64, 16);
 
-    const size_t decrypted_length = (b64_decoded_length - 80) * sizeof(uint8_t);
+    const size_t decrypted_length = (b64_decoded_length - 80);
     uint8_t* decrypted = malloc(decrypted_length);
 
     if (decrypted == NULL || zinbuf == NULL || zoutbuf == NULL)
@@ -477,13 +526,13 @@ exit:
 
     if (zinbuf != NULL)
     {
-        memset(zinbuf, 0x00, PWCRYPT_Z_CHUNKSIZE * sizeof(uint8_t));
+        memset(zinbuf, 0x00, PWCRYPT_Z_CHUNKSIZE);
         free(zinbuf);
     }
 
     if (zoutbuf != NULL)
     {
-        memset(zoutbuf, 0x00, PWCRYPT_Z_CHUNKSIZE * sizeof(uint8_t));
+        memset(zoutbuf, 0x00, PWCRYPT_Z_CHUNKSIZE);
         free(zoutbuf);
     }
 
