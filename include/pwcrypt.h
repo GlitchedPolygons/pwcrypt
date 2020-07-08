@@ -95,7 +95,6 @@ static const uint8_t EMPTY64[64] = {
 
 #define PWCRYPT_MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define PWCRYPT_MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define PWCRYPT_CLAMP(n, u, v) ((n < u) ? (u) : ((n > v) ? (v) : (n)))
 
 /**
  * (Tries to) read from <c>/dev/urandom</c> (or Windows equivalent, yeah...) filling the given \p output_buffer with \p output_buffer_size random bytes.
@@ -132,7 +131,7 @@ int pwcrypt_assess_password_strength(const char* password, size_t password_lengt
  * @param data The data to compress.
  * @param data_length Length of the \p data array (how many bytes to compress).
  * @param buffer_size_kib The underlying buffer size to use (in KiB). Especially <c>inflate()</c> profits from a relatively large buffer aka. "chunk" size. A 256KiB buffer works great :)
- * @param level The level of compression <c>[0-9]</c>. Lower means faster, higher level means better compression (but slower). Default is <c>6</c>. If you pass a value that is out of the allowed range of <c>[0-9]</c>, <c>6</c> will be used!
+ * @param level The level of compression <c>[1-9]</c>. Lower means faster, higher level means better compression (but slower). Default is <c>6</c>. If you pass a value that is out of the allowed range of <c>[1-9]</c>, <c>6</c> will be used!
  * @param out Pointer to an output buffer. This will be allocated on the heap ONLY on success: if something failed, this is left untouched! Needs to be freed manually by the caller.
  * @param out_length Where to write the output array's length into.
  * @return <c>0</c> on success; non-zero error codes if something fails.
