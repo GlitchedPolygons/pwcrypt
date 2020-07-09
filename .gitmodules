@@ -4,3 +4,6 @@
 [submodule "lib/mbedtls"]
 	path = lib/mbedtls
 	url = https://github.com/ARMmbed/mbedtls
+[submodule "lib/acutest"]
+	path = lib/acutest
+	url = git@github.com:mity/acutest.git
