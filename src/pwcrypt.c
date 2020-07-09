@@ -90,145 +90,6 @@ int pwcrypt_assess_password_strength(const char* password, size_t password_lengt
     return 0;
 }
 
-int pwcrypt_compress(const uint8_t* data, const size_t data_length, const size_t buffer_size_kib, const int level, uint8_t** out, size_t* out_length)
-{
-    if (data == NULL || data_length == 0 || out == NULL || out_length == NULL)
-    {
-        fprintf(stderr, "pwcrypt: Invalid arguments provided to \"pwcrypt_compress\"!\n");
-        return PWCRYPT_ERROR_INVALID_ARGS;
-    }
-
-    int r = -1;
-
-    mz_stream stream;
-    memset(&stream, 0x00, sizeof(stream));
-
-    assert(sizeof(uint8_t) == 1);
-    const size_t buffersize = (1024 * (buffer_size_kib ? buffer_size_kib : PWCRYPT_Z_CHUNKSIZE));
-    uint8_t* zinbuf = malloc(buffersize);
-    uint8_t* zoutbuf = malloc(buffersize);
-
-    const size_t compressed_size = mz_compressBound(data_length);
-    uint8_t* compressed = malloc(compressed_size);
-    if (compressed == NULL || zinbuf == NULL || zoutbuf == NULL)
-    {
-        r = PWCRYPT_ERROR_OOM;
-        fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
-        goto exit;
-    }
-
-    if ((data_length | compressed_size) > 0xFFFFFFFFU)
-    {
-        r = MZ_PARAM_ERROR;
-        fprintf(stderr, "pwcrypt: Compression of input data failed! \"mz_ulong\" is 64-bits...\n");
-        goto exit;
-    }
-
-    r = mz_deflateInit(&stream, level > 9 || !level ? 6 : level);
-    if (r != MZ_OK)
-    {
-        fprintf(stderr, "pwcrypt: Compression of input data failed! \"mz_deflateInit\" returned: %d\n", r);
-        goto exit;
-    }
-
-    stream.next_in = zinbuf;
-    stream.avail_in = 0;
-    stream.next_out = zoutbuf;
-    stream.avail_out = PWCRYPT_Z_CHUNKSIZE;
-
-    uint8_t* o = compressed;
-    size_t remaining = data_length;
-
-    for (;;)
-    {
-        if (stream.avail_in == 0)
-        {
-            const uint32_t n = PWCRYPT_MIN(PWCRYPT_Z_CHUNKSIZE, remaining);
-
-            memcpy(zinbuf, data + stream.total_in, n);
-
-            stream.next_in = zinbuf;
-            stream.avail_in = n;
-
-            remaining -= n;
-        }
-
-        r = deflate(&stream, remaining ? Z_NO_FLUSH : Z_FINISH);
-
-        if (r == Z_STREAM_END || stream.avail_out == 0)
-        {
-            const uint32_t n = PWCRYPT_Z_CHUNKSIZE - stream.avail_out;
-
-            memcpy(o, zoutbuf, n);
-            o += n;
-
-            stream.next_out = zoutbuf;
-            stream.avail_out = PWCRYPT_Z_CHUNKSIZE;
-        }
-
-        if (r == Z_STREAM_END)
-        {
-            r = 0;
-            break;
-        }
-        else if (r != 0)
-        {
-            printf("pwcrypt: deflate() failed with status %i!\n", r);
-            goto exit;
-        }
-    }
-
-    *out = malloc(stream.total_out);
-    if (*out == NULL)
-    {
-        r = PWCRYPT_ERROR_OOM;
-        fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
-        goto exit;
-    }
-
-    r = 0;
-    *out_length = stream.total_out;
-    memcpy(*out, compressed, stream.total_out);
-
-exit:
-
-    o = NULL;
-
-    mz_deflateEnd(&stream);
-    memset(&stream, 0x00, sizeof(stream));
-
-    if (zinbuf != NULL)
-    {
-        memset(zinbuf, 0x00, buffersize);
-        free(zinbuf);
-    }
-
-    if (zoutbuf != NULL)
-    {
-        memset(zoutbuf, 0x00, buffersize);
-        free(zoutbuf);
-    }
-
-    if (compressed != NULL)
-    {
-        memset(compressed, 0x00, compressed_size);
-        free(compressed);
-    }
-
-    return r;
-}
-
-int pwcrypt_decompress(const uint8_t* data, const size_t data_length, const size_t buffer_size_kib, uint8_t** out, size_t* out_length)
-{
-    if (data == NULL || data_length == 0 || out == NULL || out_length == NULL)
-    {
-        fprintf(stderr, "pwcrypt: Invalid arguments provided to \"pwcrypt_decompress\"!\n");
-        return PWCRYPT_ERROR_INVALID_ARGS;
-    }
-
-    // TODO: impl!
-}
-
 int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out)
 {
     if (text == NULL || text_length == 0 || password == NULL || out == NULL)
@@ -263,7 +124,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     uint8_t* compressed = NULL;
     size_t compressed_length = 0;
 
-    r = pwcrypt_compress((uint8_t*)text, text_length, 256, 8, &compressed, &compressed_length);
+    r = ccrush_compress((uint8_t*)text, text_length, 256, 8, &compressed, &compressed_length);
     if (r != 0)
     {
         r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
@@ -439,20 +300,6 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     mbedtls_gcm_context aes_ctx;
     mbedtls_gcm_init(&aes_ctx);
 
-    mz_stream stream;
-    memset(&stream, 0x00, sizeof(stream));
-
-    chillbuff output_buffer;
-    chillbuff_init(&output_buffer, 1024, sizeof(char), CHILLBUFF_GROW_DUPLICATIVE);
-
-    uint8_t* zinbuf = malloc(PWCRYPT_Z_CHUNKSIZE);
-    uint8_t* zoutbuf = malloc(PWCRYPT_Z_CHUNKSIZE);
-
-    stream.next_in = zinbuf;
-    stream.avail_in = 0;
-    stream.next_out = zoutbuf;
-    stream.avail_out = PWCRYPT_Z_CHUNKSIZE;
-
     uint8_t iv[16];
     uint8_t tag[16];
     uint8_t salt[32];
@@ -469,7 +316,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     const size_t decrypted_length = (b64_decoded_length - 80);
     uint8_t* decrypted = malloc(decrypted_length);
 
-    if (decrypted == NULL || zinbuf == NULL || zoutbuf == NULL)
+    if (decrypted == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
         fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
@@ -506,51 +353,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    r = mz_inflateInit(&stream);
-    if (r != 0)
-    {
-        fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"mz_inflateInit\" returned: %d\n", r);
-        goto exit;
-    }
-
-    uint32_t remaining = (uint32_t)decrypted_length;
-
-    for (;;)
-    {
-        if (stream.avail_in == 0)
-        {
-            const uint32_t n = PWCRYPT_MIN(PWCRYPT_Z_CHUNKSIZE, remaining);
-
-            memcpy(zinbuf, decrypted + stream.total_in, n);
-            stream.next_in = zinbuf;
-            stream.avail_in = n;
-
-            remaining -= n;
-        }
-
-        r = mz_inflate(&stream, Z_SYNC_FLUSH);
-
-        if (r == Z_STREAM_END || stream.avail_out == 0)
-        {
-            const uint32_t n = PWCRYPT_Z_CHUNKSIZE - stream.avail_out;
-
-            chillbuff_push_back(&output_buffer, zoutbuf, n);
-
-            stream.next_out = zoutbuf;
-            stream.avail_out = PWCRYPT_Z_CHUNKSIZE;
-        }
-
-        if (r == Z_STREAM_END)
-        {
-            r = 0;
-            break;
-        }
-        else if (r != 0)
-        {
-            fprintf(stderr, "pwcrypt: inflate() failed with status: %i!\n", r);
-            goto exit;
-        }
-    }
+    // TODO: decompress here
 
     *out = calloc(output_buffer.length + 1, sizeof(char));
     if (*out == NULL)
@@ -559,11 +362,10 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    memcpy(*out, (char*)output_buffer.array, output_buffer.length * output_buffer.element_size);
+    //memcpy(*out, (char*)output_buffer.array, output_buffer.length * output_buffer.element_size);
 
 exit:
 
-    mz_inflateEnd(&stream);
     mbedtls_gcm_free(&aes_ctx);
     memset(key, 0x00, sizeof(key));
     memset(iv, 0x00, sizeof(iv));
@@ -582,20 +384,6 @@ exit:
         memset(decrypted, 0x00, decrypted_length);
         free(decrypted);
     }
-
-    if (zinbuf != NULL)
-    {
-        memset(zinbuf, 0x00, PWCRYPT_Z_CHUNKSIZE);
-        free(zinbuf);
-    }
-
-    if (zoutbuf != NULL)
-    {
-        memset(zoutbuf, 0x00, PWCRYPT_Z_CHUNKSIZE);
-        free(zoutbuf);
-    }
-
-    chillbuff_free(&output_buffer);
 
     return r;
 }
