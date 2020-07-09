@@ -15,14 +15,11 @@
 */
 
 #include "pwcrypt.h"
-#include "chillbuff.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <argon2.h>
 #include <stdlib.h>
-#include <miniz.h>
-#include <assert.h>
 #include <mbedtls/gcm.h>
 #include <mbedtls/base64.h>
 
@@ -362,7 +359,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    //memcpy(*out, (char*)output_buffer.array, output_buffer.length * output_buffer.element_size);
+    // memcpy(*out, (char*)output_buffer.array, output_buffer.length * output_buffer.element_size);
 
 exit:
 

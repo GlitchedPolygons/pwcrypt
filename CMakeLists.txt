@@ -6,6 +6,8 @@ set(CMAKE_C_STANDARD 11)
 option(ENABLE_TESTING "Build MbedTLS tests." OFF)
 option(ENABLE_PROGRAMS "Build MbedTLS example programs." OFF)
 option(USE_SHARED_MBEDTLS_LIBRARY "Statically link MbedTLS if possible." OFF)
+
+option(PWCRYPT_ENABLE_TESTS "Build unit tests." OFF)
 option(PWCRYPT_ONLY_BUILD_LIB "Don't build the pwcrypt executable, but just its library for use in other C projects." OFF)
 
 set(${PROJECT_NAME}_SRC_FILES
@@ -22,18 +24,12 @@ set(${PROJECT_NAME}_SRC_FILES
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/opt.c
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/thread.c
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/thread.h
-        ${CMAKE_CURRENT_LIST_DIR}/lib/miniz/miniz.c
-        ${CMAKE_CURRENT_LIST_DIR}/lib/miniz/miniz.h
         ${CMAKE_CURRENT_LIST_DIR}/src/pwcrypt.c
         ${CMAKE_CURRENT_LIST_DIR}/include/pwcrypt.h
         )
 
 if (NOT TARGET mbedtls)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls mbedtls)
-endif ()
-
-if (NOT TARGET chillbuff)
-    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/chillbuff chillbuff)
 endif ()
 
 add_library(${PROJECT_NAME} ${${PROJECT_NAME}_SRC_FILES})
