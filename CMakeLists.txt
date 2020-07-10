@@ -1,3 +1,17 @@
+#  Copyright 2020 Raphael Beck
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 cmake_minimum_required(VERSION 3.16)
 project(pwcrypt C)
 
@@ -32,13 +46,17 @@ if (NOT TARGET mbedtls)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls mbedtls)
 endif ()
 
+if (NOT TARGET ccrush)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/ccrush ccrush)
+endif ()
+
 add_library(${PROJECT_NAME} ${${PROJECT_NAME}_SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME}
+        PUBLIC ccrush
         PUBLIC mbedtls
         PUBLIC mbedx509
         PUBLIC mbedcrypto
-        PUBLIC chillbuff
         )
 
 if (UNIX AND NOT APPLE)
@@ -51,9 +69,9 @@ endif ()
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
-        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/ccrush/include
-        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/include
-        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls/include
+        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/ccrush/include
+        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/include
+        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls/include
         )
 
 get_target_property(${PROJECT_NAME}_DEPS_TARGETS ${PROJECT_NAME} LINK_LIBRARIES)
@@ -87,6 +105,9 @@ if (PWCRYPT_ENABLE_TESTS)
     target_include_directories(run_tests
             PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
             PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/acutest/include
+            PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/ccrush/include
+            PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/include
+            PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls/include
             )
 
     if (ENABLE_COVERAGE)
