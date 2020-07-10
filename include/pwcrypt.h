@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef _WIN32
 #define WIN32_NO_STATUS

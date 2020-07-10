@@ -69,9 +69,9 @@ endif ()
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
-        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/ccrush/include
-        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/include
-        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls/include
+        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/ccrush/include
+        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/include
+        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls/include
         )
 
 get_target_property(${PROJECT_NAME}_DEPS_TARGETS ${PROJECT_NAME} LINK_LIBRARIES)
@@ -79,7 +79,6 @@ get_target_property(${PROJECT_NAME}_DEPS_TARGETS ${PROJECT_NAME} LINK_LIBRARIES)
 if (NOT PWCRYPT_ONLY_BUILD_LIB)
 
     add_executable(${PROJECT_NAME}_cli
-            ${SRC_FILES}
             ${CMAKE_CURRENT_LIST_DIR}/src/main.c
             )
 
@@ -89,12 +88,10 @@ if (NOT PWCRYPT_ONLY_BUILD_LIB)
             )
 endif ()
 
-
 if (PWCRYPT_ENABLE_TESTS)
 
     add_executable(run_tests
             ${CMAKE_CURRENT_LIST_DIR}/tests/tests.c
-            ${${PROJECT_NAME}_SRC_FILES}
             )
 
     target_link_libraries(run_tests
