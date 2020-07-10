@@ -15,13 +15,6 @@
 */
 
 #include "pwcrypt.h"
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <argon2.h>
-#include <stdlib.h>
-#include <mbedtls/gcm.h>
-#include <mbedtls/base64.h>
 
 static const uint32_t ARGON2_V = (uint32_t)ARGON2_VERSION_NUMBER;
 
@@ -313,6 +306,9 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     const size_t decrypted_length = (b64_decoded_length - 80);
     uint8_t* decrypted = malloc(decrypted_length);
 
+    uint8_t* decompressed = NULL;
+    size_t decompressed_length = 0;
+
     if (decrypted == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
@@ -350,16 +346,22 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    // TODO: decompress here
-
-    *out = calloc(output_buffer.length + 1, sizeof(char));
-    if (*out == NULL)
+    r = ccrush_decompress(decrypted, decrypted_length, 256, &decompressed, &decompressed_length);
+    if (r != 0)
     {
-        r = PWCRYPT_ERROR_OOM;
+        fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress\" returned: %d\n", r);
         goto exit;
     }
 
-    // memcpy(*out, (char*)output_buffer.array, output_buffer.length * output_buffer.element_size);
+    *out = calloc(++decompressed_length, sizeof(char));
+    if (*out == NULL)
+    {
+        r = PWCRYPT_ERROR_OOM;
+        fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
+        goto exit;
+    }
+
+    snprintf(*out, decompressed_length, "%s", decompressed);
 
 exit:
 
@@ -380,6 +382,12 @@ exit:
     {
         memset(decrypted, 0x00, decrypted_length);
         free(decrypted);
+    }
+
+    if (decompressed != NULL)
+    {
+        memset(decompressed, 0x00, decompressed_length);
+        free(decompressed);
     }
 
     return r;
