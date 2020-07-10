@@ -28,14 +28,6 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <argon2.h>
-#include <ccrush.h>
-#include <mbedtls/gcm.h>
-#include <mbedtls/base64.h>
 
 #ifdef _WIN32
 #define WIN32_NO_STATUS

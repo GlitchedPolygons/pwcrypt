@@ -15,6 +15,15 @@
 */
 
 #include "pwcrypt.h"
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
+#include <argon2.h>
+#include <ccrush.h>
+#include <assert.h>
+#include <mbedtls/gcm.h>
+#include <mbedtls/base64.h>
 
 static const uint32_t ARGON2_V = (uint32_t)ARGON2_VERSION_NUMBER;
 

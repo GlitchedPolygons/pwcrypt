@@ -84,8 +84,8 @@ if (NOT PWCRYPT_ONLY_BUILD_LIB)
             )
 
     target_link_libraries(${PROJECT_NAME}_cli
-            PUBLIC ${${PROJECT_NAME}_DEPS_TARGETS}
             PUBLIC ${PROJECT_NAME}
+            PUBLIC ${${PROJECT_NAME}_DEPS_TARGETS}
             )
 endif ()
 
@@ -98,16 +98,13 @@ if (PWCRYPT_ENABLE_TESTS)
             )
 
     target_link_libraries(run_tests
-            PUBLIC ${${PROJECT_NAME}_DEPS_TARGETS}
             PUBLIC ${PROJECT_NAME}
+            PUBLIC ${${PROJECT_NAME}_DEPS_TARGETS}
             )
 
     target_include_directories(run_tests
             PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
             PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/acutest/include
-            PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/ccrush/include
-            PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/include
-            PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls/include
             )
 
     if (ENABLE_COVERAGE)
