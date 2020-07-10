@@ -51,7 +51,7 @@ endif ()
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
-        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/miniz
+        PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/ccrush/include
         PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/include
         PRIVATE ${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls/include
         )
@@ -69,4 +69,30 @@ if (NOT PWCRYPT_ONLY_BUILD_LIB)
             PUBLIC ${${PROJECT_NAME}_DEPS_TARGETS}
             PUBLIC ${PROJECT_NAME}
             )
+endif ()
+
+
+if (PWCRYPT_ENABLE_TESTS)
+
+    add_executable(run_tests
+            ${CMAKE_CURRENT_LIST_DIR}/tests/tests.c
+            ${${PROJECT_NAME}_SRC_FILES}
+            )
+
+    target_link_libraries(run_tests
+            PUBLIC ${${PROJECT_NAME}_DEPS_TARGETS}
+            PUBLIC ${PROJECT_NAME}
+            )
+
+    target_include_directories(run_tests
+            PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
+            PUBLIC ${CMAKE_CURRENT_LIST_DIR}/lib/acutest/include
+            )
+
+    if (ENABLE_COVERAGE)
+        find_package(codecov)
+        add_coverage(${PROJECT_NAME})
+        add_coverage(run_tests)
+        coverage_evaluate()
+    endif ()
 endif ()
