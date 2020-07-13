@@ -31,6 +31,20 @@ static void null_test_success()
     TEST_CHECK(1);
 }
 
+static void pw_strength_enforcing()
+{
+    TEST_CHECK(pwcrypt_assess_password_strength("test", 4) != 0);
+    TEST_CHECK(pwcrypt_assess_password_strength("Test12", 6) != 0);
+    TEST_CHECK(pwcrypt_assess_password_strength("Tes1.", 4) != 0);
+    TEST_CHECK(pwcrypt_assess_password_strength("TESTTESTTEST", 12) != 0);
+    TEST_CHECK(pwcrypt_assess_password_strength("TEST13.,test", 12) == 0);
+    TEST_CHECK(pwcrypt_assess_password_strength("TeS3.", 4) != 0);
+    TEST_CHECK(pwcrypt_assess_password_strength("TESTTEST33333.#,", 16) != 0);
+    TEST_CHECK(pwcrypt_assess_password_strength("testtest33333.#,", 16) != 0);
+    TEST_CHECK(pwcrypt_assess_password_strength("testTEST33333333", 16) != 0);
+    TEST_CHECK(pwcrypt_assess_password_strength("testTEST.,.###..", 16) != 0);
+}
+
 static void encrypt_and_decrypt_string_success()
 {
     char* out = NULL;
@@ -56,6 +70,7 @@ static void encrypt_and_decrypt_string_success()
 TEST_LIST = {
     //
     { "nulltest", null_test_success }, //
+    { "pw_strength_enforcing", pw_strength_enforcing }, //
     { "encrypt_and_decrypt_string_success", encrypt_and_decrypt_string_success }, //
     //
     // ----------------------------------------------------------------------------------------------------------
