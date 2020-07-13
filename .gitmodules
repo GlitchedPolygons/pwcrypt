@@ -6,7 +6,7 @@
 	url = https://github.com/ARMmbed/mbedtls
 [submodule "lib/acutest"]
 	path = lib/acutest
-	url = git@github.com:mity/acutest.git
+	url = https://github.com/GlitchedPolygons/mity/acutest
 [submodule "lib/ccrush"]
 	path = lib/ccrush
 	url = https://github.com/GlitchedPolygons/ccrush
