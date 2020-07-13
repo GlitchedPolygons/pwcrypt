@@ -31,11 +31,32 @@ static void null_test_success()
     TEST_CHECK(1);
 }
 
+static void encrypt_and_decrypt_string_success()
+{
+    char* out = NULL;
+    int r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, PWCRYPT_ARGON2_T_COST, PWCRYPT_ARGON2_M_COST, 2, &out);
+
+    TEST_CHECK(out != NULL);
+    TEST_CHECK(r == 0);
+    TEST_CHECK(strcmp(out, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
+
+    char* decrypted = NULL;
+    r = pwcrypt_decrypt(out, strlen(out), "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, &decrypted);
+
+    TEST_CHECK(decrypted != NULL);
+    TEST_CHECK(r == 0);
+    TEST_CHECK(strcmp(decrypted, "Lorem ipsum dolor sick fuck amend something something...........") == 0);
+
+    free(out);
+    free(decrypted);
+}
+
 // --------------------------------------------------------------------------------------------------------------
 
 TEST_LIST = {
     //
     { "nulltest", null_test_success }, //
+    { "encrypt_and_decrypt_string_success", encrypt_and_decrypt_string_success }, //
     //
     // ----------------------------------------------------------------------------------------------------------
     //
