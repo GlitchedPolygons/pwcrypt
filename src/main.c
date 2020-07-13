@@ -15,6 +15,8 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "pwcrypt.h"
 
 // TODO: create args for allowing users to customize Argon2 params
