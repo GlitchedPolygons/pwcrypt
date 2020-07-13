@@ -16,6 +16,7 @@ cmake_minimum_required(VERSION 3.7)
 project(pwcrypt C)
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 option(ENABLE_TESTING "Build MbedTLS tests." OFF)
 option(ENABLE_PROGRAMS "Build MbedTLS example programs." OFF)
