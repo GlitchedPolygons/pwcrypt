@@ -48,7 +48,7 @@ static void pw_strength_enforcing()
 static void encrypt_and_decrypt_string_success()
 {
     char* out = NULL;
-    int r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, PWCRYPT_ARGON2_T_COST, PWCRYPT_ARGON2_M_COST, 2, &out);
+    int r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, &out);
 
     TEST_CHECK(out != NULL);
     TEST_CHECK(r == 0);
@@ -65,6 +65,53 @@ static void encrypt_and_decrypt_string_success()
     free(decrypted);
 }
 
+static void encrypt_with_invalid_params_fails()
+{
+    int r = 0;
+    char* out = NULL;
+
+    r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 0, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, &out);
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_encrypt(NULL, 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, &out);
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 0, 0, 0, 0, &out);
+    TEST_CHECK(r != 0);
+
+    r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, NULL, 77, 0, 0, 0, &out);
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, NULL);
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    free(out);
+}
+
+static void decrypt_with_invalid_params_fails()
+{
+    char* out = NULL;
+    int r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, &out);
+
+    TEST_ASSERT(r == 0);
+
+    char* decrypted = NULL;
+    r = pwcrypt_decrypt(NULL, strlen(out), "Special Password for decrypting! 1337...", 40, &decrypted);
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_decrypt(out, 0, "Special Password for decrypting! 1337...", 40, &decrypted);
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_decrypt(out, strlen(out), NULL, 32, &decrypted);
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_decrypt(out, strlen(out), "Special Password for decrypting! 1337...", 40, NULL);
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    free(out);
+    free(decrypted);
+}
+
 // --------------------------------------------------------------------------------------------------------------
 
 TEST_LIST = {
@@ -72,6 +119,8 @@ TEST_LIST = {
     { "nulltest", null_test_success }, //
     { "pw_strength_enforcing", pw_strength_enforcing }, //
     { "encrypt_and_decrypt_string_success", encrypt_and_decrypt_string_success }, //
+    { "encrypt_with_invalid_params_fails", encrypt_with_invalid_params_fails }, //
+    { "decrypt_with_invalid_params_fails", decrypt_with_invalid_params_fails }, //
     //
     // ----------------------------------------------------------------------------------------------------------
     //
