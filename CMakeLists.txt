@@ -59,9 +59,9 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC mbedcrypto
         )
 
-if (UNIX AND NOT APPLE)
-    target_link_libraries(${PROJECT_NAME} PRIVATE -luuid -lm)
-endif ()
+if (UNIX)
+    target_link_libraries(${PROJECT_NAME} PRIVATE -lpthread)
+endif()
 
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PUBLIC bcrypt)
