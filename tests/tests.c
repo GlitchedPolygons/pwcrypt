@@ -143,7 +143,6 @@ static void encrypt_and_decrypt_with_wrong_PW_fails()
 
     TEST_CHECK(decrypted == NULL);
     TEST_CHECK(r != 0);
-    TEST_CHECK(strcmp(decrypted, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
 
     free(out);
     free(decrypted);
