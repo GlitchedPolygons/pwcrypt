@@ -102,11 +102,6 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         return r;
     }
 
-    if (text_length < 1)
-    {
-        return PWCRYPT_ERROR_INVALID_ARGS;
-    }
-
     uint8_t* output = NULL;
     size_t output_length = 0;
 
