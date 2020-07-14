@@ -27,7 +27,7 @@
 
 static const uint32_t ARGON2_V = (uint32_t)ARGON2_VERSION_NUMBER;
 
-int pwcrypt_assess_password_strength(const char* password, size_t password_length)
+int pwcrypt_assess_password_strength(const char* password, const size_t password_length)
 {
     if (password_length < 6)
     {

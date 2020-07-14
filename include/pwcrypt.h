@@ -155,6 +155,41 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
  */
 int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length, char** out);
 
+
+/**
+ * Checks whether pwcrypt fprintf is enabled (whether errors are fprintfed into stderr).
+ * @return Whether errors are fprintfed into stderr or not.
+ */
+bool pwcrypt_is_fprintf_enabled();
+
+/**
+ * Like fprintf() except it doesn't do anything. Like printing into <c>/dev/null</c> :D lots of fun!
+ * @param stream [IGNORED]
+ * @param format [IGNORED]
+ * @param ... [IGNORED]
+ * @return <c>0</c>
+ */
+static inline int pwcrypt_printvoid(FILE* stream, const char* format, ...)
+{
+    return 0;
+}
+
+/** @private */
+extern int (*pwcrypt_fprintf_fptr)(FILE* stream, const char* format, ...);
+
+/**
+ * Enables pwcrypts' use of fprintf().
+ */
+void pwcrypt_enable_fprintf();
+
+/**
+ * Disables pwcrypts' use of fprintf().
+ */
+void _pwcrypt_disable_fprintf();
+
+/** @private */
+#define pwcrypt_fprintf _pwcrypt_fprintf_fptr
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

@@ -21,7 +21,7 @@
 
 // TODO: create args for allowing users to customize Argon2 params
 
-int main(int argc, const char* argv[])
+int main(const int argc, const char* argv[])
 {
     if (argc == 1 || (argc == 2 && strcmp(argv[1], "--help") == 0))
     {
