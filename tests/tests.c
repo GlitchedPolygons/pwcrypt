@@ -96,6 +96,7 @@ static void decrypt_with_invalid_params_fails()
     TEST_ASSERT(r == 0);
 
     char* decrypted = NULL;
+
     r = pwcrypt_decrypt(NULL, strlen(out), "Special Password for decrypting! 1337...", 40, &decrypted);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
@@ -112,6 +113,42 @@ static void decrypt_with_invalid_params_fails()
     free(decrypted);
 }
 
+static void decrypt_invalid_ciphertext_fails()
+{
+    char* out = NULL;
+    int r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, &out);
+
+    TEST_ASSERT(r == 0);
+
+    char* decrypted = NULL;
+
+    r = pwcrypt_decrypt("TEST STRING THAT IS JUST NOT BASE64-encoded", 43, "Special Password for decrypting! 1337...", 40, &decrypted);
+    TEST_CHECK(r != 0);
+
+    free(out);
+    free(decrypted);
+}
+
+static void encrypt_and_decrypt_with_wrong_PW_fails()
+{
+    char* out = NULL;
+    int r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, &out);
+
+    TEST_CHECK(out != NULL);
+    TEST_CHECK(r == 0);
+    TEST_CHECK(strcmp(out, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
+
+    char* decrypted = NULL;
+    r = pwcrypt_decrypt(out, strlen(out), "WRONG WRONG WRONG password... just very extremely wrong!!!   420", 64, &decrypted);
+
+    TEST_CHECK(decrypted == NULL);
+    TEST_CHECK(r != 0);
+    TEST_CHECK(strcmp(decrypted, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
+
+    free(out);
+    free(decrypted);
+}
+
 // --------------------------------------------------------------------------------------------------------------
 
 TEST_LIST = {
@@ -121,6 +158,8 @@ TEST_LIST = {
     { "encrypt_and_decrypt_string_success", encrypt_and_decrypt_string_success }, //
     { "encrypt_with_invalid_params_fails", encrypt_with_invalid_params_fails }, //
     { "decrypt_with_invalid_params_fails", decrypt_with_invalid_params_fails }, //
+    { "decrypt_invalid_ciphertext_fails", decrypt_invalid_ciphertext_fails }, //
+    { "encrypt_and_decrypt_with_wrong_PW_fails", encrypt_and_decrypt_with_wrong_PW_fails }, //
     //
     // ----------------------------------------------------------------------------------------------------------
     //
