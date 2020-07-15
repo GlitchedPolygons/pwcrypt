@@ -160,7 +160,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
  * Checks whether pwcrypt fprintf is enabled (whether errors are fprintfed into stderr).
  * @return Whether errors are fprintfed into stderr or not.
  */
-bool pwcrypt_is_fprintf_enabled();
+unsigned char pwcrypt_is_fprintf_enabled();
 
 /**
  * Like fprintf() except it doesn't do anything. Like printing into <c>/dev/null</c> :D lots of fun!
@@ -185,10 +185,10 @@ void pwcrypt_enable_fprintf();
 /**
  * Disables pwcrypts' use of fprintf().
  */
-void _pwcrypt_disable_fprintf();
+void pwcrypt_disable_fprintf();
 
 /** @private */
-#define pwcrypt_fprintf _pwcrypt_fprintf_fptr
+#define pwcrypt_fprintf pwcrypt_fprintf_fptr
 
 #ifdef __cplusplus
 } // extern "C"

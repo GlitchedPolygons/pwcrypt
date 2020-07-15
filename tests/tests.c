@@ -23,12 +23,33 @@
 #include <stdbool.h>
 
 #include <pwcrypt.h>
+
+#define TEST_INIT pwcrypt_disable_fprintf()
+
 #include <acutest.h>
 
 /* A test case that does nothing and succeeds. */
 static void null_test_success()
 {
     TEST_CHECK(1);
+}
+
+static void pwcrypt_fprintf_enables_and_disables_correctly()
+{
+    pwcrypt_disable_fprintf();
+    TEST_CHECK(!pwcrypt_is_fprintf_enabled());
+    TEST_CHECK(pwcrypt_fprintf_fptr != &fprintf);
+
+    pwcrypt_enable_fprintf();
+    TEST_CHECK(pwcrypt_is_fprintf_enabled());
+    TEST_CHECK(pwcrypt_fprintf_fptr == &fprintf);
+
+    pwcrypt_disable_fprintf();
+}
+
+static void pwcrypt_printvoid_returns_zero()
+{
+    TEST_CHECK(0 == pwcrypt_printvoid(stderr, "void", 4));
 }
 
 static void pw_strength_enforcing()
@@ -153,6 +174,8 @@ static void encrypt_and_decrypt_with_wrong_PW_fails()
 TEST_LIST = {
     //
     { "nulltest", null_test_success }, //
+    { "pwcrypt_fprintf_enables_and_disables_correctly", pwcrypt_fprintf_enables_and_disables_correctly }, //
+    { "pwcrypt_printvoid_returns_zero", pwcrypt_printvoid_returns_zero }, //
     { "pw_strength_enforcing", pw_strength_enforcing }, //
     { "encrypt_and_decrypt_string_success", encrypt_and_decrypt_string_success }, //
     { "encrypt_with_invalid_params_fails", encrypt_with_invalid_params_fails }, //

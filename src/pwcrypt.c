@@ -27,11 +27,32 @@
 
 static const uint32_t ARGON2_V = (uint32_t)ARGON2_VERSION_NUMBER;
 
+static unsigned char pwcrypt_fprintf_enabled = 1;
+
+unsigned char pwcrypt_is_fprintf_enabled()
+{
+    return pwcrypt_fprintf_enabled;
+}
+
+int (*pwcrypt_fprintf_fptr)(FILE* stream, const char* format, ...) = &fprintf;
+
+void pwcrypt_enable_fprintf()
+{
+    pwcrypt_fprintf_enabled = 1;
+    pwcrypt_fprintf_fptr = &fprintf;
+}
+
+void pwcrypt_disable_fprintf()
+{
+    pwcrypt_fprintf_enabled = 0;
+    pwcrypt_fprintf_fptr = &pwcrypt_printvoid;
+}
+
 int pwcrypt_assess_password_strength(const char* password, const size_t password_length)
 {
     if (password_length < 6)
     {
-        fprintf(stderr, "pwcrypt: Password too weak! Please use at least 6 characters, composed of at least 1 lowercase char, 1 uppercase char, 1 number and 1 special character!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Password too weak! Please use at least 6 characters, composed of at least 1 lowercase char, 1 uppercase char, 1 number and 1 special character!\n");
         return PWCRYPT_ERROR_PW_TOO_WEAK;
     }
 
@@ -64,25 +85,25 @@ int pwcrypt_assess_password_strength(const char* password, const size_t password
 
     if (!(strength & 1 << 0))
     {
-        fprintf(stderr, "pwcrypt: Please include at least 1 uppercase character in your password!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Please include at least 1 uppercase character in your password!\n");
         return PWCRYPT_ERROR_PW_TOO_WEAK;
     }
 
     if (!(strength & 1 << 1))
     {
-        fprintf(stderr, "pwcrypt: Please include at least 1 lowercase character in your password!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Please include at least 1 lowercase character in your password!\n");
         return PWCRYPT_ERROR_PW_TOO_WEAK;
     }
 
     if (!(strength & 1 << 2))
     {
-        fprintf(stderr, "pwcrypt: Please include at least 1 number in your password!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Please include at least 1 number in your password!\n");
         return PWCRYPT_ERROR_PW_TOO_WEAK;
     }
 
     if (!(strength & 1 << 3))
     {
-        fprintf(stderr, "pwcrypt: Please include at least 1 special character in your password!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Please include at least 1 special character in your password!\n");
         return PWCRYPT_ERROR_PW_TOO_WEAK;
     }
 
@@ -122,7 +143,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (r != 0)
     {
         r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
-        fprintf(stderr, "pwcrypt: Compression of text before encryption failed!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Compression of text before encryption failed!\n");
         goto exit;
     }
 
@@ -142,7 +163,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (output == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
-        fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
         goto exit;
     }
 
@@ -167,14 +188,14 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (r != ARGON2_OK)
     {
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
-        fprintf(stderr, "pwcrypt: argon2id failure! \"argon2id_hash_raw\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: argon2id failure! \"argon2id_hash_raw\" returned: %d\n", r);
         goto exit;
     }
 
     if (memcmp(key, EMPTY64, 32) == 0)
     {
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
-        fprintf(stderr, "pwcrypt: AES key derivation failure!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: AES key derivation failure!\n");
         goto exit;
     }
 
@@ -182,7 +203,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (r != 0)
     {
         r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-        fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
         goto exit;
     }
 
@@ -190,7 +211,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (r != 0)
     {
         r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-        fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
         goto exit;
     }
 
@@ -198,7 +219,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (r != MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
     {
         r = PWCRYPT_ERROR_BASE64_FAILURE;
-        fprintf(stderr, "pwcrypt: Base64-encoding failed! Assessing encoded output length with \"mbedtls_base64_encode\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: Base64-encoding failed! Assessing encoded output length with \"mbedtls_base64_encode\" returned: %d\n", r);
         goto exit;
     }
 
@@ -207,7 +228,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (output_base64 == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
-        fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
         goto exit;
     }
 
@@ -215,7 +236,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (r != 0)
     {
         r = PWCRYPT_ERROR_BASE64_FAILURE;
-        fprintf(stderr, "pwcrypt: Base64-encoding failed! \"mbedtls_base64_encode\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: Base64-encoding failed! \"mbedtls_base64_encode\" returned: %d\n", r);
         goto exit;
     }
 
@@ -223,7 +244,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (*out == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
-        fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
         goto exit;
     }
 
@@ -284,7 +305,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     if (r != 0)
     {
         free(b64_decoded);
-        fprintf(stderr, "pwcrypt: Base64-decoding failed! \"mbedtls_base64_decode\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: Base64-decoding failed! \"mbedtls_base64_decode\" returned: %d\n", r);
         return PWCRYPT_ERROR_BASE64_FAILURE;
     }
 
@@ -316,7 +337,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     if (decrypted == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
-        fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
         goto exit;
     }
 
@@ -324,14 +345,14 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     if (r != ARGON2_OK)
     {
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
-        fprintf(stderr, "pwcrypt: argon2id failure! \"argon2_hash\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: argon2id failure! \"argon2_hash\" returned: %d\n", r);
         goto exit;
     }
 
     if (memcmp(key, EMPTY64, 32) == 0)
     {
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
-        fprintf(stderr, "pwcrypt: AES key derivation failure!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: AES key derivation failure!\n");
         goto exit;
     }
 
@@ -339,21 +360,21 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     if (r != 0)
     {
         r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
-        fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
         goto exit;
     }
 
     r = mbedtls_gcm_auth_decrypt(&aes_ctx, decrypted_length, iv, sizeof(iv), NULL, 0, tag, sizeof(tag), b64_decoded + 80, decrypted);
     if (r != 0)
     {
-        fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_auth_decrypt\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_auth_decrypt\" returned: %d\n", r);
         goto exit;
     }
 
     r = ccrush_decompress(decrypted, decrypted_length, 256, &decompressed, &decompressed_length);
     if (r != 0)
     {
-        fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress\" returned: %d\n", r);
         goto exit;
     }
 
@@ -361,7 +382,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     if (*out == NULL)
     {
         r = PWCRYPT_ERROR_OOM;
-        fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
         goto exit;
     }
 

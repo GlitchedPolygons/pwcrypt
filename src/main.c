@@ -23,6 +23,8 @@
 
 int main(const int argc, const char* argv[])
 {
+    pwcrypt_enable_fprintf();
+
     if (argc == 1 || (argc == 2 && strcmp(argv[1], "--help") == 0))
     {
         fprintf(stdout, "\nTODO: HELP\n");
