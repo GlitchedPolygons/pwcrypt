@@ -19,8 +19,6 @@
 #include <string.h>
 #include "pwcrypt.h"
 
-// TODO: create args for allowing users to customize Argon2 params
-
 int main(const int argc, const char* argv[])
 {
     pwcrypt_enable_fprintf();
@@ -31,7 +29,7 @@ int main(const int argc, const char* argv[])
         return 0;
     }
 
-    if (argc != 4)
+    if (argc < 4)
     {
         fprintf(stderr, PWCRYPT_INVALID_ARGS_ERROR_MSG);
         return PWCRYPT_ERROR_INVALID_ARGS;
@@ -54,11 +52,14 @@ int main(const int argc, const char* argv[])
 
     int r = -1;
     char* output = NULL;
+    uint32_t cost_t = 0, cost_m = 0, parallelism = 0;
+
+    // TODO: parse cost args
 
     switch (*mode)
     {
         case 'e':
-            r = pwcrypt_encrypt(text, text_length, password, password_length, 0, 0, 0, &output);
+            r = pwcrypt_encrypt(text, text_length, password, password_length, cost_t, cost_m, parallelism, &output);
             if (r != 0)
             {
                 fprintf(stderr, "pwcrypt: Encryption failed!\n");
