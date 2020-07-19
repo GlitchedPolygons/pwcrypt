@@ -62,17 +62,27 @@ int main(const int argc, const char* argv[])
             {
                 const char* arg = argv[i];
 
+                if (strlen(arg) == 2 && strncmp(arg, "--", 2) == 0)
+                {
+                    break;
+                }
+
                 if (strncmp("--time-cost=", arg, 12) == 0)
                 {
                     cost_t = strtol(arg + 12, NULL, 10);
+                    continue;
                 }
-                else if (strncmp("--memory-cost=", arg, 14) == 0)
+
+                if (strncmp("--memory-cost=", arg, 14) == 0)
                 {
                     cost_m = strtol(arg + 14, NULL, 10);
+                    continue;
                 }
-                else if (strncmp("--parallelism=", arg, 14) == 0)
+
+                if (strncmp("--parallelism=", arg, 14) == 0)
                 {
                     parallelism = strtol(arg + 14, NULL, 10);
+                    continue;
                 }
             }
 
