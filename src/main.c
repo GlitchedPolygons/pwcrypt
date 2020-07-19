@@ -54,7 +54,23 @@ int main(const int argc, const char* argv[])
     char* output = NULL;
     uint32_t cost_t = 0, cost_m = 0, parallelism = 0;
 
-    // TODO: parse cost args
+    for (int i = 4; i < argc; i++)
+    {
+        const char* arg = argv[i];
+
+        if (strncmp("--time-cost=", arg, 12) == 0)
+        {
+            cost_t = strtol(arg + 12, NULL, 10);
+        }
+        else if (strncmp("--memory-cost=", argv[i], 14) == 0)
+        {
+            cost_m = strtol(arg + 14, NULL, 10);
+        }
+        else if (strncmp("--parallelism=", argv[i], 14) == 0)
+        {
+            parallelism = strtol(arg + 14, NULL, 10);
+        }
+    }
 
     switch (*mode)
     {
