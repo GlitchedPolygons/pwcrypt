@@ -81,7 +81,7 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Default Argon2 memory cost parameter to use for key derivation if nothing else was specified.
  */
-#define PWCRYPT_ARGON2_M_COST (1024 * 128)
+#define PWCRYPT_ARGON2_M_COST (1024 * 256)
 
 /**
  * Default Argon2 degree of parallelism parameter if nothing else was specified.
