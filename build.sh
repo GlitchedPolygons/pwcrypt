@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #  Copyright 2020 Raphael Beck
 #
@@ -14,8 +14,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-if [ "$EUID" -e 0 ]
-  then echo "  Please don't run as root/using sudo..."
+if [ "$(whoami)" == "root" ]; then
+  echo "  Please don't run as root/using sudo..."
   exit
 fi
 
@@ -25,7 +25,7 @@ rm -rf "$REPO"/build
 mkdir -p "$REPO"/build && cd "$REPO"/build || exit
 cmake -DBUILD_SHARED_LIBS=Off -DUSE_SHARED_MBEDTLS_LIBRARY=Off -DCMAKE_BUILD_TYPE=Release ..
 make
-tar -czvf pwcrypt.tar.gz *.so *.lib *.dll *.dylib *.a pwcrypt_cli
+tar -czvf pwcrypt.tar.gz pwcrypt_cli *.a
 cd "$REPO" || exit
 echo "  Done. Exported build into $REPO/build"
 echo "  Check out the pwcrypt.tar.gz file in there! "

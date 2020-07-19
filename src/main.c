@@ -19,13 +19,27 @@
 #include <string.h>
 #include "pwcrypt.h"
 
+static const char HELP_TEXT[] = "\n"
+                                "pwcrypt \n"
+                                "------- \n"
+                                "v1.0.0  \n\n"
+                                "Encrypt and decrypt strings using passwords. \n"
+                                "The strings are compressed and then encrypted by deriving an AES-256 key from the password using Argon2. \n\n"
+                                "Usage: \n\n"
+                                "pwcrypt_cli {e|d} {input} {password} [--time-cost=INT] [--memory-cost=INT] [--parallelism=INT] \n\n"
+                                "Examples: \n\n"
+                                "-- Encrypting \n\n"
+                                "  pwcrypt_cli e \"My string to encrypt.\" \"SUPER-safe Password123_!\" \n\n"
+                                "-- Decrypting \n\n"
+                                "  pwcrypt_cli d \"EwAAAAQAAAAAAAQAAgAAAFYjNGlNEnNMn5VtyW5hvxnKhdk9i\" \"SUPER-safe Password123_!\" \n";
+
 int main(const int argc, const char* argv[])
 {
     pwcrypt_enable_fprintf();
 
     if (argc == 1 || (argc == 2 && strcmp(argv[1], "--help") == 0))
     {
-        fprintf(stdout, "\nTODO: HELP\n");
+        fprintf(stdout, HELP_TEXT);
         return 0;
     }
 
