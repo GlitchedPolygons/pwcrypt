@@ -101,6 +101,40 @@ static const uint8_t EMPTY64[64] = {
 #define PWCRYPT_MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 /**
+ * Checks whether pwcrypt fprintf is enabled (whether errors are fprintfed into stderr).
+ * @return Whether errors are fprintfed into stderr or not.
+ */
+unsigned char pwcrypt_is_fprintf_enabled();
+
+/**
+ * Like fprintf() except it doesn't do anything. Like printing into <c>/dev/null</c> :D lots of fun!
+ * @param stream [IGNORED]
+ * @param format [IGNORED]
+ * @param ... [IGNORED]
+ * @return <c>0</c>
+ */
+static inline int pwcrypt_printvoid(FILE* stream, const char* format, ...)
+{
+    return 0;
+}
+
+/** @private */
+extern int (*pwcrypt_fprintf_fptr)(FILE* stream, const char* format, ...);
+
+/**
+ * Enables pwcrypts' use of fprintf().
+ */
+void pwcrypt_enable_fprintf();
+
+/**
+ * Disables pwcrypts' use of fprintf().
+ */
+void pwcrypt_disable_fprintf();
+
+/** @private */
+#define pwcrypt_fprintf pwcrypt_fprintf_fptr
+
+/**
  * (Tries to) read from <c>/dev/urandom</c> (or Windows equivalent, yeah...) filling the given \p output_buffer with \p output_buffer_size random bytes.
  * @param output_buffer Where to write the random bytes into.
  * @param output_buffer_size How many random bytes to write into \p output_buffer
@@ -115,7 +149,11 @@ static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffe
         FILE* rnd = fopen("/dev/urandom", "r");
         if (rnd != NULL)
         {
-            fread(output_buffer, sizeof(unsigned char), output_buffer_size, rnd);
+            const size_t n = fread(output_buffer, sizeof(unsigned char), output_buffer_size, rnd);
+            if (n != output_buffer_size)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Warning! Only %llu bytes out of %llu have been read from /dev/urandom\n", n, output_buffer_size);
+            }
             fclose(rnd);
         }
 #endif
@@ -155,41 +193,6 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
  * @return <c>0</c> on success; non-zero error codes if something fails.
  */
 int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, size_t password_length, char** out);
-
-
-/**
- * Checks whether pwcrypt fprintf is enabled (whether errors are fprintfed into stderr).
- * @return Whether errors are fprintfed into stderr or not.
- */
-unsigned char pwcrypt_is_fprintf_enabled();
-
-/**
- * Like fprintf() except it doesn't do anything. Like printing into <c>/dev/null</c> :D lots of fun!
- * @param stream [IGNORED]
- * @param format [IGNORED]
- * @param ... [IGNORED]
- * @return <c>0</c>
- */
-static inline int pwcrypt_printvoid(FILE* stream, const char* format, ...)
-{
-    return 0;
-}
-
-/** @private */
-extern int (*pwcrypt_fprintf_fptr)(FILE* stream, const char* format, ...);
-
-/**
- * Enables pwcrypts' use of fprintf().
- */
-void pwcrypt_enable_fprintf();
-
-/**
- * Disables pwcrypts' use of fprintf().
- */
-void pwcrypt_disable_fprintf();
-
-/** @private */
-#define pwcrypt_fprintf pwcrypt_fprintf_fptr
 
 #ifdef __cplusplus
 } // extern "C"
