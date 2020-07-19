@@ -52,45 +52,50 @@ int main(const int argc, const char* argv[])
 
     int r = -1;
     char* output = NULL;
-    uint32_t cost_t = 0, cost_m = 0, parallelism = 0;
-
-    for (int i = 4; i < argc; i++)
-    {
-        const char* arg = argv[i];
-
-        if (strncmp("--time-cost=", arg, 12) == 0)
-        {
-            cost_t = strtol(arg + 12, NULL, 10);
-        }
-        else if (strncmp("--memory-cost=", argv[i], 14) == 0)
-        {
-            cost_m = strtol(arg + 14, NULL, 10);
-        }
-        else if (strncmp("--parallelism=", argv[i], 14) == 0)
-        {
-            parallelism = strtol(arg + 14, NULL, 10);
-        }
-    }
 
     switch (*mode)
     {
-        case 'e':
+        case 'e': {
+            uint32_t cost_t = 0, cost_m = 0, parallelism = 0;
+
+            for (int i = 4; i < argc; i++)
+            {
+                const char* arg = argv[i];
+
+                if (strncmp("--time-cost=", arg, 12) == 0)
+                {
+                    cost_t = strtol(arg + 12, NULL, 10);
+                }
+                else if (strncmp("--memory-cost=", arg, 14) == 0)
+                {
+                    cost_m = strtol(arg + 14, NULL, 10);
+                }
+                else if (strncmp("--parallelism=", arg, 14) == 0)
+                {
+                    parallelism = strtol(arg + 14, NULL, 10);
+                }
+            }
+
             r = pwcrypt_encrypt(text, text_length, password, password_length, cost_t, cost_m, parallelism, &output);
             if (r != 0)
             {
                 fprintf(stderr, "pwcrypt: Encryption failed!\n");
             }
+
             break;
-        case 'd':
+        }
+        case 'd': {
             r = pwcrypt_decrypt(text, text_length, password, password_length, &output);
             if (r != 0)
             {
                 fprintf(stderr, "pwcrypt: Decryption failed!\n");
             }
             break;
-        default:
+        }
+        default: {
             fprintf(stderr, PWCRYPT_INVALID_ARGS_ERROR_MSG);
             return PWCRYPT_ERROR_INVALID_ARGS;
+        }
     }
 
     if (r == 0 && output)

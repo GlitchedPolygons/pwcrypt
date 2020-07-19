@@ -3,8 +3,8 @@
 **/.DS_Store
 **/[Tt]humbs.db
 **/[Oo]ut
-**/[Bb]uild*
 **/[Cc]make-build-*
+build/
 latex/
 
 # ------------------------------------------------------
