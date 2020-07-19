@@ -12,7 +12,7 @@
 ### How to clone
 `git clone --recursive https://github.com/GlitchedPolygons/pwcrypt.git`
 
-### How to use
+### How to use the library
 Just add **pwcrypt** as a git submodule to your project (e.g. into some `lib/` or `deps/` folder inside your project's repo; `{repo_root}/lib/` is used here in the following example).
 
 ```
@@ -22,6 +22,35 @@ git submodule update --init --recursive
 
 If you don't want to use git submodules, you can also start vendoring a specific version of **pwcrypt** by copying its full repo content into the folder where you keep your project's external libraries/dependencies.
 
-### Linking
-
+#### Linking
 If you use [CMake](https://cmake.org) you can just `add_subdirectory(path_to_submodule)` and then `target_link_libraries(your_project PRIVATE pwcrypt)` inside your CMakeLists.txt file.
+
+### How to use the CLI
+The pwcrypt command line interface works using the following (relatively rigid) sequence of arguments:
+
+- Mode ('e' for encrypting, 'd' for decrypting)
+- Input text (string to encrypt or decrypt)
+- Password (string to encrypt the input with)
+- [Optional params for encryption]
+
+#### Encrypting
+
+`pwcrypt e "My string to encrypt" "VERY-safe_password123!"`
+
+You can pass optional (integer) arguments for controlling key-derivation with [Argon2](https://github.com/P-H-C/phc-winner-argon2):
+
+`--time-cost=4`
+- The higher, the safer, the slower...
+
+`--memory-cost=65536`
+- This value is in KiB and sets the used Argon2 memory cost.
+
+`--parallelism=2`
+- Sets the amount of parallel threads to be used by Argon2
+
+Passing `0` to these optional args is equivalent to omitting them, thus using the default values 
+as defined inside [pwcrypt.h](https://github.com/GlitchedPolygons/pwcrypt/blob/master/include/pwcrypt.h).
+
+#### Decrypting
+
+`pwcrypt_cli d "EwAAAAQAAAAAAAQAAgAAAFYjNGlNEnNMn5VtyW5hvxnKhdk9i" "Decryption Password 123 !!!"`
