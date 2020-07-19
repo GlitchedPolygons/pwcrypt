@@ -23,9 +23,9 @@ REPO=$(dirname "$0")
 rm -rf "$REPO"/out
 rm -rf "$REPO"/build
 mkdir -p "$REPO"/build && cd "$REPO"/build || exit
-cmake -DBUILD_SHARED_LIBS=On -DUSE_SHARED_MBEDTLS_LIBRARY=On -DCMAKE_BUILD_TYPE=Release ..
+cmake -DBUILD_SHARED_LIBS=Off -DUSE_SHARED_MBEDTLS_LIBRARY=Off -DCMAKE_BUILD_TYPE=Release ..
 make
-tar -czvf pwcrypt.tar.gz *.so *.lib *.dll *.dylib *.a
+tar -czvf pwcrypt.tar.gz *.so *.lib *.dll *.dylib *.a pwcrypt_cli
 cd "$REPO" || exit
 echo "  Done. Exported build into $REPO/build"
 echo "  Check out the pwcrypt.tar.gz file in there! "

@@ -100,7 +100,7 @@ int main(const int argc, const char* argv[])
 
     if (r == 0 && output)
     {
-        fprintf(stdout, "%s", output);
+        fprintf(stdout, "%s\n", output);
         memset(output, 0x00, strlen(output));
         free(output);
     }
