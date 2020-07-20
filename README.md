@@ -35,7 +35,7 @@ The pwcrypt command line interface works using the following (relatively rigid) 
 
 #### Encrypting
 
-`pwcrypt e "My string to encrypt" "VERY-safe_password123!"`
+`pwcrypt_cli e "My string to encrypt" "VERY-safe_password123!"`
 
 You can pass optional (integer) arguments for controlling key-derivation with [Argon2](https://github.com/P-H-C/phc-winner-argon2):
 
