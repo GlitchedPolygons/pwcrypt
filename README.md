@@ -43,7 +43,7 @@ You can pass optional (integer) arguments for controlling key-derivation with [A
 - The higher, the safer, the slower...
 
 `--memory-cost=65536`
-- This value is in KiB and sets the used Argon2 memory cost.
+- This value is in KiB and sets the Argon2 memory cost parameter.
 
 `--parallelism=2`
 - Sets the amount of parallel threads to be used by Argon2
