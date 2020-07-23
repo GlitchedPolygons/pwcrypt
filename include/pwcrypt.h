@@ -31,15 +31,6 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 
-#ifdef _WIN32
-#define WIN32_NO_STATUS
-#include <windows.h>
-#undef WIN32_NO_STATUS
-#include <bcrypt.h>
-#else
-#include <stdio.h>
-#endif
-
 /**
  * Error message for invalid CLI arguments.
  */
@@ -139,26 +130,7 @@ void pwcrypt_disable_fprintf();
  * @param output_buffer Where to write the random bytes into.
  * @param output_buffer_size How many random bytes to write into \p output_buffer
  */
-static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffer_size)
-{
-    if (output_buffer != NULL && output_buffer_size > 0)
-    {
-#ifdef _WIN32
-        BCryptGenRandom(NULL, output_buffer, output_buffer_size, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
-#else
-        FILE* rnd = fopen("/dev/urandom", "r");
-        if (rnd != NULL)
-        {
-            const size_t n = fread(output_buffer, sizeof(unsigned char), output_buffer_size, rnd);
-            if (n != output_buffer_size)
-            {
-                pwcrypt_fprintf(stderr, "pwcrypt: Warning! Only %llu bytes out of %llu have been read from /dev/urandom\n", n, output_buffer_size);
-            }
-            fclose(rnd);
-        }
-#endif
-    }
-}
+void dev_urandom(uint8_t* output_buffer, size_t output_buffer_size);
 
 /**
  * Checks whether a given password is strong enough or not.

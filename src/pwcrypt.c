@@ -15,7 +15,7 @@
 */
 
 #include "pwcrypt.h"
-#include <stdio.h>
+
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
@@ -25,16 +25,23 @@
 #include <mbedtls/gcm.h>
 #include <mbedtls/base64.h>
 
+#ifdef _WIN32
+#define WIN32_NO_STATUS
+#include <windows.h>
+#undef WIN32_NO_STATUS
+#include <bcrypt.h>
+#endif
+
 static const uint32_t ARGON2_V = (uint32_t)ARGON2_VERSION_NUMBER;
 
 static unsigned char pwcrypt_fprintf_enabled = 1;
+
+int (*pwcrypt_fprintf_fptr)(FILE* stream, const char* format, ...) = &fprintf;
 
 unsigned char pwcrypt_is_fprintf_enabled()
 {
     return pwcrypt_fprintf_enabled;
 }
-
-int (*pwcrypt_fprintf_fptr)(FILE* stream, const char* format, ...) = &fprintf;
 
 void pwcrypt_enable_fprintf()
 {
@@ -46,6 +53,27 @@ void pwcrypt_disable_fprintf()
 {
     pwcrypt_fprintf_enabled = 0;
     pwcrypt_fprintf_fptr = &pwcrypt_printvoid;
+}
+
+void dev_urandom(uint8_t* output_buffer, const size_t output_buffer_size)
+{
+    if (output_buffer != NULL && output_buffer_size > 0)
+    {
+#ifdef _WIN32
+        BCryptGenRandom(NULL, output_buffer, output_buffer_size, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+#else
+        FILE* rnd = fopen("/dev/urandom", "r");
+        if (rnd != NULL)
+        {
+            const size_t n = fread(output_buffer, sizeof(unsigned char), output_buffer_size, rnd);
+            if (n != output_buffer_size)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Warning! Only %llu bytes out of %llu have been read from /dev/urandom\n", n, output_buffer_size);
+            }
+            fclose(rnd);
+        }
+#endif
+    }
 }
 
 int pwcrypt_assess_password_strength(const char* password, const size_t password_length)
