@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <mbedtls/gcm.h>
 #include <mbedtls/base64.h>
+#include <mbedtls/chachapoly.h>
 
 static const uint32_t ARGON2_V = (uint32_t)ARGON2_VERSION_NUMBER;
 
@@ -110,7 +111,7 @@ int pwcrypt_assess_password_strength(const char* password, const size_t password
     return 0;
 }
 
-int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out)
+int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint8_t algo, char** out)
 {
     if (text == NULL || text_length == 0 || password == NULL || out == NULL)
     {
@@ -135,6 +136,9 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
 
     mbedtls_gcm_context aes_ctx;
     mbedtls_gcm_init(&aes_ctx);
+
+    mbedtls_chachapoly_context chachapoly_ctx;
+    mbedtls_chachapoly_init(&chachapoly_ctx);
 
     uint8_t* compressed = NULL;
     size_t compressed_length = 0;
@@ -195,24 +199,53 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (memcmp(key, EMPTY64, 32) == 0)
     {
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: AES key derivation failure!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Symmetric encryption key derivation failure!\n");
         goto exit;
     }
 
-    r = mbedtls_gcm_setkey(&aes_ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
-    if (r != 0)
+    switch (algo)
     {
-        r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
-        goto exit;
-    }
+        case PWCRYPT_ALGO_ID_AES256_GCM: {
+            r = mbedtls_gcm_setkey(&aes_ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
+            if (r != 0)
+            {
+                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
+                goto exit;
+            }
 
-    r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, compressed_length, output + 48, 16, NULL, 0, compressed, output + 80, 16, output + 64);
-    if (r != 0)
-    {
-        r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
-        goto exit;
+            r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, compressed_length, output + 48, 16, NULL, 0, compressed, output + 80, 16, output + 64);
+            if (r != 0)
+            {
+                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
+                goto exit;
+            }
+            break;
+        }
+        case PWCRYPT_ALGO_ID_CHACHA20_POLY1305: {
+            r = mbedtls_chachapoly_setkey(&chachapoly_ctx, key);
+            if (r != 0)
+            {
+                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_chachapoly_setkey\" returned: %d\n", r);
+                goto exit;
+            }
+
+            r = mbedtls_chachapoly_encrypt_and_tag(&chachapoly_ctx, compressed_length, output + 48, NULL, 0, compressed, output + 80, output + 64);
+            if (r != 0)
+            {
+                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_chachapoly_encrypt_and_tag\" returned: %d\n", r);
+                goto exit;
+            }
+            break;
+        }
+        default: {
+            r = PWCRYPT_ERROR_INVALID_ARGS;
+            pwcrypt_fprintf(stderr, "pwcrypt: Invalid algorithm ID. %d is not a valid pwcrypt algo id!\n", (unsigned short)algo);
+            goto exit;
+        }
     }
 
     r = mbedtls_base64_encode(NULL, 0, &output_base64_length, output, output_length);
@@ -253,6 +286,8 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
 exit:
 
     mbedtls_gcm_free(&aes_ctx);
+    mbedtls_chachapoly_free(&chachapoly_ctx);
+
     memset(key, 0x00, sizeof(key));
 
     if (output != NULL)
@@ -315,6 +350,9 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     mbedtls_gcm_context aes_ctx;
     mbedtls_gcm_init(&aes_ctx);
 
+    mbedtls_chachapoly_context chachapoly_ctx;
+    mbedtls_chachapoly_init(&chachapoly_ctx);
+
     uint8_t iv[16];
     uint8_t tag[16];
     uint8_t salt[32];
@@ -352,22 +390,49 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     if (memcmp(key, EMPTY64, 32) == 0)
     {
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: AES key derivation failure!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Symmetric decryption key derivation failure!\n");
         goto exit;
     }
+
+    // Start trying out decryption algorithms, and jump to the next algo on failure:
 
     r = mbedtls_gcm_setkey(&aes_ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
     if (r != 0)
     {
         r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
-        goto exit;
+        goto chachapoly;
     }
 
     r = mbedtls_gcm_auth_decrypt(&aes_ctx, decrypted_length, iv, sizeof(iv), NULL, 0, tag, sizeof(tag), b64_decoded + 80, decrypted);
     if (r != 0)
     {
-        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_auth_decrypt\" returned: %d\n", r);
+        goto chachapoly;
+    }
+
+    goto decrypted;
+
+chachapoly:
+
+    r = mbedtls_chachapoly_setkey(&chachapoly_ctx, key);
+    if (r != 0)
+    {
+        r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+        goto decrypted;
+    }
+
+    r = mbedtls_chachapoly_auth_decrypt(&chachapoly_ctx, decrypted_length, iv, NULL, 0, tag, b64_decoded + 80, decrypted);
+    if (r != 0)
+    {
+        goto decrypted;
+    }
+
+    goto decrypted;
+
+decrypted:
+
+    if (r != 0)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! Status code: %d\n", r);
         goto exit;
     }
 
@@ -391,11 +456,13 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
 exit:
 
     mbedtls_gcm_free(&aes_ctx);
+    mbedtls_chachapoly_free(&chachapoly_ctx);
+    argon2_version_number = argon2_cost_t = argon2_cost_m = argon2_parallelism = 0;
+
     memset(key, 0x00, sizeof(key));
     memset(iv, 0x00, sizeof(iv));
     memset(tag, 0x00, sizeof(tag));
     memset(salt, 0x00, sizeof(salt));
-    argon2_version_number = argon2_cost_t = argon2_cost_m = argon2_parallelism = 0;
 
     if (b64_decoded != NULL)
     {
