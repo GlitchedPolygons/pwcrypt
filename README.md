@@ -1,5 +1,5 @@
 # pwcrypt
-## Easy peasy, password-based AES-256 GCM symmetric encryption squeezy
+## Easy peasy, password-based symmetric encryption squeezy
 
 [![Codacy](https://app.codacy.com/project/badge/Grade/795a2f6752234b0590d7ec66470c7e2f)](https://www.codacy.com/manual/GlitchedPolygons/pwcrypt?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=GlitchedPolygons/pwcrypt&amp;utm_campaign=Badge_Grade)
 [![Codecov](https://codecov.io/gh/GlitchedPolygons/pwcrypt/branch/master/graph/badge.svg)](https://codecov.io/gh/GlitchedPolygons/pwcrypt)
@@ -22,6 +22,8 @@ git submodule update --init --recursive
 
 If you don't want to use git submodules, you can also start vendoring a specific version of **pwcrypt** by copying its full repo content into the folder where you keep your project's external libraries/dependencies.
 
+Check out the [API docs](https://glitchedpolygons.github.io/pwcrypt/files.html) or the [`pwcrypt.h`](https://github.com/GlitchedPolygons/pwcrypt/blob/master/include/pwcrypt.h) header file to find out how to call the encrypt/decrypt functions in C.
+
 #### Linking
 If you use [CMake](https://cmake.org) you can just `add_subdirectory(path_to_submodule)` and then `target_link_libraries(your_project PRIVATE pwcrypt)` inside your CMakeLists.txt file.
 
@@ -37,7 +39,7 @@ The pwcrypt command line interface works using the following (relatively rigid) 
 
 `pwcrypt_cli e "My string to encrypt" "VERY-safe_password123!"`
 
-You can pass optional (integer) arguments for controlling key-derivation with [Argon2](https://github.com/P-H-C/phc-winner-argon2):
+You can append the following optional (integer) arguments for controlling key-derivation with [Argon2](https://github.com/P-H-C/phc-winner-argon2) at the end:
 
 `--time-cost=4`
 - The higher, the safer, the slower...
@@ -50,6 +52,10 @@ You can pass optional (integer) arguments for controlling key-derivation with [A
 
 Passing `0` to these optional args is equivalent to omitting them, thus using the default values 
 as defined inside [pwcrypt.h](https://github.com/GlitchedPolygons/pwcrypt/blob/master/include/pwcrypt.h).
+
+---
+
+Append `--algorithm=chachapoly` to use the [ChaCha20-Poly1305](https://tools.ietf.org/html/rfc7539) encryption algorithm instead of the default value `aes256-gcm`.
 
 #### Decrypting
 
