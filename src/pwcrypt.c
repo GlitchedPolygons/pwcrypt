@@ -137,6 +137,9 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     mbedtls_gcm_context aes_ctx;
     mbedtls_gcm_init(&aes_ctx);
 
+    mbedtls_chachapoly_context chachapoly_ctx;
+    mbedtls_chachapoly_init(&chachapoly_ctx);
+
     uint8_t* compressed = NULL;
     size_t compressed_length = 0;
 
@@ -200,20 +203,49 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
-    r = mbedtls_gcm_setkey(&aes_ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
-    if (r != 0)
+    switch (algo)
     {
-        r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
-        goto exit;
-    }
+        case PWCRYPT_ALGO_ID_AES256_GCM: {
+            r = mbedtls_gcm_setkey(&aes_ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
+            if (r != 0)
+            {
+                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
+                goto exit;
+            }
 
-    r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, compressed_length, output + 48, 16, NULL, 0, compressed, output + 80, 16, output + 64);
-    if (r != 0)
-    {
-        r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
-        goto exit;
+            r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, compressed_length, output + 48, 16, NULL, 0, compressed, output + 80, 16, output + 64);
+            if (r != 0)
+            {
+                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
+                goto exit;
+            }
+            break;
+        }
+        case PWCRYPT_ALGO_ID_CHACHA20_POLY1305: {
+            r = mbedtls_chachapoly_setkey(&chachapoly_ctx, key);
+            if (r != 0)
+            {
+                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_chachapoly_setkey\" returned: %d\n", r);
+                goto exit;
+            }
+
+            r = mbedtls_chachapoly_encrypt_and_tag(&chachapoly_ctx, compressed_length, output + 48, NULL, 0, compressed, output + 80, output + 64);
+            if (r != 0)
+            {
+                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_chachapoly_encrypt_and_tag\" returned: %d\n", r);
+                goto exit;
+            }
+            break;
+        }
+        default: {
+            r = PWCRYPT_ERROR_INVALID_ARGS;
+            pwcrypt_fprintf(stderr, "pwcrypt: Invalid algorithm ID. %d is not a valid pwcrypt algo id!\n", (unsigned short)algo);
+            goto exit;
+        }
     }
 
     r = mbedtls_base64_encode(NULL, 0, &output_base64_length, output, output_length);
@@ -254,6 +286,8 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
 exit:
 
     mbedtls_gcm_free(&aes_ctx);
+    mbedtls_chachapoly_free(&chachapoly_ctx);
+
     memset(key, 0x00, sizeof(key));
 
     if (output != NULL)

@@ -17,7 +17,7 @@
 /**
  *  @file pwcrypt.h
  *  @author Raphael Beck
- *  @brief Encrypt and decrypt strings symmetrically using Argon2id key derivation + AES-256 (GCM).
+ *  @brief Encrypt and decrypt strings symmetrically using Argon2id key derivation + either AES-256 (GCM) or ChaCha20-Poly1305.
  */
 
 #ifndef PWCRYPT_H
@@ -67,6 +67,11 @@ static const uint8_t EMPTY64[64] = {
     0x00, 0x00, 0x00, 0x00, //
     0x00, 0x00, 0x00, 0x00, //
 };
+
+/**
+ * Current version of the used pwcrypt library.
+ */
+#define PWCRYPT_VERSION 2
 
 /**
  * Default chunksize to use for compressing and decompressing buffers.
@@ -180,13 +185,13 @@ int pwcrypt_assess_password_strength(const char* password, size_t password_lengt
 
 /**
  * Encrypts a text string symmetrically with a password. <p>
- * The password string is fed into a customizable amount of Argon2id iterations to derive an AES-256 key, with which the text will be encrypted and written into the output buffer.
+ * The password string is fed into a customizable amount of Argon2id iterations to derive a 256-bit symmetric key, with which the text will be encrypted and written into the output buffer.
  * @param text The text string to encrypt.
  * @param text_length Length of the \p text string argument.
- * @param password The password string with which to encrypt the \p text argument (this will be used to derive an AES-256 key using Argon2id).
+ * @param password The password string with which to encrypt the \p text argument (this will be used to derive a 256-bit symmetric encryption key (e.g. AES-256 key) using Argon2id).
  * @param password_length Length of the \p password string argument.
- * @param argon2_cost_t The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric AES-256 key. Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_T_COST.
- * @param argon2_cost_m The Argon2 memory cost parameter (in KiB) to use for AES key derivation.  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_M_COST.
+ * @param argon2_cost_t The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric encryption key. Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_T_COST.
+ * @param argon2_cost_m The Argon2 memory cost parameter (in KiB) to use for key derivation.  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_M_COST.
  * @param argon2_parallelism Degree of parallelism to use when deriving the symmetric encryption key from the password with Argon2 (number of parallel threads).  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_PARALLELISM.
  * @param algo Which encryption algo to use (see the top of the pwcrypt.h header file for more infos).
  * @param out Pointer to the output string buffer where to write the encrypted string into (this will be allocated and NUL-terminated on success; if anything fails, this will be left untouched! So you only need to free on successful encryption).
