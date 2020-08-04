@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <mbedtls/gcm.h>
 #include <mbedtls/base64.h>
+#include <mbedtls/chachapoly.h>
 
 static const uint32_t ARGON2_V = (uint32_t)ARGON2_VERSION_NUMBER;
 
@@ -110,7 +111,7 @@ int pwcrypt_assess_password_strength(const char* password, const size_t password
     return 0;
 }
 
-int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out)
+int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint8_t algo, char** out)
 {
     if (text == NULL || text_length == 0 || password == NULL || out == NULL)
     {

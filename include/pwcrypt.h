@@ -88,6 +88,16 @@ static const uint8_t EMPTY64[64] = {
  */
 #define PWCRYPT_ARGON2_PARALLELISM 2
 
+/**
+ * Algo ID for the (default) AES256-GCM encryption algorithm.
+ */
+#define PWCRYPT_ALGO_ID_AES256_GCM 0
+
+/**
+ * Algo ID for the ChaCha20-Poly1305 encryption algorithm.
+ */
+#define PWCRYPT_ALGO_ID_CHACHA20_POLY1305 1
+
 #define PWCRYPT_ERROR_INVALID_ARGS -1
 #define PWCRYPT_ERROR_OOM 1000
 #define PWCRYPT_ERROR_PW_TOO_WEAK 2000
@@ -178,10 +188,11 @@ int pwcrypt_assess_password_strength(const char* password, size_t password_lengt
  * @param argon2_cost_t The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric AES-256 key. Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_T_COST.
  * @param argon2_cost_m The Argon2 memory cost parameter (in KiB) to use for AES key derivation.  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_M_COST.
  * @param argon2_parallelism Degree of parallelism to use when deriving the symmetric encryption key from the password with Argon2 (number of parallel threads).  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_PARALLELISM.
+ * @param algo Which encryption algo to use (see the top of the pwcrypt.h header file for more infos).
  * @param out Pointer to the output string buffer where to write the encrypted string into (this will be allocated and NUL-terminated on success; if anything fails, this will be left untouched! So you only need to free on successful encryption).
  * @return <c>0</c> on success; non-zero error codes if something fails.
  */
-int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, char** out);
+int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint8_t algo, char** out);
 
 /**
  * Decrypts a string that was encrypted using pwcrypt_encrypt(). <p>
