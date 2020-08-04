@@ -394,39 +394,47 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
+    // Start trying out decryption algorithms, and jump to the next algo on failure:
+
     r = mbedtls_gcm_setkey(&aes_ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
     if (r != 0)
     {
         r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
-        goto exit;
+        goto chachapoly;
     }
-
-    /*
-    r = mbedtls_chachapoly_setkey(&chachapoly_ctx, key);
-    if (r != 0)
-    {
-        r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_chachapoly_setkey\" returned: %d\n", r);
-        goto exit;
-    }
-     */
 
     r = mbedtls_gcm_auth_decrypt(&aes_ctx, decrypted_length, iv, sizeof(iv), NULL, 0, tag, sizeof(tag), b64_decoded + 80, decrypted);
     if (r != 0)
     {
-        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_auth_decrypt\" returned: %d\n", r);
-        goto exit;
+        goto chachapoly;
     }
 
-    /*
+    goto decrypted;
+
+chachapoly:
+
+    r = mbedtls_chachapoly_setkey(&chachapoly_ctx, key);
+    if (r != 0)
+    {
+        r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+        goto decrypted;
+    }
+
     r = mbedtls_chachapoly_auth_decrypt(&chachapoly_ctx, decrypted_length, iv, NULL, 0, tag, b64_decoded + 80, decrypted);
     if (r != 0)
     {
-        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_chachapoly_auth_decrypt\" returned: %d\n", r);
+        goto decrypted;
+    }
+
+    goto decrypted;
+
+decrypted:
+
+    if (r != 0)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! Status code: %d\n", r);
         goto exit;
     }
-    */
 
     r = ccrush_decompress(decrypted, decrypted_length, 256, &decompressed, &decompressed_length);
     if (r != 0)

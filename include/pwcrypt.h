@@ -159,7 +159,7 @@ static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffe
     if (output_buffer != NULL && output_buffer_size > 0)
     {
 #ifdef _WIN32
-        BCryptGenRandom(NULL, output_buffer, output_buffer_size, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+        BCryptGenRandom(NULL, output_buffer, (ULONG)output_buffer_size, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
 #else
         FILE* rnd = fopen("/dev/urandom", "r");
         if (rnd != NULL)
