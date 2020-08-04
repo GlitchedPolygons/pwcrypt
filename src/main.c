@@ -22,7 +22,7 @@
 static const char HELP_TEXT[] = "\n"
                                 "pwcrypt \n"
                                 "------- \n"
-                                "v1.0.0  \n\n"
+                                "%s  \n\n"
                                 "Encrypt and decrypt strings using passwords. \n"
                                 "The strings are compressed and then encrypted by deriving an AES-256 key from the password using Argon2. \n\n"
                                 "Usage: \n\n"
@@ -39,7 +39,7 @@ int main(const int argc, const char* argv[])
 
     if (argc == 1 || (argc == 2 && strcmp(argv[1], "--help") == 0))
     {
-        fprintf(stdout, HELP_TEXT);
+        fprintf(stdout, HELP_TEXT, PWCRYPT_VERSION_STR);
         return 0;
     }
 

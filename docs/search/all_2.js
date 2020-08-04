@@ -15,5 +15,6 @@ var searchData=
   ['pwcrypt_5fis_5ffprintf_5fenabled_14',['pwcrypt_is_fprintf_enabled',['../pwcrypt_8h.html#ad8cd7dda7eacdd1a66ffb11275100a98',1,'pwcrypt.h']]],
   ['pwcrypt_5fprintvoid_15',['pwcrypt_printvoid',['../pwcrypt_8h.html#a7a88f7a04a14965811d62a1fb7b978e2',1,'pwcrypt.h']]],
   ['pwcrypt_5fversion_16',['PWCRYPT_VERSION',['../pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749',1,'pwcrypt.h']]],
-  ['pwcrypt_5fz_5fchunksize_17',['PWCRYPT_Z_CHUNKSIZE',['../pwcrypt_8h.html#a2f42bd2f1c4b44339f65fbde2b369826',1,'pwcrypt.h']]]
+  ['pwcrypt_5fversion_5fstr_17',['PWCRYPT_VERSION_STR',['../pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f',1,'pwcrypt.h']]],
+  ['pwcrypt_5fz_5fchunksize_18',['PWCRYPT_Z_CHUNKSIZE',['../pwcrypt_8h.html#a2f42bd2f1c4b44339f65fbde2b369826',1,'pwcrypt.h']]]
 ];
