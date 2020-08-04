@@ -350,6 +350,9 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     mbedtls_gcm_context aes_ctx;
     mbedtls_gcm_init(&aes_ctx);
 
+    mbedtls_chachapoly_context chachapoly_ctx;
+    mbedtls_chachapoly_init(&chachapoly_ctx);
+
     uint8_t iv[16];
     uint8_t tag[16];
     uint8_t salt[32];
@@ -399,12 +402,31 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
         goto exit;
     }
 
+    /*
+    r = mbedtls_chachapoly_setkey(&chachapoly_ctx, key);
+    if (r != 0)
+    {
+        r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_chachapoly_setkey\" returned: %d\n", r);
+        goto exit;
+    }
+     */
+
     r = mbedtls_gcm_auth_decrypt(&aes_ctx, decrypted_length, iv, sizeof(iv), NULL, 0, tag, sizeof(tag), b64_decoded + 80, decrypted);
     if (r != 0)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_auth_decrypt\" returned: %d\n", r);
         goto exit;
     }
+
+    /*
+    r = mbedtls_chachapoly_auth_decrypt(&chachapoly_ctx, decrypted_length, iv, NULL, 0, tag, b64_decoded + 80, decrypted);
+    if (r != 0)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_chachapoly_auth_decrypt\" returned: %d\n", r);
+        goto exit;
+    }
+    */
 
     r = ccrush_decompress(decrypted, decrypted_length, 256, &decompressed, &decompressed_length);
     if (r != 0)
@@ -426,11 +448,13 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
 exit:
 
     mbedtls_gcm_free(&aes_ctx);
+    mbedtls_chachapoly_free(&chachapoly_ctx);
+    argon2_version_number = argon2_cost_t = argon2_cost_m = argon2_parallelism = 0;
+
     memset(key, 0x00, sizeof(key));
     memset(iv, 0x00, sizeof(iv));
     memset(tag, 0x00, sizeof(tag));
     memset(salt, 0x00, sizeof(salt));
-    argon2_version_number = argon2_cost_t = argon2_cost_m = argon2_parallelism = 0;
 
     if (b64_decoded != NULL)
     {
