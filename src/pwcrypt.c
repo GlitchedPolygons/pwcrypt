@@ -196,7 +196,7 @@ int pwcrypt_encrypt(const char* text, size_t text_length, const char* password, 
     if (memcmp(key, EMPTY64, 32) == 0)
     {
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: AES key derivation failure!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Symmetric encryption key derivation failure!\n");
         goto exit;
     }
 
@@ -353,7 +353,7 @@ int pwcrypt_decrypt(const char* text, size_t text_length, const char* password, 
     if (memcmp(key, EMPTY64, 32) == 0)
     {
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
-        pwcrypt_fprintf(stderr, "pwcrypt: AES key derivation failure!\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Symmetric decryption key derivation failure!\n");
         goto exit;
     }
 
