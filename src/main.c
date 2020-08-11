@@ -65,7 +65,7 @@ int main(const int argc, const char* argv[])
     }
 
     int r = -1;
-    char* output = NULL;
+    uint8_t* output = NULL;
 
     switch (*mode)
     {
@@ -109,7 +109,7 @@ int main(const int argc, const char* argv[])
                 }
             }
 
-            r = pwcrypt_encrypt(text, text_length, password, password_length, cost_t, cost_m, parallelism, algo_id, &output);
+            r = pwcrypt_encrypt((uint8_t*)text, text_length, 1, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, &output, NULL, 1);
             if (r != 0)
             {
                 fprintf(stderr, "pwcrypt: Encryption failed!\n");
@@ -118,7 +118,7 @@ int main(const int argc, const char* argv[])
             break;
         }
         case 'd': {
-            r = pwcrypt_decrypt(text, text_length, password, password_length, &output);
+            r = pwcrypt_decrypt((uint8_t*)text, text_length, (uint8_t*)password, password_length, &output, NULL);
             if (r != 0)
             {
                 fprintf(stderr, "pwcrypt: Decryption failed!\n");
