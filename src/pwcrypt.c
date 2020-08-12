@@ -146,8 +146,7 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
 
     if (compress)
     {
-        compress = 1;
-        r = ccrush_compress(input, input_length, 256, 8, &input_buffer, &input_buffer_length);
+        r = ccrush_compress(input, input_length, 256, (int)compress, &input_buffer, &input_buffer_length);
         if (r != 0)
         {
             pwcrypt_fprintf(stderr, "pwcrypt: Compression of input data before encryption failed!\n");
@@ -522,7 +521,8 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
 
     if (pwcrypt_compressed)
     {
-        r = ccrush_decompress(decrypted, decrypted_length, 256, out, out_length);
+        size_t dl = 0;
+        r = ccrush_decompress(decrypted, decrypted_length, 256, out, out_length ? out_length : &dl);
         if (r != 0)
         {
             pwcrypt_fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress\" returned: %d\n", r);

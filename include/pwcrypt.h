@@ -201,7 +201,7 @@ int pwcrypt_assess_password_strength(const uint8_t* password, size_t password_le
  * The password string is fed into a customizable amount of Argon2id iterations to derive a 256-bit symmetric key, with which the input will be encrypted and written into the output buffer.
  * @param input The input string to encrypt.
  * @param input_length Length of the \p input string argument.
- * @param compress Should the input data be compressed before being encrypted? Pass <c>0</c> for no compression, anything else for a quick deflate on the input data.
+ * @param compress Should the input data be compressed before being encrypted? Pass <c>0</c> for no compression, or a compression level from <c>1</c> to <c>9</c> to pass to the deflate algorithm (<c>6</c> is a healthy default value to use for this).
  * @param password The password string with which to encrypt the \p input argument (this will be used to derive a 256-bit symmetric encryption key (e.g. AES-256 key) using Argon2id).
  * @param password_length Length of the \p password string argument.
  * @param argon2_cost_t The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric encryption key. Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_T_COST.

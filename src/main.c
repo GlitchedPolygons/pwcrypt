@@ -70,7 +70,7 @@ int main(const int argc, const char* argv[])
     switch (*mode)
     {
         case 'e': {
-            uint8_t algo_id = PWCRYPT_ALGO_ID_AES256_GCM;
+            uint32_t algo_id = PWCRYPT_ALGO_ID_AES256_GCM;
             uint32_t cost_t = 0, cost_m = 0, parallelism = 0;
 
             for (int i = 4; i < argc; i++)
@@ -104,12 +104,12 @@ int main(const int argc, const char* argv[])
                 {
                     // Currently, this is OK since there are only 2 algos that have the IDs 0 and 1.
                     // But at a later point, it would def. make sense to have a decent control block here for extracting algo ID from the CLI args.
-                    algo_id = (uint8_t)(strncmp("chachapoly", arg + 12, 10) == 0);
+                    algo_id = (uint32_t)(strncmp("chachapoly", arg + 12, 10) == 0);
                     continue;
                 }
             }
 
-            r = pwcrypt_encrypt((uint8_t*)text, text_length, 1, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, &output, NULL, 1);
+            r = pwcrypt_encrypt((uint8_t*)text, text_length, 8, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, &output, NULL, 1);
             if (r != 0)
             {
                 fprintf(stderr, "pwcrypt: Encryption failed!\n");
