@@ -58,7 +58,7 @@ as defined inside [pwcrypt.h](https://github.com/GlitchedPolygons/pwcrypt/blob/m
 
 ---
 
-Append `--algorithm=chachapoly` to use the [ChaCha20-Poly1305](https://tools.ietf.org/html/rfc7539) encryption algorithm instead of the default value `aes256-gcm`.
+Append `--algorithm=chachapoly` at the end to use the [ChaCha20-Poly1305](https://tools.ietf.org/html/rfc7539) encryption algorithm instead of the default value `aes256-gcm`.
 
 #### Decrypting
 
