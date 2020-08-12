@@ -185,7 +185,7 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     assert(sizeof(uint8_t) == 1);
     assert(sizeof(uint32_t) == 4);
 
-    output_buffer_length = (92 + input_buffer_length);
+    output_buffer_length = (96 + input_buffer_length);
 
     output_buffer = calloc(output_buffer_length, sizeof(uint8_t));
     if (output_buffer == NULL)
@@ -438,7 +438,7 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
     memcpy(&pwcrypt_version_number, input, 4);
     memcpy(&pwcrypt_algo_id, input + 4, 4);
     memcpy(&pwcrypt_compressed, input + 8, 4);
-    memcpy(&argon2_version_number, input + 16, 4);
+    memcpy(&argon2_version_number, input + 16, 4); // [12 - 15] is copied earlier (see above)
     memcpy(&argon2_cost_t, input + 20, 4);
     memcpy(&argon2_cost_m, input + 24, 4);
     memcpy(&argon2_parallelism, input + 28, 4);
@@ -527,8 +527,8 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
         {
             pwcrypt_fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress\" returned: %d\n", r);
             r = PWCRYPT_ERROR_DECOMPRESSION_FAILURE;
-            goto exit;
         }
+        goto exit;
     }
 
     *out = malloc(decrypted_length + 1);
