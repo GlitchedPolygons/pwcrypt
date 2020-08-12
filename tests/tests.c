@@ -69,10 +69,12 @@ static void pw_strength_enforcing()
 static void encrypt_and_decrypt_aes256_gcm_string_success()
 {
     uint8_t* out = NULL;
-    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 1, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
+    size_t out_length = 0;
+    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........Lorem ipsum dolor sick fuck amend something something...........Lorem ipsum dolor sick fuck amend something something...........Lorem ipsum dolor sick fuck amend something something...........", 256, 8, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, &out_length, 1);
 
     TEST_CHECK(out != NULL);
     TEST_CHECK(r == 0);
+    TEST_CHECK(out_length < 256); // Ensure compressor works!
     TEST_CHECK(strcmp((char*)out, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
 
     uint8_t* decrypted = NULL;
@@ -89,7 +91,7 @@ static void encrypt_and_decrypt_aes256_gcm_string_success()
 static void encrypt_and_decrypt_chachapoly_string_success()
 {
     uint8_t* out = NULL;
-    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 1, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_CHACHA20_POLY1305, &out, NULL, 1);
+    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_CHACHA20_POLY1305, &out, NULL, 1);
 
     TEST_CHECK(out != NULL);
     TEST_CHECK(r == 0);
@@ -150,17 +152,19 @@ static void encrypt_and_decrypt_aes256_gcm_string_nobase64_success()
 {
     uint8_t* out = NULL;
     size_t out_length = 0;
-    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 1, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, &out_length, 0);
+    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, &out_length, 0);
 
     TEST_CHECK(out != NULL);
     TEST_CHECK(r == 0);
     TEST_CHECK(strcmp((char*)out, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
 
     uint8_t* decrypted = NULL;
-    r = pwcrypt_decrypt(out, strlen((char*)out), (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, &decrypted, NULL);
+    size_t decrypted_length = 0;
+    r = pwcrypt_decrypt(out, out_length, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, &decrypted, &decrypted_length);
 
     TEST_CHECK(decrypted != NULL);
     TEST_CHECK(r == 0);
+    TEST_CHECK(decrypted_length == 64);
     TEST_CHECK(strcmp((char*)decrypted, "Lorem ipsum dolor sick fuck amend something something...........") == 0);
 
     free(out);
@@ -170,17 +174,20 @@ static void encrypt_and_decrypt_aes256_gcm_string_nobase64_success()
 static void encrypt_and_decrypt_chachapoly_string_nobase64_success()
 {
     uint8_t* out = NULL;
-    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 1, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_CHACHA20_POLY1305, &out, NULL, 1);
+    size_t out_length = 0;
+    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_CHACHA20_POLY1305, &out, &out_length, 0);
 
     TEST_CHECK(out != NULL);
     TEST_CHECK(r == 0);
     TEST_CHECK(strcmp((char*)out, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
 
     uint8_t* decrypted = NULL;
-    r = pwcrypt_decrypt(out, strlen((char*)out), (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, &decrypted, NULL);
+    size_t decrypted_length = 0;
+    r = pwcrypt_decrypt(out, out_length, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, &decrypted, &decrypted_length);
 
     TEST_CHECK(decrypted != NULL);
     TEST_CHECK(r == 0);
+    TEST_CHECK(decrypted_length == 64);
     TEST_CHECK(strcmp((char*)decrypted, "Lorem ipsum dolor sick fuck amend something something...........") == 0);
 
     free(out);
@@ -190,17 +197,20 @@ static void encrypt_and_decrypt_chachapoly_string_nobase64_success()
 static void encrypt_and_decrypt_aes256_gcm_string_nocompression_nobase64_success()
 {
     uint8_t* out = NULL;
-    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 0, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
+    size_t out_length = 0;
+    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 0, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, &out_length, 0);
 
     TEST_CHECK(out != NULL);
     TEST_CHECK(r == 0);
     TEST_CHECK(strcmp((char*)out, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
 
     uint8_t* decrypted = NULL;
-    r = pwcrypt_decrypt(out, strlen((char*)out), (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, &decrypted, NULL);
+    size_t decrypted_length = 0;
+    r = pwcrypt_decrypt(out, strlen((char*)out), (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, &decrypted, &decrypted_length);
 
     TEST_CHECK(decrypted != NULL);
     TEST_CHECK(r == 0);
+    TEST_CHECK(decrypted_length == 64);
     TEST_CHECK(strcmp((char*)decrypted, "Lorem ipsum dolor sick fuck amend something something...........") == 0);
 
     free(out);
@@ -210,17 +220,20 @@ static void encrypt_and_decrypt_aes256_gcm_string_nocompression_nobase64_success
 static void encrypt_and_decrypt_chachapoly_string_nocompression_nobase64_success()
 {
     uint8_t* out = NULL;
-    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 0, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_CHACHA20_POLY1305, &out, NULL, 1);
+    size_t out_length = 0;
+    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 0, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_CHACHA20_POLY1305, &out, &out_length, 0);
 
     TEST_CHECK(out != NULL);
     TEST_CHECK(r == 0);
     TEST_CHECK(strcmp((char*)out, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
 
     uint8_t* decrypted = NULL;
-    r = pwcrypt_decrypt(out, strlen((char*)out), (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, &decrypted, NULL);
+    size_t decrypted_length = 0;
+    r = pwcrypt_decrypt(out, strlen((char*)out), (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, &decrypted, &decrypted_length);
 
     TEST_CHECK(decrypted != NULL);
     TEST_CHECK(r == 0);
+    TEST_CHECK(decrypted_length == 64);
     TEST_CHECK(strcmp((char*)decrypted, "Lorem ipsum dolor sick fuck amend something something...........") == 0);
 
     free(out);
@@ -230,24 +243,24 @@ static void encrypt_and_decrypt_chachapoly_string_nocompression_nobase64_success
 static void encrypt_with_invalid_params_fails()
 {
     int r = 0;
-    char* out = NULL;
+    uint8_t* out = NULL;
 
-    r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 0, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out);
+    r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 0, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
-    r = pwcrypt_encrypt(NULL, 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out);
+    r = pwcrypt_encrypt(NULL, 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
-    r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 0, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out);
+    r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 0, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
     TEST_CHECK(r != 0);
 
-    r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, NULL, 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out);
+    r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, NULL, 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
-    r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, NULL);
+    r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, NULL, NULL, 1);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
-    r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, 200, &out);
+    r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, 200, &out, NULL, 1);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
     free(out);
@@ -255,23 +268,24 @@ static void encrypt_with_invalid_params_fails()
 
 static void decrypt_with_invalid_params_fails()
 {
-    char* out = NULL;
-    int r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out);
+    uint8_t* out = NULL;
+    size_t out_length = 0;
+    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 7, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, &out_length, 1);
 
     TEST_ASSERT(r == 0);
 
-    char* decrypted = NULL;
+    uint8_t* decrypted = NULL;
 
-    r = pwcrypt_decrypt(NULL, strlen(out), "Special Password for decrypting! 1337...", 40, &decrypted);
+    r = pwcrypt_decrypt(NULL, out_length, (uint8_t*)"Special Password for decrypting! 1337...", 40, &decrypted, NULL);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
-    r = pwcrypt_decrypt(out, 0, "Special Password for decrypting! 1337...", 40, &decrypted);
+    r = pwcrypt_decrypt(out, 0, (uint8_t*)"Special Password for decrypting! 1337...", 40, &decrypted, NULL);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
-    r = pwcrypt_decrypt(out, strlen(out), NULL, 32, &decrypted);
+    r = pwcrypt_decrypt(out, out_length, NULL, 32, &decrypted, NULL);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
-    r = pwcrypt_decrypt(out, strlen(out), "Special Password for decrypting! 1337...", 40, NULL);
+    r = pwcrypt_decrypt(out, out_length, (uint8_t*)"Special Password for decrypting! 1337...", 40, NULL, NULL);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
     free(out);
@@ -280,14 +294,15 @@ static void decrypt_with_invalid_params_fails()
 
 static void decrypt_invalid_ciphertext_fails()
 {
-    char* out = NULL;
-    int r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out);
+    uint8_t* out = NULL;
+    size_t out_length = 0;
+    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, &out_length, 1);
 
     TEST_ASSERT(r == 0);
 
-    char* decrypted = NULL;
+    uint8_t* decrypted = NULL;
 
-    r = pwcrypt_decrypt("TEST STRING THAT IS JUST NOT BASE64-encoded", 43, "Special Password for decrypting! 1337...", 40, &decrypted);
+    r = pwcrypt_decrypt((uint8_t*)"TEST STRING THAT IS JUST NOT BASE64-encoded", 43, (uint8_t*)"Special Password for decrypting! 1337...", 40, &decrypted, NULL);
     TEST_CHECK(r != 0);
 
     free(out);
@@ -296,15 +311,15 @@ static void decrypt_invalid_ciphertext_fails()
 
 static void encrypt_and_decrypt_with_wrong_PW_fails()
 {
-    char* out = NULL;
-    int r = pwcrypt_encrypt("Lorem ipsum dolor sick fuck amend something something...........", 64, "Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out);
+    uint8_t* out = NULL;
+    int r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 0, 0, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
 
     TEST_CHECK(out != NULL);
     TEST_CHECK(r == 0);
-    TEST_CHECK(strcmp(out, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
+    TEST_CHECK(strcmp((char*)out, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
 
-    char* decrypted = NULL;
-    r = pwcrypt_decrypt(out, strlen(out), "WRONG WRONG WRONG password... just very extremely wrong!!!   420", 64, &decrypted);
+    uint8_t* decrypted = NULL;
+    r = pwcrypt_decrypt(out, strlen((char*)out), (uint8_t*)"WRONG WRONG WRONG password... just very extremely wrong!!!   420", 64, &decrypted, NULL);
 
     TEST_CHECK(decrypted == NULL);
     TEST_CHECK(r != 0);
@@ -322,7 +337,13 @@ TEST_LIST = {
     { "pwcrypt_printvoid_returns_zero", pwcrypt_printvoid_returns_zero }, //
     { "pw_strength_enforcing", pw_strength_enforcing }, //
     { "encrypt_and_decrypt_aes256_gcm_string_success", encrypt_and_decrypt_aes256_gcm_string_success }, //
+    { "encrypt_and_decrypt_aes256_gcm_string_nobase64_success", encrypt_and_decrypt_aes256_gcm_string_nobase64_success }, //
+    { "encrypt_and_decrypt_aes256_gcm_string_nocompression_success", encrypt_and_decrypt_aes256_gcm_string_nocompression_success }, //
+    { "encrypt_and_decrypt_aes256_gcm_string_nocompression_nobase64_success", encrypt_and_decrypt_aes256_gcm_string_nocompression_nobase64_success }, //
     { "encrypt_and_decrypt_chachapoly_string_success", encrypt_and_decrypt_chachapoly_string_success }, //
+    { "encrypt_and_decrypt_chachapoly_string_nobase64_success", encrypt_and_decrypt_chachapoly_string_nobase64_success }, //
+    { "encrypt_and_decrypt_chachapoly_string_nocompression_success", encrypt_and_decrypt_chachapoly_string_nocompression_success }, //
+    { "encrypt_and_decrypt_chachapoly_string_nocompression_nobase64_success", encrypt_and_decrypt_chachapoly_string_nocompression_nobase64_success }, //
     { "encrypt_with_invalid_params_fails", encrypt_with_invalid_params_fails }, //
     { "decrypt_with_invalid_params_fails", decrypt_with_invalid_params_fails }, //
     { "decrypt_invalid_ciphertext_fails", decrypt_invalid_ciphertext_fails }, //
