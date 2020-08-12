@@ -144,28 +144,12 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     uint8_t* input_buffer = NULL;
     size_t input_buffer_length = 0;
 
-    if (compress)
+    r = ccrush_compress(input, input_length, 256, (int)compress, &input_buffer, &input_buffer_length);
+    if (r != 0)
     {
-        r = ccrush_compress(input, input_length, 256, (int)compress, &input_buffer, &input_buffer_length);
-        if (r != 0)
-        {
-            pwcrypt_fprintf(stderr, "pwcrypt: Compression of input data before encryption failed!\n");
-            r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
-            goto exit;
-        }
-    }
-    else
-    {
-        input_buffer_length = input_length;
-        input_buffer = malloc(input_buffer_length);
-        if (input_buffer == NULL)
-        {
-            pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
-            r = PWCRYPT_ERROR_OOM;
-            goto exit;
-        }
-
-        memcpy(input_buffer, input, input_buffer_length);
+        pwcrypt_fprintf(stderr, "pwcrypt: Compression of input data before encryption failed! \"ccrush_compress\" returned: %d\n", r);
+        r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
+        goto exit;
     }
 
     // [0 - 3]      (4B)   uint32_t:     Pwcrypt Version Number
@@ -333,6 +317,11 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
 
         memcpy(*output, output_buffer, output_buffer_length);
         (*output)[output_buffer_length] = 0x00;
+
+        if (output_length != NULL)
+        {
+            *output_length = output_buffer_length;
+        }
     }
 
 exit:
@@ -360,7 +349,7 @@ exit:
         free(input_buffer);
     }
 
-    return r;
+    return (r);
 }
 
 int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** out, size_t* out_length)
@@ -437,7 +426,7 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
     memcpy(&pwcrypt_version_number, input, 4);
     memcpy(&pwcrypt_algo_id, input + 4, 4);
     memcpy(&pwcrypt_compressed, input + 8, 4);
-    memcpy(&argon2_version_number, input + 16, 4); // [12 - 15] is copied earlier (see above)
+    memcpy(&argon2_version_number, input + 16, 4); // [12 - 15] (input_base64_encoded) is copied earlier (see above).
     memcpy(&argon2_cost_t, input + 20, 4);
     memcpy(&argon2_cost_m, input + 24, 4);
     memcpy(&argon2_parallelism, input + 28, 4);
@@ -519,32 +508,13 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
 
     assert(r == 0);
 
-    if (pwcrypt_compressed)
+    size_t dl = 0;
+    r = ccrush_decompress(decrypted, decrypted_length, 256, out, out_length ? out_length : &dl);
+    if (r != 0)
     {
-        size_t dl = 0;
-        r = ccrush_decompress(decrypted, decrypted_length, 256, out, out_length ? out_length : &dl);
-        if (r != 0)
-        {
-            pwcrypt_fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress\" returned: %d\n", r);
-            r = PWCRYPT_ERROR_DECOMPRESSION_FAILURE;
-        }
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress\" returned: %d\n", r);
+        r = PWCRYPT_ERROR_DECOMPRESSION_FAILURE;
         goto exit;
-    }
-
-    *out = malloc(decrypted_length + 1);
-    if (*out == NULL)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
-        r = PWCRYPT_ERROR_OOM;
-        goto exit;
-    }
-
-    memcpy(*out, decrypted, decrypted_length);
-    (*out)[decrypted_length] = 0x00;
-
-    if (out_length != NULL)
-    {
-        *out_length = decrypted_length;
     }
 
 exit:
@@ -570,5 +540,5 @@ exit:
         free(decrypted);
     }
 
-    return r;
+    return (r);
 }
