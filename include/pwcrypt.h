@@ -197,7 +197,7 @@ static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffe
 int pwcrypt_assess_password_strength(const uint8_t* password, size_t password_length);
 
 /**
- * Encrypts a input string symmetrically with a password. <p>
+ * Encrypts an input string of data symmetrically with a password. <p>
  * The password string is fed into a customizable amount of Argon2id iterations to derive a 256-bit symmetric key, with which the input will be encrypted and written into the output buffer.
  * @param input The input string to encrypt.
  * @param input_length Length of the \p input string argument.
@@ -208,7 +208,7 @@ int pwcrypt_assess_password_strength(const uint8_t* password, size_t password_le
  * @param argon2_cost_m The Argon2 memory cost parameter (in KiB) to use for key derivation.  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_M_COST.
  * @param argon2_parallelism Degree of parallelism to use when deriving the symmetric encryption key from the password with Argon2 (number of parallel threads).  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_PARALLELISM.
  * @param algo Which encryption algo to use (see the top of the pwcrypt.h header file for more infos).
- * @param output Pointer to the output buffer where to write the encrypted ciphertext into (this will be allocated and NUL-terminated on success; if anything fails, this will be left untouched! So you only need to free on successful encryption).
+ * @param output Pointer to the output buffer where to write the encrypted ciphertext into. This will be allocated and NUL-terminated on success; if anything fails, this will be left untouched! So you only need to free on successful encryption.
  * @param output_length [OPTIONAL] Where to write the output buffer length into. Pass <c>NULL</c> if you don't care.
  * @param output_base64 Should the encrypted output bytes be base64-encoded for easy textual transmission (e.g. email)? If you decide to base64-encode the encrypted data buffer, please be aware that a NUL-terminator is appended at the end to allow usage as a C-string but it will not be counted in \p output_length. Pass <c>0</c> for raw binary output, or anything else for a human-readable, base64-encoded output string.
  * @return <c>0</c> on success; non-zero error codes if something fails.
@@ -216,17 +216,17 @@ int pwcrypt_assess_password_strength(const uint8_t* password, size_t password_le
 int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress, const uint8_t* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t** output, size_t* output_length, uint32_t output_base64);
 
 /**
- * Decrypts a string that was encrypted using pwcrypt_encrypt(). <p>
+ * Decrypts a string or a byte array that was encrypted using pwcrypt_encrypt(). <p>
  * @param encrypted_data The ciphertext to decrypt.
  * @param encrypted_data_length Length of the \p encrypted_data argument (string length or byte array size).
  * @param encrypted_data_base64 Is the input \p encrypted_data base64-encoded?
  * @param password The decryption password.
  * @param password_length Length of the \p password argument.
- * @param output Pointer to the output buffer where to write the decrypted data into (this will be allocated and NUL-terminated automatically on success; if anything fails, this will be left untouched! So you only need to free this if decryption succeeds).
+ * @param output Pointer to the output buffer where to write the decrypted data into. This will be allocated and NUL-terminated automatically on success; if anything fails, this will be left untouched! So you only need to free this if decryption succeeds.
  * @param output_length [OPTIONAL] Where to write the output buffer length into. Pass <c>NULL</c> if you don't care.
  * @return <c>0</c> on success; non-zero error codes if something fails.
  */
-int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** out, size_t* out_length);
+int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** output, size_t* output_length);
 
 #ifdef __cplusplus
 } // extern "C"

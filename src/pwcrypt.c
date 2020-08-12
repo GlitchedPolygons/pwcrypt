@@ -352,14 +352,13 @@ exit:
     return (r);
 }
 
-int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** out, size_t* out_length)
+int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** output, size_t* output_length)
 {
-    if (encrypted_data == NULL || encrypted_data_length <= 96 || password == NULL || password_length < 6 || out == NULL)
+    if (encrypted_data == NULL || encrypted_data_length <= 96 || password == NULL || password_length < 6 || output == NULL)
     {
         return PWCRYPT_ERROR_INVALID_ARGS;
     }
 
-    int r = -1;
     assert(sizeof(uint8_t) == 1);
     assert(sizeof(uint32_t) == 4);
 
@@ -384,7 +383,7 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
         return PWCRYPT_ERROR_OOM;
     }
 
-    r = mbedtls_base64_decode(input, input_length, &input_length, encrypted_data, encrypted_data_length);
+    int r = mbedtls_base64_decode(input, input_length, &input_length, encrypted_data, encrypted_data_length);
     if (r != 0)
     {
         if (input_base64_encoded)
@@ -509,7 +508,7 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
     assert(r == 0);
 
     size_t dl = 0;
-    r = ccrush_decompress(decrypted, decrypted_length, 256, out, out_length ? out_length : &dl);
+    r = ccrush_decompress(decrypted, decrypted_length, 256, output, output_length ? output_length : &dl);
     if (r != 0)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress\" returned: %d\n", r);
