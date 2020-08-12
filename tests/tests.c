@@ -75,7 +75,7 @@ static void encrypt_and_decrypt_aes256_gcm_string_success()
     TEST_CHECK(out != NULL);
     TEST_CHECK(r == 0);
     TEST_CHECK(out_length < 256); // Ensure compressor works!
-    TEST_CHECK(strcmp((char*)out, "Lorem ipsum dolor sick fuck amend something something...........") != 0);
+    TEST_CHECK(strcmp((char*)out, "Lorem ipsum dolor sick fuck amend something something...........Lorem ipsum dolor sick fuck amend something something...........Lorem ipsum dolor sick fuck amend something something...........Lorem ipsum dolor sick fuck amend something something...........") != 0);
 
     uint8_t* decrypted = NULL;
     r = pwcrypt_decrypt(out, strlen((char*)out), (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, &decrypted, NULL);
