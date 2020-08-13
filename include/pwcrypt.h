@@ -108,14 +108,50 @@ static const uint8_t EMPTY64[64] = {
  */
 #define PWCRYPT_ALGO_ID_CHACHA20_POLY1305 1
 
+/**
+ * Error code for invalid arguments passed to a pwcrypt function.
+ */
 #define PWCRYPT_ERROR_INVALID_ARGS -1
+
+/**
+ * Error code "out of memory", uh oh...
+ */
 #define PWCRYPT_ERROR_OOM 1000
+
+/**
+ * Error code for passwords that are too weak.
+ */
 #define PWCRYPT_ERROR_PW_TOO_WEAK 2000
+
+/**
+ * Error code for Argon2 key derivation failures.
+ */
 #define PWCRYPT_ERROR_ARGON2_FAILURE 3000
+
+/**
+ * Encryption failures return this error code.
+ */
 #define PWCRYPT_ERROR_ENCRYPTION_FAILURE 4000
+
+/**
+ * Error code for decryption failures. <p>
+ * Hint: If you're having this and you're using pwcrypt as a library, try to set a breakpoint and step through the code to see what exactly is failing
+ */
 #define PWCRYPT_ERROR_DECRYPTION_FAILURE 5000
+
+/**
+ * Base-64 encoding/decoding failure.
+ */
 #define PWCRYPT_ERROR_BASE64_FAILURE 6000
+
+/**
+ * This error code is returned when encryption failed due to a failure to compress the input data (ccrush lib failure).
+ */
 #define PWCRYPT_ERROR_COMPRESSION_FAILURE 7000
+
+/**
+ * Error code for when decompressing data fails (ccrush lib failure)..
+ */
 #define PWCRYPT_ERROR_DECOMPRESSION_FAILURE 8000
 
 /**
