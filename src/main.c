@@ -65,12 +65,14 @@ int main(const int argc, const char* argv[])
     }
 
     int r = -1;
-    char* output = NULL;
+    uint8_t* output = NULL;
+    size_t output_length = 0;
 
     switch (*mode)
     {
         case 'e': {
-            uint8_t algo_id = PWCRYPT_ALGO_ID_AES256_GCM;
+            uint32_t compression = 8;
+            uint32_t algo_id = PWCRYPT_ALGO_ID_AES256_GCM;
             uint32_t cost_t = 0, cost_m = 0, parallelism = 0;
 
             for (int i = 4; i < argc; i++)
@@ -100,16 +102,22 @@ int main(const int argc, const char* argv[])
                     continue;
                 }
 
+                if (strncmp("--compression=", arg, 14) == 0)
+                {
+                    compression = strtol(arg + 14, NULL, 10);
+                    continue;
+                }
+
                 if (strncmp("--algorithm=", arg, 12) == 0)
                 {
                     // Currently, this is OK since there are only 2 algos that have the IDs 0 and 1.
                     // But at a later point, it would def. make sense to have a decent control block here for extracting algo ID from the CLI args.
-                    algo_id = (uint8_t)(strncmp("chachapoly", arg + 12, 10) == 0);
+                    algo_id = (uint32_t)(strncmp("chachapoly", arg + 12, 10) == 0);
                     continue;
                 }
             }
 
-            r = pwcrypt_encrypt(text, text_length, password, password_length, cost_t, cost_m, parallelism, algo_id, &output);
+            r = pwcrypt_encrypt((uint8_t*)text, text_length, compression, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, &output, &output_length, 1);
             if (r != 0)
             {
                 fprintf(stderr, "pwcrypt: Encryption failed!\n");
@@ -118,7 +126,7 @@ int main(const int argc, const char* argv[])
             break;
         }
         case 'd': {
-            r = pwcrypt_decrypt(text, text_length, password, password_length, &output);
+            r = pwcrypt_decrypt((uint8_t*)text, text_length, (uint8_t*)password, password_length, &output, &output_length);
             if (r != 0)
             {
                 fprintf(stderr, "pwcrypt: Decryption failed!\n");
@@ -134,7 +142,7 @@ int main(const int argc, const char* argv[])
     if (r == 0 && output)
     {
         fprintf(stdout, "%s\n", output);
-        memset(output, 0x00, strlen(output));
+        memset(output, 0x00, output_length);
         free(output);
     }
 

@@ -42,7 +42,7 @@ The pwcrypt command line interface works using the following (relatively rigid) 
 
 `pwcrypt_cli e "My string to encrypt" "VERY-safe_password123!"`
 
-You can append the following optional (integer) arguments for controlling key-derivation with [Argon2](https://github.com/P-H-C/phc-winner-argon2) at the end:
+You can append the following **optional** (integer) arguments for controlling key-derivation with [Argon2](https://github.com/P-H-C/phc-winner-argon2) at the end:
 
 `--time-cost=4`
 - The higher, the safer, the slower...
@@ -53,12 +53,15 @@ You can append the following optional (integer) arguments for controlling key-de
 `--parallelism=2`
 - Sets the amount of parallel threads to be used by Argon2
 
-Passing `0` to these optional args is equivalent to omitting them, thus using the default values 
-as defined inside [pwcrypt.h](https://github.com/GlitchedPolygons/pwcrypt/blob/master/include/pwcrypt.h).
+> Passing `0` to these optional args is equivalent to omitting them, thus using the default values 
+> as defined inside [pwcrypt.h](https://github.com/GlitchedPolygons/pwcrypt/blob/master/include/pwcrypt.h).
+
+`--compression=8`
+- This value between `0` and `9` determines the compression level to use when deflating the input data to encrypt: `0` does not compress at all, and `9` compresses the most (but can be slower). Default is `8`. 
 
 ---
 
-Append `--algorithm=chachapoly` to use the [ChaCha20-Poly1305](https://tools.ietf.org/html/rfc7539) encryption algorithm instead of the default value `aes256-gcm`.
+Append `--algorithm=chachapoly` at the end to use the [ChaCha20-Poly1305](https://tools.ietf.org/html/rfc7539) encryption algorithm instead of the default value `aes256-gcm`.
 
 #### Decrypting
 
