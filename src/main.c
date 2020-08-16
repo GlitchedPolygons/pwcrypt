@@ -201,6 +201,7 @@ int main(const int argc, const char* argv[])
             {
                 fprintf(stderr, "pwcrypt: Encryption failed! Couldn't write all %zu bytes into the output file...\n", output_length);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
+                goto exit;
             }
         }
         else
