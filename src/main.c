@@ -120,8 +120,6 @@ int main(const int argc, const char* argv[])
 
         if (strncmp("--file=", arg, 7) == 0)
         {
-            file = 1;
-
             input_file = fopen(text, "r");
             if (input_file == NULL)
             {
@@ -130,6 +128,7 @@ int main(const int argc, const char* argv[])
                 goto exit;
             }
 
+            file = 1;
             fseek(input_file, 0, SEEK_END);
             input_length = ftell(input_file);
             rewind(input_file);

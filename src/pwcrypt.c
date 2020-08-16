@@ -528,7 +528,7 @@ exit:
     mbedtls_platform_zeroize(&argon2_cost_t, sizeof(uint32_t));
     mbedtls_platform_zeroize(&argon2_cost_m, sizeof(uint32_t));
     mbedtls_platform_zeroize(&argon2_parallelism, sizeof(uint32_t));
-    
+
     mbedtls_platform_zeroize(key, sizeof(key));
     mbedtls_platform_zeroize(iv, sizeof(iv));
     mbedtls_platform_zeroize(tag, sizeof(tag));
