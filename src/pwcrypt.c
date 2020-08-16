@@ -520,8 +520,15 @@ exit:
 
     mbedtls_gcm_free(&aes_ctx);
     mbedtls_chachapoly_free(&chachapoly_ctx);
-    pwcrypt_version_number = 0, pwcrypt_algo_id = 0, pwcrypt_compressed = 0, argon2_version_number = 0, argon2_cost_t = 0, argon2_cost_m = 0, argon2_parallelism = 0;
 
+    mbedtls_platform_zeroize(&pwcrypt_version_number, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&pwcrypt_algo_id, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&pwcrypt_compressed, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_version_number, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_cost_t, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_cost_m, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_parallelism, sizeof(uint32_t));
+    
     mbedtls_platform_zeroize(key, sizeof(key));
     mbedtls_platform_zeroize(iv, sizeof(iv));
     mbedtls_platform_zeroize(tag, sizeof(tag));
