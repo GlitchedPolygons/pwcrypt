@@ -71,12 +71,12 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Current version of the used pwcrypt library.
  */
-#define PWCRYPT_VERSION 300
+#define PWCRYPT_VERSION 310
 
 /**
  * Current version of the used pwcrypt library (nicely-formatted string).
  */
-#define PWCRYPT_VERSION_STR "3.0.0"
+#define PWCRYPT_VERSION_STR "3.1.0"
 
 /**
  * Default chunksize to use for compressing and decompressing buffers.
@@ -153,6 +153,11 @@ static const uint8_t EMPTY64[64] = {
  * Error code for when decompressing data fails (ccrush lib failure)..
  */
 #define PWCRYPT_ERROR_DECOMPRESSION_FAILURE 8000
+
+/**
+ * Error code for failures while handling files.
+ */
+#define PWCRYPT_ERROR_FILE_FAILURE 9000
 
 /**
  * Picks the smaller of two numbers.

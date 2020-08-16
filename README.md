@@ -10,6 +10,7 @@
 ---
 
 ### How to clone
+
 `git clone --recursive https://github.com/GlitchedPolygons/pwcrypt.git`
 
 ### How to use the library
@@ -25,18 +26,23 @@ If you don't want to use git submodules, you can also start vendoring a specific
 Check out the [API docs](https://glitchedpolygons.github.io/pwcrypt/files.html) or the [`pwcrypt.h`](https://github.com/GlitchedPolygons/pwcrypt/blob/master/include/pwcrypt.h) header file to find out how to call the encrypt/decrypt functions in C.
 
 #### Note for Windows users
+
 The [`build.bat`](https://github.com/GlitchedPolygons/pwcrypt/blob/master/build.bat) script needs to be run with the _"x64 Native Tools Command Prompt for Visual Studio 2019"_ as an admin, NOT with the standard cmd.exe! 
 
 #### Linking
+
 If you use [CMake](https://cmake.org) you can just `add_subdirectory(path_to_submodule)` and then `target_link_libraries(your_project PRIVATE pwcrypt)` inside your CMakeLists.txt file.
 
 ### How to use the CLI
+
 The pwcrypt command line interface works using the following (relatively rigid) sequence of arguments:
 
 - Mode ('e' for encrypting, 'd' for decrypting)
 - Input text (string to encrypt or decrypt)
 - Password (string to encrypt the input with)
 - [Optional params for encryption]
+
+`pwcrypt_cli {e|d} {input} {password} [--time-cost=INT] [--memory-cost=INT] [--parallelism=INT] [--compression=INT] [--algorithm=aes256-gcm|chachapoly] [--file=OUTPUT_FILE_PATH]`
 
 #### Encrypting
 
@@ -66,3 +72,20 @@ Append `--algorithm=chachapoly` at the end to use the [ChaCha20-Poly1305](https:
 #### Decrypting
 
 `pwcrypt_cli d "EwAAAAQAAAAAAAQAAgAAAFYjNGlNEnNMn5VtyW5hvxnKhdk9i" "Decryption Password 123 !!!"`
+
+### Files instead of strings
+
+The pwcrypt CLI supports encrypting/decrypting files instead of strings too: <p>
+Append the argument `--file="/usr/some/output/filepath.bin"` containing the **output** file path,
+and the result will be written into a file instead of printing it out to the console.
+In this case, the `{input}` text argument will be treated not as a string to encrypt, but as the input path of the file to encrypt/decrypt.
+
+* Example:
+
+<pre>
+pwcrypt_cli e "/home/someuser/secret.png" \
+     "Extremely Safe Encryption 1337 PW" \
+     --file="/home/someuser/enrypted-secret.dat" \
+     --compression=0 \
+     --algorithm=chachapoly
+</pre>
