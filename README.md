@@ -89,3 +89,7 @@ pwcrypt_cli e "/home/someuser/secret.png" \
      --compression=0 \
      --algorithm=chachapoly
 </pre>
+
+Please keep in mind: <br>
+The output string path is **definitive**: there will be no asking whether it's ok to overwrite existing files or not. 
+So make sure to only confirm commands that you know won't cause loss of some files!
