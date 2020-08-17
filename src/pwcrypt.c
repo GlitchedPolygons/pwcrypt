@@ -329,23 +329,23 @@ exit:
     mbedtls_gcm_free(&aes_ctx);
     mbedtls_chachapoly_free(&chachapoly_ctx);
 
-    memset(key, 0x00, sizeof(key));
+    mbedtls_platform_zeroize(key, sizeof(key));
 
     if (output_buffer != NULL)
     {
-        memset(output_buffer, 0x00, output_buffer_length);
+        mbedtls_platform_zeroize(output_buffer, output_buffer_length);
         free(output_buffer);
     }
 
     if (output_buffer_base64 != NULL)
     {
-        memset(output_buffer_base64, 0x00, output_buffer_base64_size);
+        mbedtls_platform_zeroize(output_buffer_base64, output_buffer_base64_size);
         free(output_buffer_base64);
     }
 
     if (input_buffer != NULL)
     {
-        memset(input_buffer, 0x00, input_buffer_length);
+        mbedtls_platform_zeroize(input_buffer, input_buffer_length);
         free(input_buffer);
     }
 
@@ -520,22 +520,29 @@ exit:
 
     mbedtls_gcm_free(&aes_ctx);
     mbedtls_chachapoly_free(&chachapoly_ctx);
-    pwcrypt_version_number = 0, pwcrypt_algo_id = 0, pwcrypt_compressed = 0, argon2_version_number = 0, argon2_cost_t = 0, argon2_cost_m = 0, argon2_parallelism = 0;
 
-    memset(key, 0x00, sizeof(key));
-    memset(iv, 0x00, sizeof(iv));
-    memset(tag, 0x00, sizeof(tag));
-    memset(salt, 0x00, sizeof(salt));
+    mbedtls_platform_zeroize(&pwcrypt_version_number, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&pwcrypt_algo_id, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&pwcrypt_compressed, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_version_number, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_cost_t, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_cost_m, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_parallelism, sizeof(uint32_t));
+
+    mbedtls_platform_zeroize(key, sizeof(key));
+    mbedtls_platform_zeroize(iv, sizeof(iv));
+    mbedtls_platform_zeroize(tag, sizeof(tag));
+    mbedtls_platform_zeroize(salt, sizeof(salt));
 
     if (input != NULL)
     {
-        memset(input, 0x00, input_length);
+        mbedtls_platform_zeroize(input, input_length);
         free(input);
     }
 
     if (decrypted != NULL)
     {
-        memset(decrypted, 0x00, decrypted_length);
+        mbedtls_platform_zeroize(decrypted, decrypted_length);
         free(decrypted);
     }
 
