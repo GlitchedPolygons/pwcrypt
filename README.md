@@ -42,7 +42,15 @@ The pwcrypt command line interface works using the following (relatively rigid) 
 - Password (string to encrypt the input with)
 - [Optional params for encryption]
 
-`pwcrypt_cli {e|d} {input} {password} [--time-cost=INT] [--memory-cost=INT] [--parallelism=INT] [--compression=INT] [--algorithm=aes256-gcm|chachapoly] [--file=OUTPUT_FILE_PATH]`
+```
+pwcrypt_cli {e|d} {input} {password} \
+     [--time-cost=INT] \
+     [--memory-cost=INT] \
+     [--parallelism=INT] \
+     [--compression=INT] \
+     [--algorithm=aes256-gcm|chachapoly] \
+     [--file=OUTPUT_FILE_PATH]
+```
 
 #### Encrypting
 
@@ -78,7 +86,7 @@ Append `--algorithm=chachapoly` at the end to use the [ChaCha20-Poly1305](https:
 The pwcrypt CLI supports encrypting/decrypting files instead of strings too: <p>
 Append the argument `--file="/usr/some/output/filepath.bin"` containing the **output** file path,
 and the result will be written into a file instead of printing it out to the console.
-In this case, the `{input}` text argument will be treated not as a string to encrypt, but as the input path of the file to encrypt/decrypt.
+In this case, the `{input}` text argument will be treated as the path of the file to encrypt/decrypt, NOT as the input string to encrypt.
 
 * Example:
 
@@ -92,4 +100,4 @@ pwcrypt_cli e "/home/someuser/secret.png" \
 
 Please keep in mind: <br>
 The output string path is **definitive**: there will be no asking whether it's ok to overwrite existing files or not. 
-So make sure to only confirm commands that you know won't cause loss of some files!
+So make sure to only confirm commands that you know won't cause losses!
