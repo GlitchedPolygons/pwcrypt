@@ -36,6 +36,9 @@ extern "C" {
 #include <windows.h>
 #undef WIN32_NO_STATUS
 #include <bcrypt.h>
+#else
+#include <io.h>
+#include <sys/stat.h>
 #endif
 
 /**
