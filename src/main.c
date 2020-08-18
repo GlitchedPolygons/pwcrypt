@@ -120,7 +120,7 @@ int main(const int argc, const char* argv[])
 
         if (strncmp("--file=", arg, 7) == 0)
         {
-            input_file = fopen(text, "r");
+            input_file = fopen(text, "rb");
             if (input_file == NULL)
             {
                 fprintf(stderr, "pwcrypt: Failure to open file \"%s\"\n", text);
