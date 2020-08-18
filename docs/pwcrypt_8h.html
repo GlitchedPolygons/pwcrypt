@@ -95,9 +95,9 @@ Include dependency graph for pwcrypt.h:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:a6f984651db551e9e4b63d1e011208749"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749">PWCRYPT_VERSION</a>&#160;&#160;&#160;300</td></tr>
+<tr class="memitem:a6f984651db551e9e4b63d1e011208749"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749">PWCRYPT_VERSION</a>&#160;&#160;&#160;310</td></tr>
 <tr class="separator:a6f984651db551e9e4b63d1e011208749"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f">PWCRYPT_VERSION_STR</a>&#160;&#160;&#160;&quot;3.0.0&quot;</td></tr>
+<tr class="memitem:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f">PWCRYPT_VERSION_STR</a>&#160;&#160;&#160;&quot;3.1.0&quot;</td></tr>
 <tr class="separator:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f42bd2f1c4b44339f65fbde2b369826"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a2f42bd2f1c4b44339f65fbde2b369826">PWCRYPT_Z_CHUNKSIZE</a>&#160;&#160;&#160;(1024 * 256)</td></tr>
 <tr class="separator:a2f42bd2f1c4b44339f65fbde2b369826"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -129,6 +129,8 @@ Macros</h2></td></tr>
 <tr class="separator:a1f237d074ae60f0b41a4fdbd62cf0f03"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7810ca1d3245053e135d52438bc46e88"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a7810ca1d3245053e135d52438bc46e88">PWCRYPT_ERROR_DECOMPRESSION_FAILURE</a>&#160;&#160;&#160;8000</td></tr>
 <tr class="separator:a7810ca1d3245053e135d52438bc46e88"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9572322c0950a2469ebfade4ec44dd96"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a9572322c0950a2469ebfade4ec44dd96">PWCRYPT_ERROR_FILE_FAILURE</a>&#160;&#160;&#160;9000</td></tr>
+<tr class="separator:a9572322c0950a2469ebfade4ec44dd96"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c10aadbb67a8f6dd14140e3f707eb08"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a5c10aadbb67a8f6dd14140e3f707eb08">PWCRYPT_MIN</a>(x,  y)&#160;&#160;&#160;(((x) &lt; (y)) ? (x) : (y))</td></tr>
 <tr class="separator:a5c10aadbb67a8f6dd14140e3f707eb08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a52b0ba6632029e9f9d009472b78b77bc"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a52b0ba6632029e9f9d009472b78b77bc">PWCRYPT_MAX</a>(x,  y)&#160;&#160;&#160;(((x) &gt; (y)) ? (x) : (y))</td></tr>
@@ -149,6 +151,8 @@ Functions</h2></td></tr>
 <tr class="separator:ac7042035dbcc4f674046fd0eab086801"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa689a5dedcc46f81436012f82cccd40b"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#aa689a5dedcc46f81436012f82cccd40b">dev_urandom</a> (uint8_t *output_buffer, const size_t output_buffer_size)</td></tr>
 <tr class="separator:aa689a5dedcc46f81436012f82cccd40b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8304a144cc4d671ab912fe0917f5d1a0"><td class="memItemLeft" align="right" valign="top">static size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a8304a144cc4d671ab912fe0917f5d1a0">pwcrypt_get_filesize</a> (const char *filepath)</td></tr>
+<tr class="separator:a8304a144cc4d671ab912fe0917f5d1a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac7aa530cf42eadb118a20507854195d3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#ac7aa530cf42eadb118a20507854195d3">pwcrypt_assess_password_strength</a> (const uint8_t *password, size_t password_length)</td></tr>
 <tr class="separator:ac7aa530cf42eadb118a20507854195d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7081d496a5e483ea348a71d4c2dd6bf6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a7081d496a5e483ea348a71d4c2dd6bf6">pwcrypt_encrypt</a> (const uint8_t *input, size_t input_length, uint32_t compress, const uint8_t *password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t **output, size_t *output_length, uint32_t output_base64)</td></tr>
@@ -333,6 +337,21 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="a9572322c0950a2469ebfade4ec44dd96"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9572322c0950a2469ebfade4ec44dd96">&#9670;&nbsp;</a></span>PWCRYPT_ERROR_FILE_FAILURE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define PWCRYPT_ERROR_FILE_FAILURE&#160;&#160;&#160;9000</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Error code for failures while handling files. </p>
+
+</div>
+</div>
 <a id="ae54a26d96145aa76bb650022a17c807b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae54a26d96145aa76bb650022a17c807b">&#9670;&nbsp;</a></span>PWCRYPT_ERROR_INVALID_ARGS</h2>
 
@@ -443,7 +462,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define PWCRYPT_VERSION&#160;&#160;&#160;300</td>
+          <td class="memname">#define PWCRYPT_VERSION&#160;&#160;&#160;310</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -458,7 +477,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define PWCRYPT_VERSION_STR&#160;&#160;&#160;&quot;3.0.0&quot;</td>
+          <td class="memname">#define PWCRYPT_VERSION_STR&#160;&#160;&#160;&quot;3.1.0&quot;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -767,6 +786,39 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><code>0</code> on success; non-zero error codes if something fails. </dd></dl>
+
+</div>
+</div>
+<a id="a8304a144cc4d671ab912fe0917f5d1a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8304a144cc4d671ab912fe0917f5d1a0">&#9670;&nbsp;</a></span>pwcrypt_get_filesize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static size_t pwcrypt_get_filesize </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>filepath</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Retrieve the size of a file. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filepath</td><td>The file path. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The file size if retrieval succeeded; <code>0</code> if getting the file size failed for some reason. </dd></dl>
 
 </div>
 </div>
