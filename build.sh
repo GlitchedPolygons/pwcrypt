@@ -19,11 +19,11 @@ if [ "$(whoami)" == "root" ]; then
   exit
 fi
 
+PREVCC="$CC"
 if command -v clang &> /dev/null
 then
     echo "-- Clang found on system, great! Long live LLVM! :D"
     export CC=clang
-    export CXX=clang++
 fi
 
 REPO=$(dirname "$0")
@@ -33,6 +33,7 @@ mkdir -p "$REPO"/build/include && cd "$REPO"/build || exit
 cmake -DBUILD_SHARED_LIBS=Off -DUSE_SHARED_MBEDTLS_LIBRARY=Off -DCMAKE_BUILD_TYPE=Release ..
 make
 cp -r ../include .
+export CC="$PREVCC"
 tar -czvf pwcrypt.tar.gz pwcrypt_cli *.a include/*
 cd "$REPO" || exit
 echo "  Done. Exported build into $REPO/build"
