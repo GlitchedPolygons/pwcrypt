@@ -72,7 +72,8 @@ int main(const int argc, const char* argv[])
     uint8_t* output = NULL;
     size_t output_length = 0;
 
-    FILE* output_file = NULL;
+    char output_file_path[PATH_MAX + 1];
+    mbedtls_platform_zeroize(output_file_path, sizeof(output_file_path));
 
     uint32_t compression = 8;
     uint32_t algo_id = PWCRYPT_ALGO_ID_AES256_GCM;
@@ -120,6 +121,14 @@ int main(const int argc, const char* argv[])
 
         if (strncmp("--file=", arg, 7) == 0)
         {
+            input_length = pwcrypt_get_filesize(text);
+            if (input_length == 0)
+            {
+                fprintf(stderr, "pwcrypt: Failure to assess filesize: \"%s\"\n", text);
+                r = PWCRYPT_ERROR_FILE_FAILURE;
+                goto exit;
+            }
+
             input_file = fopen(text, "rb");
             if (input_file == NULL)
             {
@@ -129,15 +138,6 @@ int main(const int argc, const char* argv[])
             }
 
             file = 1;
-
-            input_length = pwcrypt_get_filesize(text);
-            if (input_length == 0)
-            {
-                fprintf(stderr, "pwcrypt: Failure to open file \"%s\"\n", text);
-                r = PWCRYPT_ERROR_FILE_FAILURE;
-                goto exit;
-            }
-
             input = malloc(input_length + 1);
             if (input == NULL)
             {
@@ -154,10 +154,10 @@ int main(const int argc, const char* argv[])
                 goto exit;
             }
 
-            output_file = fopen(arg + 7, "wb");
-            if (output_file == NULL)
+            const int n = snprintf(output_file_path, sizeof(output_file_path), "%s", arg + 7);
+            if (n < 0 || n >= sizeof(output_file_path))
             {
-                fprintf(stderr, "pwcrypt: Failure to create output file %s\n", arg + 7);
+                fprintf(stderr, "pwcrypt: Output file path too long: \"%s\" (maximum length is PATH_MAX=%d).\n", text, PATH_MAX);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
                 goto exit;
             }
@@ -203,12 +203,21 @@ int main(const int argc, const char* argv[])
     {
         if (file)
         {
+            FILE* output_file = fopen(output_file_path, "wb");
+            if (output_file == NULL)
+            {
+                fprintf(stderr, "pwcrypt: Failure to create output file %s\n", output_file_path);
+                r = PWCRYPT_ERROR_FILE_FAILURE;
+                goto exit;
+            }
+
             if (output_length != fwrite(output, sizeof(uint8_t), output_length, output_file))
             {
                 fprintf(stderr, "pwcrypt: Encryption failed! Couldn't write all %zu bytes into the output file...\n", output_length);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
-                goto exit;
             }
+
+            fclose(output_file);
         }
         else
         {
@@ -221,12 +230,6 @@ exit:
     {
         fclose(input_file);
         mbedtls_platform_zeroize(&input_file, sizeof(FILE*));
-    }
-
-    if (output_file != NULL)
-    {
-        fclose(output_file);
-        mbedtls_platform_zeroize(&output_file, sizeof(FILE*));
     }
 
     if (file && input != NULL)
@@ -249,6 +252,7 @@ exit:
     mbedtls_platform_zeroize(&cost_t, sizeof(uint32_t));
     mbedtls_platform_zeroize(&cost_m, sizeof(uint32_t));
     mbedtls_platform_zeroize(&parallelism, sizeof(uint32_t));
+    mbedtls_platform_zeroize(output_file_path, sizeof(output_file_path));
 
     return (r);
 }
