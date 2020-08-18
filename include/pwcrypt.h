@@ -267,23 +267,17 @@ exit:
     return filesize;
 #else
     struct stat stbuf;
-    int fd = open(filepath, 0x00);
-    if (fd == -1)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: Failure to open file for reading its size: %s", filepath);
-        goto exit;
-    }
-
-    if ((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
+    if ((stat(filepath, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Failure to retrieve filesize: %s", filepath);
         goto exit;
     }
-
+    if (sizeof(stbuf.st_size) < 8)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: The current size of \"off_t\" (%d B) promises less than 64-bit file sizes, which means filesize representation in this implementation is limited to 2GB.", sizeof(stbuf.st_size));
+    }
     filesize = (size_t)stbuf.st_size;
-
 exit:
-    close(fd);
     mbedtls_platform_zeroize(&stbuf, sizeof(stbuf));
     return filesize;
 #endif
