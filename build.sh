@@ -19,6 +19,13 @@ if [ "$(whoami)" == "root" ]; then
   exit
 fi
 
+if command -v clang &> /dev/null
+then
+    echo "-- Clang found on system, great! Long live LLVM! :D"
+    export CC=clang
+    export CXX=clang++
+fi
+
 REPO=$(dirname "$0")
 rm -rf "$REPO"/out
 rm -rf "$REPO"/build
