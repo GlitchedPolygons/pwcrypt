@@ -30,6 +30,10 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <mbedtls/gcm.h>
+#include <mbedtls/base64.h>
+#include <mbedtls/chachapoly.h>
+#include <mbedtls/platform_util.h>
 
 #ifdef _WIN32
 #define WIN32_NO_STATUS
@@ -37,7 +41,10 @@ extern "C" {
 #undef WIN32_NO_STATUS
 #include <bcrypt.h>
 #else
+#include <fcntl.h>
+#include <unistd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #endif
 
 /**
@@ -232,7 +239,7 @@ static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffe
 /**
  * Retrieve the size of a file.
  * @param filepath The file path.
- * @return The file size if retrieval succeeded; <c>0</c> if getting the file size failed for some reason.
+ * @return The file size (in bytes) if retrieval succeeded; <c>0</c> if getting the file size failed for some reason.
  */
 static inline size_t pwcrypt_get_filesize(const char* filepath)
 {
@@ -259,7 +266,7 @@ exit:
     CloseHandle(f);
     return filesize;
 #else
-    struct stat64 stbuf;
+    struct stat stbuf;
     int fd = open(filepath, 0x00);
     if (fd == -1)
     {
@@ -267,7 +274,7 @@ exit:
         goto exit;
     }
 
-    if ((fstat64(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
+    if ((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Failure to retrieve filesize: %s", filepath);
         goto exit;
@@ -277,7 +284,7 @@ exit:
 
 exit:
     close(fd);
-    mbedtls_platform_zeroize(&stbuf, sizeof(struct stat64));
+    mbedtls_platform_zeroize(&stbuf, sizeof(stbuf));
     return filesize;
 #endif
 }
