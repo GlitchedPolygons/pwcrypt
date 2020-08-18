@@ -129,11 +129,16 @@ int main(const int argc, const char* argv[])
             }
 
             file = 1;
-            fseek(input_file, 0, SEEK_END);
-            input_length = ftell(input_file);
-            rewind(input_file);
 
-            input = malloc(input_length);
+            input_length = pwcrypt_get_filesize(text);
+            if (input_length == 0)
+            {
+                fprintf(stderr, "pwcrypt: Failure to open file \"%s\"\n", text);
+                r = PWCRYPT_ERROR_FILE_FAILURE;
+                goto exit;
+            }
+
+            input = malloc(input_length + 1);
             if (input == NULL)
             {
                 fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
@@ -141,6 +146,7 @@ int main(const int argc, const char* argv[])
                 goto exit;
             }
 
+            input[input_length] = 0x00;
             if (input_length != fread(input, sizeof(uint8_t), input_length, input_file))
             {
                 fprintf(stderr, "pwcrypt: Failure to read file \"%s\"\n", text);

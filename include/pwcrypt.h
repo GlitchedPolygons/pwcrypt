@@ -36,8 +36,6 @@ extern "C" {
 #include <windows.h>
 #undef WIN32_NO_STATUS
 #include <bcrypt.h>
-#else
-#include <stdio.h>
 #endif
 
 /**
@@ -227,6 +225,59 @@ static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffe
         }
 #endif
     }
+}
+
+/**
+ * Retrieve the size of a file.
+ * @param filepath The file path.
+ * @return The file size if retrieval succeeded; <c>0</c> if getting the file size failed for some reason.
+ */
+static inline size_t pwcrypt_get_filesize(const char* filepath)
+{
+    size_t filesize = 0;
+
+#if _WIN32
+    HANDLE f = CreateFile(filepath, FILE_ATTRIBUTE_READONLY, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (f == INVALID_HANDLE_VALUE)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Failure to open file for reading its size: %s", filepath);
+        goto exit;
+    }
+
+    LARGE_INTEGER i;
+    if (!GetFileSizeEx(f, &i))
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Failure to read file size: %s", filepath);
+        goto exit;
+    }
+
+    filesize = (size_t)i.QuadPart;
+
+exit:
+    CloseHandle(f);
+    return filesize;
+#else
+    struct stat64 stbuf;
+    int fd = open(filepath, 0x00);
+    if (fd == -1)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Failure to open file for reading its size: %s", filepath);
+        goto exit;
+    }
+
+    if ((fstat64(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Failure to retrieve filesize: %s", filepath);
+        goto exit;
+    }
+
+    filesize = (size_t)stbuf.st_size;
+
+exit:
+    close(fd);
+    mbedtls_platform_zeroize(&stbuf, sizeof(struct stat64));
+    return filesize;
+#endif
 }
 
 /**
