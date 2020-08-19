@@ -21,6 +21,10 @@
 
 #include "pwcrypt.h"
 
+#if _WIN32
+#define PATH_MAX 260
+#endif
+
 static const char HELP_TEXT[] = "\n"
                                 "pwcrypt \n"
                                 "------- \n"
