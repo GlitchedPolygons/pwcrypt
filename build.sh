@@ -32,9 +32,13 @@ rm -rf "$REPO"/build
 mkdir -p "$REPO"/build/include && cd "$REPO"/build || exit
 cmake -DBUILD_SHARED_LIBS=Off -DUSE_SHARED_MBEDTLS_LIBRARY=Off -DCMAKE_BUILD_TYPE=Release ..
 make
-cp -r ../include .
 export CC="$PREVCC"
-tar -czvf pwcrypt.tar.gz pwcrypt_cli *.a include/*
+cp -r ../include .
+V=$(grep 'VERSION_STR' < "$REPO/include/pwcrypt.h" | awk '{print $3}' | sed -e 's/^"//' -e 's/"$//')
+O=$(uname -s | awk '{print tolower($0)}')
+P=$(uname -m | awk '{print tolower($0)}')
+FN="pwcrypt-$V-$O-$P.tar.gz"
+tar -czvf "$FN" pwcrypt_cli *.a include/*
 cd "$REPO" || exit
 echo "  Done. Exported build into $REPO/build"
-echo "  Check out the pwcrypt.tar.gz file in there! "
+echo "  Check out the $FN file in there! "
