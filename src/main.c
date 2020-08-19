@@ -41,13 +41,13 @@ int main(const int argc, const char* argv[])
 
     if (argc == 1 || (argc == 2 && strcmp(argv[1], "--help") == 0))
     {
-        fprintf(stdout, HELP_TEXT, PWCRYPT_VERSION_STR);
+        pwcrypt_fprintf(stdout, HELP_TEXT, PWCRYPT_VERSION_STR);
         return 0;
     }
 
     if (argc < 4)
     {
-        fprintf(stderr, PWCRYPT_INVALID_ARGS_ERROR_MSG);
+        pwcrypt_fprintf(stderr, PWCRYPT_INVALID_ARGS_ERROR_MSG);
         return PWCRYPT_ERROR_INVALID_ARGS;
     }
 
@@ -81,7 +81,7 @@ int main(const int argc, const char* argv[])
 
     if (mode_length != 1)
     {
-        fprintf(stderr, PWCRYPT_INVALID_ARGS_ERROR_MSG);
+        pwcrypt_fprintf(stderr, PWCRYPT_INVALID_ARGS_ERROR_MSG);
         r = PWCRYPT_ERROR_INVALID_ARGS;
         goto exit;
     }
@@ -124,7 +124,6 @@ int main(const int argc, const char* argv[])
             input_length = pwcrypt_get_filesize(text);
             if (input_length == 0)
             {
-                fprintf(stderr, "pwcrypt: Failure to assess filesize: \"%s\"\n", text);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
                 goto exit;
             }
@@ -132,7 +131,7 @@ int main(const int argc, const char* argv[])
             input_file = fopen(text, "rb");
             if (input_file == NULL)
             {
-                fprintf(stderr, "pwcrypt: Failure to open file \"%s\"\n", text);
+                pwcrypt_fprintf(stderr, "pwcrypt: Failure to open file \"%s\"\n", text);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
                 goto exit;
             }
@@ -141,7 +140,7 @@ int main(const int argc, const char* argv[])
             input = malloc(input_length + 1);
             if (input == NULL)
             {
-                fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
+                pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
                 r = PWCRYPT_ERROR_OOM;
                 goto exit;
             }
@@ -149,7 +148,7 @@ int main(const int argc, const char* argv[])
             input[input_length] = 0x00;
             if (input_length != fread(input, sizeof(uint8_t), input_length, input_file))
             {
-                fprintf(stderr, "pwcrypt: Failure to read file \"%s\"\n", text);
+                pwcrypt_fprintf(stderr, "pwcrypt: Failure to read file \"%s\"\n", text);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
                 goto exit;
             }
@@ -157,7 +156,7 @@ int main(const int argc, const char* argv[])
             const int n = snprintf(output_file_path, sizeof(output_file_path), "%s", arg + 7);
             if (n < 0 || n >= sizeof(output_file_path))
             {
-                fprintf(stderr, "pwcrypt: Output file path too long: \"%s\" (maximum length is PATH_MAX=%d).\n", text, PATH_MAX);
+                pwcrypt_fprintf(stderr, "pwcrypt: Output file path too long: \"%s\" (maximum length is PATH_MAX=%d).\n", text, PATH_MAX);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
                 goto exit;
             }
@@ -180,7 +179,7 @@ int main(const int argc, const char* argv[])
             r = pwcrypt_encrypt(input, input_length, compression, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, &output, &output_length, (uint32_t)(!file));
             if (r != 0)
             {
-                fprintf(stderr, "pwcrypt: Encryption failed!\n");
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failed!\n");
             }
             break;
         }
@@ -188,12 +187,12 @@ int main(const int argc, const char* argv[])
             r = pwcrypt_decrypt(input, input_length, (uint8_t*)password, password_length, &output, &output_length);
             if (r != 0)
             {
-                fprintf(stderr, "pwcrypt: Decryption failed!\n");
+                pwcrypt_fprintf(stderr, "pwcrypt: Decryption failed!\n");
             }
             break;
         }
         default: {
-            fprintf(stderr, PWCRYPT_INVALID_ARGS_ERROR_MSG);
+            pwcrypt_fprintf(stderr, PWCRYPT_INVALID_ARGS_ERROR_MSG);
             r = PWCRYPT_ERROR_INVALID_ARGS;
             goto exit;
         }
@@ -206,22 +205,23 @@ int main(const int argc, const char* argv[])
             FILE* output_file = fopen(output_file_path, "wb");
             if (output_file == NULL)
             {
-                fprintf(stderr, "pwcrypt: Failure to create output file %s\n", output_file_path);
+                pwcrypt_fprintf(stderr, "pwcrypt: Failure to create output file %s\n", output_file_path);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
                 goto exit;
             }
 
             if (output_length != fwrite(output, sizeof(uint8_t), output_length, output_file))
             {
-                fprintf(stderr, "pwcrypt: Encryption failed! Couldn't write all %zu bytes into the output file...\n", output_length);
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failed! Couldn't write all %zu bytes into the output file...\n", output_length);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
             }
 
             fclose(output_file);
+            mbedtls_platform_zeroize(&output_file, sizeof(FILE*));
         }
         else
         {
-            fprintf(stdout, "%s\n", output);
+            pwcrypt_fprintf(stdout, "%s\n", output);
         }
     }
 

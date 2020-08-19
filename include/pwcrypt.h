@@ -269,7 +269,7 @@ exit:
     struct stat stbuf;
     if ((stat(filepath, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
     {
-        pwcrypt_fprintf(stderr, "pwcrypt: Failure to retrieve filesize: %s", filepath);
+        pwcrypt_fprintf(stderr, "pwcrypt: Failure to assess filesize: %s (file not found?).", filepath);
         goto exit;
     }
     if (sizeof(stbuf.st_size) < 8)
