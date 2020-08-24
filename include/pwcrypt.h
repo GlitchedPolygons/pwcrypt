@@ -50,7 +50,7 @@ extern "C" {
 /**
  * Error message for invalid CLI arguments.
  */
-static const char PWCRYPT_INVALID_ARGS_ERROR_MSG[] = "pwcrypt: Invalid arguments! Please run \"pwcrypt-- help\" to find out how to use this program.\n";
+static const char PWCRYPT_INVALID_ARGS_ERROR_MSG[] = "pwcrypt: Invalid arguments! Please run \"pwcrypt --help\" to find out how to use this program.\n";
 
 /**
  * An array of 64 bytes of value 0x00.
