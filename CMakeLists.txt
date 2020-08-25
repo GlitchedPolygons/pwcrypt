@@ -60,7 +60,7 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC mbedcrypto
         )
 
-if (UNIX)
+if (UNIX AND NOT ANDROID)
     target_link_libraries(${PROJECT_NAME} PRIVATE -lpthread)
 endif()
 
