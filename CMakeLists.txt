@@ -25,22 +25,20 @@ option(USE_SHARED_MBEDTLS_LIBRARY "Statically link MbedTLS if possible." OFF)
 option(PWCRYPT_ENABLE_TESTS "Build unit tests." OFF)
 option(PWCRYPT_ONLY_BUILD_LIB "Don't build the pwcrypt executable, but just its library for use in other C projects." OFF)
 
+set(${PROJECT_NAME}_ARGON2_IMPL ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/ref.c)
+
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+    set(${PROJECT_NAME}_ARGON2_IMPL ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/opt.c)
+endif ()
+
 set(${PROJECT_NAME}_SRC_FILES
-        ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/blake2/blake2.h
-        ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/blake2/blake2-impl.h
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/blake2/blake2b.c
-        ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/blake2/blamka-round-opt.h
-        ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/blake2/blamka-round-ref.h
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/argon2.c
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/core.c
-        ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/core.h
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/encoding.c
-        ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/encoding.h
-        ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/opt.c
         ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/thread.c
-        ${CMAKE_CURRENT_LIST_DIR}/lib/argon2/src/thread.h
+        ${${PROJECT_NAME}_ARGON2_IMPL}
         ${CMAKE_CURRENT_LIST_DIR}/src/pwcrypt.c
-        ${CMAKE_CURRENT_LIST_DIR}/include/pwcrypt.h
         )
 
 if (NOT TARGET mbedtls)
@@ -55,14 +53,12 @@ add_library(${PROJECT_NAME} ${${PROJECT_NAME}_SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC ccrush
-        PUBLIC mbedtls
-        PUBLIC mbedx509
         PUBLIC mbedcrypto
         )
 
 if (UNIX AND NOT ANDROID)
     target_link_libraries(${PROJECT_NAME} PRIVATE -lpthread)
-endif()
+endif ()
 
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PUBLIC bcrypt)
