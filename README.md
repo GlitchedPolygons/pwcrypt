@@ -101,3 +101,10 @@ pwcrypt_cli e "/home/someuser/secret.png" \
 Please keep in mind: <br>
 The output string path is **definitive**: there will be no asking whether it's ok to overwrite existing files or not. 
 So make sure to only confirm commands that you know won't cause losses!
+
+### GUIs
+
+You want the nice graphical stuff huh? The fully visualized presentation. With colors 'n' design n' stuff. We get it!
+
+There is a (commercial) [Android app](https://play.google.com/store/apps/details?id=com.glitchedpolygons.pwcrypt) on the Google Play store called "psíthyros" that uses and wraps this library. It presents a very usable and accessible way of interacting with pwcrypt (for text messages, mainly).
+The desktop client will follow soon too!
