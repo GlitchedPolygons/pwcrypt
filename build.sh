@@ -42,12 +42,28 @@ cd static || exit
 cmake -DBUILD_SHARED_LIBS=Off -DUSE_SHARED_MBEDTLS_LIBRARY=Off -DPWCRYPT_BUILD_DLL=Off -DPWCRYPT_ONLY_BUILD_LIB=On -DPWCRYPT_ENABLE_TESTS=Off -DCMAKE_BUILD_TYPE=Release ../.. || exit
 cmake --build . --config Release || exit
 cd .. || exit
+
 VER=$(grep VERSION_STR include/*.h | sed -e "s/^#define PWCRYPT_VERSION_STR\ \"//" -e "s/\"$//" | tr -d '\n' | tr -d '\r\n')
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 CPU=$(uname -m)
 FILENAME="pwcrypt-${VER}-${OS}-${CPU}.tar.gz"
-tar -czvf "${FILENAME}" "pwcrypt_cli" "Release/pwcrypt_cli.exe" "include/pwcrypt.h" "shared/Release/pwcrypt.dll" "shared/Release/pwcrypt.exp" "shared/Release/pwcrypt.lib" "shared/*.dylib" "shared/*.dylib*" "shared/*.so" "shared/*.so*" "static/*.a" "static/Release/pwcrypt.lib"
+
+tar -czvf "${FILENAME}" \
+    include/pwcrypt.h \
+    static/*.a \
+    static/mbedtls/library/*.a \
+    static/Release/*.lib \
+    static/mbedtls/library/Release/*.lib \
+    shared/*.so \
+    shared/*.so* \
+    shared/*.dylib \
+    shared/Release/pwcrypt.dll \
+    shared/Release/pwcrypt.exp \
+    shared/Release/pwcrypt.lib \
+    pwcrypt_cli \
+    Release/pwcrypt_cli.exe 2> /dev/null
+
 cd "$REPO" || exit
 export CC="$PREVCC"
 echo "  Done. Exported build into $REPO/build"
-echo "  Check out the .tar.gz file in there! "
+echo "  Check out the ${FILENAME} file in there! "
