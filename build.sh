@@ -50,13 +50,11 @@ FILENAME="pwcrypt-${VER}-${OS}-${CPU}.tar.gz"
 
 tar -czvf "${FILENAME}" \
     include/pwcrypt.h \
-    static/*.a \
-    static/mbedtls/library/*.a \
-    static/Release/*.lib \
-    static/mbedtls/library/Release/*.lib \
-    shared/*.so \
-    shared/*.so* \
-    shared/*.dylib \
+    static/libpwcrypt.a \
+    static/Release/pwcrypt.lib \
+    shared/libpwcrypt.so \
+    shared/libpwcrypt.so* \
+    shared/libpwcrypt.dylib \
     shared/Release/pwcrypt.dll \
     shared/Release/pwcrypt.exp \
     shared/Release/pwcrypt.lib \
