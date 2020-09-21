@@ -27,6 +27,16 @@
 extern "C" {
 #endif
 
+#if defined(_WIN32) && defined(PWCRYPT_DLL)
+#ifdef PWCRYPT_BUILD_DLL
+#define PWCRYPT_API __declspec(dllexport)
+#else
+#define PWCRYPT_API __declspec(dllimport)
+#endif
+#else
+#define PWCRYPT_API
+#endif
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -34,18 +44,6 @@ extern "C" {
 #include <mbedtls/base64.h>
 #include <mbedtls/chachapoly.h>
 #include <mbedtls/platform_util.h>
-
-#ifdef _WIN32
-#define WIN32_NO_STATUS
-#include <windows.h>
-#undef WIN32_NO_STATUS
-#include <bcrypt.h>
-#else
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#endif
 
 /**
  * Error message for invalid CLI arguments.
@@ -78,12 +76,12 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Current version of the used pwcrypt library.
  */
-#define PWCRYPT_VERSION 310
+#define PWCRYPT_VERSION 311
 
 /**
  * Current version of the used pwcrypt library (nicely-formatted string).
  */
-#define PWCRYPT_VERSION_STR "3.1.0"
+#define PWCRYPT_VERSION_STR "3.1.1"
 
 /**
  * Default chunksize to use for compressing and decompressing buffers.
@@ -180,7 +178,7 @@ static const uint8_t EMPTY64[64] = {
  * Checks whether pwcrypt fprintf is enabled (whether errors are fprintfed into stderr).
  * @return Whether errors are fprintfed into stderr or not.
  */
-unsigned char pwcrypt_is_fprintf_enabled();
+PWCRYPT_API unsigned char pwcrypt_is_fprintf_enabled();
 
 /**
  * Like fprintf() except it doesn't do anything. Like printing into <c>/dev/null</c> :D lots of fun!
@@ -200,12 +198,12 @@ extern int (*pwcrypt_fprintf_fptr)(FILE* stream, const char* format, ...);
 /**
  * Enables pwcrypts' use of fprintf().
  */
-void pwcrypt_enable_fprintf();
+PWCRYPT_API void pwcrypt_enable_fprintf();
 
 /**
  * Disables pwcrypts' use of fprintf().
  */
-void pwcrypt_disable_fprintf();
+PWCRYPT_API void pwcrypt_disable_fprintf();
 
 /** @private */
 #define pwcrypt_fprintf pwcrypt_fprintf_fptr
@@ -215,73 +213,14 @@ void pwcrypt_disable_fprintf();
  * @param output_buffer Where to write the random bytes into.
  * @param output_buffer_size How many random bytes to write into \p output_buffer
  */
-static inline void dev_urandom(uint8_t* output_buffer, const size_t output_buffer_size)
-{
-    if (output_buffer != NULL && output_buffer_size > 0)
-    {
-#ifdef _WIN32
-        BCryptGenRandom(NULL, output_buffer, (ULONG)output_buffer_size, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
-#else
-        FILE* rnd = fopen("/dev/urandom", "r");
-        if (rnd != NULL)
-        {
-            const size_t n = fread(output_buffer, sizeof(unsigned char), output_buffer_size, rnd);
-            if (n != output_buffer_size)
-            {
-                pwcrypt_fprintf(stderr, "pwcrypt: Warning! Only %llu bytes out of %llu have been read from /dev/urandom\n", n, output_buffer_size);
-            }
-            fclose(rnd);
-        }
-#endif
-    }
-}
+PWCRYPT_API void dev_urandom(uint8_t* output_buffer, size_t output_buffer_size);
 
 /**
  * Retrieve the size of a file.
  * @param filepath The file path.
  * @return The file size (in bytes) if retrieval succeeded; <c>0</c> if getting the file size failed for some reason.
  */
-static inline size_t pwcrypt_get_filesize(const char* filepath)
-{
-    size_t filesize = 0;
-
-#if _WIN32
-    HANDLE f = CreateFile(filepath, FILE_ATTRIBUTE_READONLY, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (f == INVALID_HANDLE_VALUE)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: Failure to open file for reading its size: %s", filepath);
-        goto exit;
-    }
-
-    LARGE_INTEGER i;
-    if (!GetFileSizeEx(f, &i))
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: Failure to read file size: %s", filepath);
-        goto exit;
-    }
-
-    filesize = (size_t)i.QuadPart;
-
-exit:
-    CloseHandle(f);
-    return filesize;
-#else
-    struct stat stbuf;
-    if ((stat(filepath, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: Failure to assess filesize: %s (file not found?).", filepath);
-        goto exit;
-    }
-    if (sizeof(stbuf.st_size) < 8)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: The current size of \"off_t\" (%d B) promises less than 64-bit file sizes, which means filesize representation in this implementation is limited to 2GB.", sizeof(stbuf.st_size));
-    }
-    filesize = (size_t)stbuf.st_size;
-exit:
-    mbedtls_platform_zeroize(&stbuf, sizeof(stbuf));
-    return filesize;
-#endif
-}
+PWCRYPT_API size_t pwcrypt_get_filesize(const char* filepath);
 
 /**
  * Checks whether a given password is strong enough or not.
@@ -289,7 +228,7 @@ exit:
  * @param password_length Length of the \p password string.
  * @return <c>0</c> if the password is OK; a non-zero error code if the password is too weak.
  */
-int pwcrypt_assess_password_strength(const uint8_t* password, size_t password_length);
+PWCRYPT_API int pwcrypt_assess_password_strength(const uint8_t* password, size_t password_length);
 
 /**
  * Encrypts an input string of data symmetrically with a password. <p>
@@ -308,7 +247,7 @@ int pwcrypt_assess_password_strength(const uint8_t* password, size_t password_le
  * @param output_base64 Should the encrypted output bytes be base64-encoded for easy textual transmission (e.g. email)? If you decide to base64-encode the encrypted data buffer, please be aware that a NUL-terminator is appended at the end to allow usage as a C-string but it will not be counted in \p output_length. Pass <c>0</c> for raw binary output, or anything else for a human-readable, base64-encoded output string.
  * @return <c>0</c> on success; non-zero error codes if something fails.
  */
-int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress, const uint8_t* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t** output, size_t* output_length, uint32_t output_base64);
+PWCRYPT_API int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress, const uint8_t* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t** output, size_t* output_length, uint32_t output_base64);
 
 /**
  * Decrypts a string or a byte array that was encrypted using pwcrypt_encrypt(). <p>
@@ -321,7 +260,7 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
  * @param output_length [OPTIONAL] Where to write the output buffer length into. Pass <c>NULL</c> if you don't care.
  * @return <c>0</c> on success; non-zero error codes if something fails.
  */
-int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** output, size_t* output_length);
+PWCRYPT_API int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** output, size_t* output_length);
 
 #ifdef __cplusplus
 } // extern "C"

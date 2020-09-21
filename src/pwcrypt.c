@@ -23,6 +23,18 @@
 #include <ccrush.h>
 #include <assert.h>
 
+#ifdef _WIN32
+#define WIN32_NO_STATUS
+#include <windows.h>
+#undef WIN32_NO_STATUS
+#include <bcrypt.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
+
 static const uint32_t PWCRYPT_V = (uint32_t)PWCRYPT_VERSION;
 static const uint32_t ARGON2_V = (uint32_t)ARGON2_VERSION_NUMBER;
 
@@ -45,6 +57,69 @@ void pwcrypt_disable_fprintf()
 {
     pwcrypt_fprintf_enabled = 0;
     pwcrypt_fprintf_fptr = &pwcrypt_printvoid;
+}
+
+size_t pwcrypt_get_filesize(const char* filepath)
+{
+    size_t filesize = 0;
+
+#if _WIN32
+    HANDLE f = CreateFile(filepath, FILE_ATTRIBUTE_READONLY, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (f == INVALID_HANDLE_VALUE)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Failure to open file for reading its size: %s", filepath);
+        goto exit;
+    }
+
+    LARGE_INTEGER i;
+    if (!GetFileSizeEx(f, &i))
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Failure to read file size: %s", filepath);
+        goto exit;
+    }
+
+    filesize = (size_t)i.QuadPart;
+
+    exit:
+    CloseHandle(f);
+    return filesize;
+#else
+    struct stat stbuf;
+    if ((stat(filepath, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Failure to assess filesize: %s (file not found?).", filepath);
+        goto exit;
+    }
+    if (sizeof(stbuf.st_size) < 8)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: The current size of \"off_t\" (%d B) promises less than 64-bit file sizes, which means filesize representation in this implementation is limited to 2GB.", sizeof(stbuf.st_size));
+    }
+    filesize = (size_t)stbuf.st_size;
+exit:
+    mbedtls_platform_zeroize(&stbuf, sizeof(stbuf));
+    return filesize;
+#endif
+}
+
+void dev_urandom(uint8_t* output_buffer, const size_t output_buffer_size)
+{
+    if (output_buffer != NULL && output_buffer_size > 0)
+    {
+#ifdef _WIN32
+        BCryptGenRandom(NULL, output_buffer, (ULONG)output_buffer_size, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+#else
+        FILE* rnd = fopen("/dev/urandom", "r");
+        if (rnd != NULL)
+        {
+            const size_t n = fread(output_buffer, sizeof(unsigned char), output_buffer_size, rnd);
+            if (n != output_buffer_size)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Warning! Only %llu bytes out of %llu have been read from /dev/urandom\n", n, output_buffer_size);
+            }
+            fclose(rnd);
+        }
+#endif
+    }
 }
 
 int pwcrypt_assess_password_strength(const uint8_t* password, const size_t password_length)
