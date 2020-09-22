@@ -233,10 +233,10 @@ PWCRYPT_API int pwcrypt_assess_password_strength(const uint8_t* password, size_t
 /**
  * Encrypts an input string of data symmetrically with a password. <p>
  * The password string is fed into a customizable amount of Argon2id iterations to derive a 256-bit symmetric key, with which the input will be encrypted and written into the output buffer.
- * @param input The input string to encrypt.
- * @param input_length Length of the \p input string argument.
+ * @param input The input data to encrypt.
+ * @param input_length Length of the \p input data array argument.
  * @param compress Should the input data be compressed before being encrypted? Pass <c>0</c> for no compression, or a compression level from <c>1</c> to <c>9</c> to pass to the deflate algorithm (<c>6</c> is a healthy default value to use for this).
- * @param password The password string with which to encrypt the \p input argument (this will be used to derive a 256-bit symmetric encryption key (e.g. AES-256 key) using Argon2id).
+ * @param password The password string (ideally a UTF8-encoded byte array, but you can obviously also encrypt using a file) with which to encrypt the \p input argument (this will be used to derive a 256-bit symmetric encryption key (e.g. AES-256 key) using Argon2id).
  * @param password_length Length of the \p password string argument.
  * @param argon2_cost_t The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric encryption key. Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_T_COST.
  * @param argon2_cost_m The Argon2 memory cost parameter (in KiB) to use for key derivation.  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_M_COST.
@@ -261,6 +261,12 @@ PWCRYPT_API int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint3
  * @return <c>0</c> on success; non-zero error codes if something fails.
  */
 PWCRYPT_API int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** output, size_t* output_length);
+
+/**
+ * Wrapper around <c>free()</c> (mainly useful for C# interop).
+ * @param ptr The memory to free (typically the output of one of the two main pwcrypt functions).
+ */
+PWCRYPT_API void pwcrypt_free(void* ptr);
 
 #ifdef __cplusplus
 } // extern "C"

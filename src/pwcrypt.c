@@ -122,6 +122,11 @@ void dev_urandom(uint8_t* output_buffer, const size_t output_buffer_size)
     }
 }
 
+void pwcrypt_free(void* ptr)
+{
+    free(ptr);
+}
+
 int pwcrypt_assess_password_strength(const uint8_t* password, const size_t password_length)
 {
     if (password_length < 6)

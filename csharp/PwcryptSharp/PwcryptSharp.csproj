@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AssemblyName>GlitchedPolygons.PwcryptSharp</AssemblyName>
+    <RootNamespace>GlitchedPolygons.PwcryptSharp</RootNamespace>
+    <PackageId>GlitchedPolygons.PwcryptSharp</PackageId>
+    <Authors>Glitched Polygons</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="lib\x64\linux\libpwcrypt.so.3.1.1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="lib\x64\windows\pwcrypt.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="lib\x64\mac\libpwcrypt.3.1.1.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
