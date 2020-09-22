@@ -54,7 +54,7 @@ tar -czvf "${FILENAME}" \
     static/Release/pwcrypt.lib \
     shared/libpwcrypt.so \
     shared/libpwcrypt.so* \
-    shared/libpwcrypt.dylib \
+    shared/libpwcrypt*.dylib \
     shared/Release/pwcrypt.dll \
     shared/Release/pwcrypt.exp \
     shared/Release/pwcrypt.lib \
