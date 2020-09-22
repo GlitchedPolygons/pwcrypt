@@ -1,0 +1,28 @@
+This project makes use of the following components, 
+which are, at the time of writing, open-source and
+freely available under their respective licenses:
+
+---
+
+* [MbedTLS](https://github.com/ARMmbed/mbedtls)
+* * License: Apache-2.0
+* * Copyright: ARM and the MbedTLS Contributors
+
+* [Ccrush](https://github.com/GlitchedPolygons/ccrush)
+* * License: BSD-2-Clause
+* * Copyright: Raphael Beck
+* * * [Miniz](https://github.com/richgel999/miniz)
+* * * * License: MIT
+* * * * Copyright: Rich Geldreich, Tenacious Software LLC, RAD Game Tools and Valve Software
+
+* [Argon2](https://github.com/P-H-C/phc-winner-argon2)
+* * License: Apache 2.0 or CC0 1.0 Universal
+* * Copyright: Daniel Dinu, Dmitry Khovratovich, Jean-Philippe Aumasson, and Samuel Neves
+
+* [Acutest](https://github.com/mity/acutest)
+* * License: MIT
+* * Copyright: Martin Mitáš
+
+---
+
+Raphael Beck, the 22nd of September, 2020
