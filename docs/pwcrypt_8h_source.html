@@ -92,28 +92,28 @@ $(function() {
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160; </div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#include &lt;stdint.h&gt;</span></div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#include &lt;stddef.h&gt;</span></div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160; </div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#ifdef _WIN32</span></div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor">#define WIN32_NO_STATUS</span></div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="preprocessor">#include &lt;windows.h&gt;</span></div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="preprocessor">#undef WIN32_NO_STATUS</span></div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="preprocessor">#include &lt;bcrypt.h&gt;</span></div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160; </div>
-<div class="line"><a name="l00044"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#aabbf40cd5fc584f5e34dfb286524b19f">   44</a></span>&#160;<span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span> <a class="code" href="pwcrypt_8h.html#aabbf40cd5fc584f5e34dfb286524b19f">PWCRYPT_INVALID_ARGS_ERROR_MSG</a>[] = <span class="stringliteral">&quot;pwcrypt: Invalid arguments! Please run \&quot;pwcrypt-- help\&quot; to find out how to use this program.\n&quot;</span>;</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160; </div>
-<div class="line"><a name="l00049"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a00cfc9fb0fb9021683177dcdfe898dd4">   49</a></span>&#160;<span class="keyword">static</span> <span class="keyword">const</span> uint8_t <a class="code" href="pwcrypt_8h.html#a00cfc9fb0fb9021683177dcdfe898dd4">EMPTY64</a>[64] = {</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#if defined(_WIN32) &amp;&amp; defined(PWCRYPT_DLL)</span></div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#ifdef PWCRYPT_BUILD_DLL</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#define PWCRYPT_API __declspec(dllexport)</span></div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#define PWCRYPT_API __declspec(dllimport)</span></div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="preprocessor">#define PWCRYPT_API</span></div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160; </div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;<span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;<span class="preprocessor">#include &lt;stdint.h&gt;</span></div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="preprocessor">#include &lt;stddef.h&gt;</span></div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<span class="preprocessor">#include &lt;mbedtls/gcm.h&gt;</span></div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="preprocessor">#include &lt;mbedtls/base64.h&gt;</span></div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="preprocessor">#include &lt;mbedtls/chachapoly.h&gt;</span></div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="preprocessor">#include &lt;mbedtls/platform_util.h&gt;</span></div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160; </div>
+<div class="line"><a name="l00051"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#aabbf40cd5fc584f5e34dfb286524b19f">   51</a></span>&#160;<span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span> <a class="code" href="pwcrypt_8h.html#aabbf40cd5fc584f5e34dfb286524b19f">PWCRYPT_INVALID_ARGS_ERROR_MSG</a>[] = <span class="stringliteral">&quot;pwcrypt: Invalid arguments! Please run \&quot;pwcrypt --help\&quot; to find out how to use this program.\n&quot;</span>;</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160; </div>
+<div class="line"><a name="l00056"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a00cfc9fb0fb9021683177dcdfe898dd4">   56</a></span>&#160;<span class="keyword">static</span> <span class="keyword">const</span> uint8_t <a class="code" href="pwcrypt_8h.html#a00cfc9fb0fb9021683177dcdfe898dd4">EMPTY64</a>[64] = {</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    <span class="comment">//</span></div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
 <div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
 <div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
@@ -123,155 +123,100 @@ $(function() {
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;};</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160; </div>
-<div class="line"><a name="l00072"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749">   72</a></span>&#160;<span class="preprocessor">#define PWCRYPT_VERSION 310</span></div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160; </div>
-<div class="line"><a name="l00077"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f">   77</a></span>&#160;<span class="preprocessor">#define PWCRYPT_VERSION_STR &quot;3.1.0&quot;</span></div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160; </div>
-<div class="line"><a name="l00082"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a2f42bd2f1c4b44339f65fbde2b369826">   82</a></span>&#160;<span class="preprocessor">#define PWCRYPT_Z_CHUNKSIZE (1024 * 256)</span></div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160; </div>
-<div class="line"><a name="l00087"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a44275f6b5f0879ead495ddfce628e0e3">   87</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ARGON2_T_COST 4</span></div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160; </div>
-<div class="line"><a name="l00092"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a1df1498104833d580084582d6d22be37">   92</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ARGON2_M_COST (1024 * 256)</span></div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160; </div>
-<div class="line"><a name="l00097"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#aecd608ec2f8cb926c6ff225d25b6a653">   97</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ARGON2_PARALLELISM 2</span></div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160; </div>
-<div class="line"><a name="l00102"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a37ca2e4b7c30369b68839f779ce3e9c5">  102</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ALGO_ID_AES256_GCM 0</span></div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160; </div>
-<div class="line"><a name="l00107"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a1b00e22c5af3cd2b4929e77a5bbda727">  107</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ALGO_ID_CHACHA20_POLY1305 1</span></div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160; </div>
-<div class="line"><a name="l00112"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#ae54a26d96145aa76bb650022a17c807b">  112</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_INVALID_ARGS -1</span></div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160; </div>
-<div class="line"><a name="l00117"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#aad7b3a925d9a8200255330c5c87781ff">  117</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_OOM 1000</span></div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160; </div>
-<div class="line"><a name="l00122"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a7625f759cce9cb6987d8604fd0a2e1c1">  122</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_PW_TOO_WEAK 2000</span></div>
-<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160; </div>
-<div class="line"><a name="l00127"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a9fa0500606ce7ea2b349f98dced36e08">  127</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_ARGON2_FAILURE 3000</span></div>
-<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160; </div>
-<div class="line"><a name="l00132"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#ab75a609dcd45ff598fc535087944b9c9">  132</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_ENCRYPTION_FAILURE 4000</span></div>
-<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160; </div>
-<div class="line"><a name="l00138"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a7c42c331686ab6a38a6cdf89de4e9723">  138</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_DECRYPTION_FAILURE 5000</span></div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160; </div>
-<div class="line"><a name="l00143"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a5cf79dd921071e652cf62507d3b09abe">  143</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_BASE64_FAILURE 6000</span></div>
-<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160; </div>
-<div class="line"><a name="l00148"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a1f237d074ae60f0b41a4fdbd62cf0f03">  148</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_COMPRESSION_FAILURE 7000</span></div>
-<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160; </div>
-<div class="line"><a name="l00153"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a7810ca1d3245053e135d52438bc46e88">  153</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_DECOMPRESSION_FAILURE 8000</span></div>
-<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160; </div>
-<div class="line"><a name="l00158"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a9572322c0950a2469ebfade4ec44dd96">  158</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_FILE_FAILURE 9000</span></div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160; </div>
-<div class="line"><a name="l00163"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a5c10aadbb67a8f6dd14140e3f707eb08">  163</a></span>&#160;<span class="preprocessor">#define PWCRYPT_MIN(x, y) (((x) &lt; (y)) ? (x) : (y))</span></div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160; </div>
-<div class="line"><a name="l00168"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a52b0ba6632029e9f9d009472b78b77bc">  168</a></span>&#160;<span class="preprocessor">#define PWCRYPT_MAX(x, y) (((x) &gt; (y)) ? (x) : (y))</span></div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160; </div>
-<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> <a class="code" href="pwcrypt_8h.html#ad8cd7dda7eacdd1a66ffb11275100a98">pwcrypt_is_fprintf_enabled</a>();</div>
-<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160; </div>
-<div class="line"><a name="l00183"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a7a88f7a04a14965811d62a1fb7b978e2">  183</a></span>&#160;<span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">int</span> <a class="code" href="pwcrypt_8h.html#a7a88f7a04a14965811d62a1fb7b978e2">pwcrypt_printvoid</a>(FILE* stream, <span class="keyword">const</span> <span class="keywordtype">char</span>* format, ...)</div>
-<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;{</div>
-<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;    <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;}</div>
-<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160; </div>
-<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;<span class="keyword">extern</span> int (*pwcrypt_fprintf_fptr)(FILE* stream, <span class="keyword">const</span> <span class="keywordtype">char</span>* format, ...);</div>
-<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160; </div>
-<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="keywordtype">void</span> <a class="code" href="pwcrypt_8h.html#a3aaf0e9ee19e484057cbbcc2d64972d9">pwcrypt_enable_fprintf</a>();</div>
-<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160; </div>
-<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;<span class="keywordtype">void</span> <a class="code" href="pwcrypt_8h.html#ac7042035dbcc4f674046fd0eab086801">pwcrypt_disable_fprintf</a>();</div>
-<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160; </div>
-<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;<span class="preprocessor">#define pwcrypt_fprintf pwcrypt_fprintf_fptr</span></div>
-<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160; </div>
-<div class="line"><a name="l00209"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#aa689a5dedcc46f81436012f82cccd40b">  209</a></span>&#160;<span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code" href="pwcrypt_8h.html#aa689a5dedcc46f81436012f82cccd40b">dev_urandom</a>(uint8_t* output_buffer, <span class="keyword">const</span> <span class="keywordtype">size_t</span> output_buffer_size)</div>
-<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;{</div>
-<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;    <span class="keywordflow">if</span> (output_buffer != NULL &amp;&amp; output_buffer_size &gt; 0)</div>
-<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;    {</div>
-<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;<span class="preprocessor">#ifdef _WIN32</span></div>
-<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;        BCryptGenRandom(NULL, output_buffer, (ULONG)output_buffer_size, BCRYPT_USE_SYSTEM_PREFERRED_RNG);</div>
-<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;        FILE* rnd = fopen(<span class="stringliteral">&quot;/dev/urandom&quot;</span>, <span class="stringliteral">&quot;r&quot;</span>);</div>
-<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;        <span class="keywordflow">if</span> (rnd != NULL)</div>
-<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;        {</div>
-<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;            <span class="keyword">const</span> <span class="keywordtype">size_t</span> n = fread(output_buffer, <span class="keyword">sizeof</span>(<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>), output_buffer_size, rnd);</div>
-<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;            <span class="keywordflow">if</span> (n != output_buffer_size)</div>
-<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;            {</div>
-<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;                pwcrypt_fprintf(stderr, <span class="stringliteral">&quot;pwcrypt: Warning! Only %llu bytes out of %llu have been read from /dev/urandom\n&quot;</span>, n, output_buffer_size);</div>
-<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;            }</div>
-<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;            fclose(rnd);</div>
-<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;        }</div>
-<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;    }</div>
-<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;}</div>
-<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160; </div>
-<div class="line"><a name="l00235"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a8304a144cc4d671ab912fe0917f5d1a0">  235</a></span>&#160;<span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">size_t</span> <a class="code" href="pwcrypt_8h.html#a8304a144cc4d671ab912fe0917f5d1a0">pwcrypt_get_filesize</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* filepath)</div>
-<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;{</div>
-<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;    <span class="keywordtype">size_t</span> filesize = 0;</div>
-<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160; </div>
-<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;<span class="preprocessor">#if _WIN32</span></div>
-<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;    HANDLE f = CreateFile(filepath, FILE_ATTRIBUTE_READONLY, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);</div>
-<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;    <span class="keywordflow">if</span> (f == INVALID_HANDLE_VALUE)</div>
-<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;    {</div>
-<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;        pwcrypt_fprintf(stderr, <span class="stringliteral">&quot;pwcrypt: Failure to open file for reading its size: %s&quot;</span>, filepath);</div>
-<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;        <span class="keywordflow">goto</span> exit;</div>
-<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;    }</div>
-<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160; </div>
-<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;    LARGE_INTEGER i;</div>
-<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;    <span class="keywordflow">if</span> (!GetFileSizeEx(f, &amp;i))</div>
-<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;    {</div>
-<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;        pwcrypt_fprintf(stderr, <span class="stringliteral">&quot;pwcrypt: Failure to read file size: %s&quot;</span>, filepath);</div>
-<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;        <span class="keywordflow">goto</span> exit;</div>
-<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;    }</div>
-<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160; </div>
-<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;    filesize = (size_t)i.QuadPart;</div>
-<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160; </div>
-<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;exit:</div>
-<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;    CloseHandle(f);</div>
-<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;    <span class="keywordflow">return</span> filesize;</div>
-<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;    <span class="keyword">struct </span>stat64 stbuf;</div>
-<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;    <span class="keywordtype">int</span> fd = open(filepath, 0x00);</div>
-<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;    <span class="keywordflow">if</span> (fd == -1)</div>
-<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;    {</div>
-<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;        pwcrypt_fprintf(stderr, <span class="stringliteral">&quot;pwcrypt: Failure to open file for reading its size: %s&quot;</span>, filepath);</div>
-<div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;        <span class="keywordflow">goto</span> exit;</div>
-<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;    }</div>
-<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160; </div>
-<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;    <span class="keywordflow">if</span> ((fstat64(fd, &amp;stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))</div>
-<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;    {</div>
-<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;        pwcrypt_fprintf(stderr, <span class="stringliteral">&quot;pwcrypt: Failure to retrieve filesize: %s&quot;</span>, filepath);</div>
-<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;        <span class="keywordflow">goto</span> exit;</div>
-<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;    }</div>
-<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160; </div>
-<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;    filesize = (size_t)stbuf.st_size;</div>
-<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160; </div>
-<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;exit:</div>
-<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;    close(fd);</div>
-<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;    mbedtls_platform_zeroize(&amp;stbuf, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> stat64));</div>
-<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;    <span class="keywordflow">return</span> filesize;</div>
-<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;}</div>
-<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160; </div>
-<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;<span class="keywordtype">int</span> <a class="code" href="pwcrypt_8h.html#ac7aa530cf42eadb118a20507854195d3">pwcrypt_assess_password_strength</a>(<span class="keyword">const</span> uint8_t* password, <span class="keywordtype">size_t</span> password_length);</div>
-<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160; </div>
-<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;<span class="keywordtype">int</span> <a class="code" href="pwcrypt_8h.html#a7081d496a5e483ea348a71d4c2dd6bf6">pwcrypt_encrypt</a>(<span class="keyword">const</span> uint8_t* input, <span class="keywordtype">size_t</span> input_length, uint32_t compress, <span class="keyword">const</span> uint8_t* password, <span class="keywordtype">size_t</span> password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t** output, <span class="keywordtype">size_t</span>* output_length, uint32_t output_base64);</div>
-<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160; </div>
-<div class="line"><a name="l00321"></a><span class="lineno">  321</span>&#160;<span class="keywordtype">int</span> <a class="code" href="pwcrypt_8h.html#a88b271476d5fc9cdae5169f5df797c23">pwcrypt_decrypt</a>(<span class="keyword">const</span> uint8_t* encrypted_data, <span class="keywordtype">size_t</span> encrypted_data_length, <span class="keyword">const</span> uint8_t* password, <span class="keywordtype">size_t</span> password_length, uint8_t** output, <span class="keywordtype">size_t</span>* output_length);</div>
-<div class="line"><a name="l00322"></a><span class="lineno">  322</span>&#160; </div>
-<div class="line"><a name="l00323"></a><span class="lineno">  323</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a name="l00324"></a><span class="lineno">  324</span>&#160;} <span class="comment">// extern &quot;C&quot;</span></div>
-<div class="line"><a name="l00325"></a><span class="lineno">  325</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00326"></a><span class="lineno">  326</span>&#160; </div>
-<div class="line"><a name="l00327"></a><span class="lineno">  327</span>&#160;<span class="preprocessor">#endif // PWCRYPT_H</span></div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    0x00, 0x00, 0x00, 0x00, <span class="comment">//</span></div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;};</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160; </div>
+<div class="line"><a name="l00079"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749">   79</a></span>&#160;<span class="preprocessor">#define PWCRYPT_VERSION 311</span></div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160; </div>
+<div class="line"><a name="l00084"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f">   84</a></span>&#160;<span class="preprocessor">#define PWCRYPT_VERSION_STR &quot;3.1.1&quot;</span></div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160; </div>
+<div class="line"><a name="l00089"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a2f42bd2f1c4b44339f65fbde2b369826">   89</a></span>&#160;<span class="preprocessor">#define PWCRYPT_Z_CHUNKSIZE (1024 * 256)</span></div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160; </div>
+<div class="line"><a name="l00094"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a44275f6b5f0879ead495ddfce628e0e3">   94</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ARGON2_T_COST 4</span></div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160; </div>
+<div class="line"><a name="l00099"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a1df1498104833d580084582d6d22be37">   99</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ARGON2_M_COST (1024 * 256)</span></div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160; </div>
+<div class="line"><a name="l00104"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#aecd608ec2f8cb926c6ff225d25b6a653">  104</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ARGON2_PARALLELISM 2</span></div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160; </div>
+<div class="line"><a name="l00109"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a37ca2e4b7c30369b68839f779ce3e9c5">  109</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ALGO_ID_AES256_GCM 0</span></div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160; </div>
+<div class="line"><a name="l00114"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a1b00e22c5af3cd2b4929e77a5bbda727">  114</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ALGO_ID_CHACHA20_POLY1305 1</span></div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160; </div>
+<div class="line"><a name="l00119"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#ae54a26d96145aa76bb650022a17c807b">  119</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_INVALID_ARGS -1</span></div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160; </div>
+<div class="line"><a name="l00124"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#aad7b3a925d9a8200255330c5c87781ff">  124</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_OOM 1000</span></div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160; </div>
+<div class="line"><a name="l00129"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a7625f759cce9cb6987d8604fd0a2e1c1">  129</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_PW_TOO_WEAK 2000</span></div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160; </div>
+<div class="line"><a name="l00134"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a9fa0500606ce7ea2b349f98dced36e08">  134</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_ARGON2_FAILURE 3000</span></div>
+<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160; </div>
+<div class="line"><a name="l00139"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#ab75a609dcd45ff598fc535087944b9c9">  139</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_ENCRYPTION_FAILURE 4000</span></div>
+<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160; </div>
+<div class="line"><a name="l00145"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a7c42c331686ab6a38a6cdf89de4e9723">  145</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_DECRYPTION_FAILURE 5000</span></div>
+<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160; </div>
+<div class="line"><a name="l00150"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a5cf79dd921071e652cf62507d3b09abe">  150</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_BASE64_FAILURE 6000</span></div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160; </div>
+<div class="line"><a name="l00155"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a1f237d074ae60f0b41a4fdbd62cf0f03">  155</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_COMPRESSION_FAILURE 7000</span></div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160; </div>
+<div class="line"><a name="l00160"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a7810ca1d3245053e135d52438bc46e88">  160</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_DECOMPRESSION_FAILURE 8000</span></div>
+<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160; </div>
+<div class="line"><a name="l00165"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a9572322c0950a2469ebfade4ec44dd96">  165</a></span>&#160;<span class="preprocessor">#define PWCRYPT_ERROR_FILE_FAILURE 9000</span></div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160; </div>
+<div class="line"><a name="l00170"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a5c10aadbb67a8f6dd14140e3f707eb08">  170</a></span>&#160;<span class="preprocessor">#define PWCRYPT_MIN(x, y) (((x) &lt; (y)) ? (x) : (y))</span></div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160; </div>
+<div class="line"><a name="l00175"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a52b0ba6632029e9f9d009472b78b77bc">  175</a></span>&#160;<span class="preprocessor">#define PWCRYPT_MAX(x, y) (((x) &gt; (y)) ? (x) : (y))</span></div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160; </div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;PWCRYPT_API <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> <a class="code" href="pwcrypt_8h.html#ae7965106b230f9a7bb86d0c1e78c55c5">pwcrypt_is_fprintf_enabled</a>();</div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160; </div>
+<div class="line"><a name="l00190"></a><span class="lineno"><a class="line" href="pwcrypt_8h.html#a7a88f7a04a14965811d62a1fb7b978e2">  190</a></span>&#160;<span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">int</span> <a class="code" href="pwcrypt_8h.html#a7a88f7a04a14965811d62a1fb7b978e2">pwcrypt_printvoid</a>(FILE* stream, <span class="keyword">const</span> <span class="keywordtype">char</span>* format, ...)</div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;{</div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;    <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;}</div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160; </div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;<span class="keyword">extern</span> int (*pwcrypt_fprintf_fptr)(FILE* stream, <span class="keyword">const</span> <span class="keywordtype">char</span>* format, ...);</div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160; </div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;PWCRYPT_API <span class="keywordtype">void</span> <a class="code" href="pwcrypt_8h.html#a242b34b03148c9502c8e0d15a304ab26">pwcrypt_enable_fprintf</a>();</div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160; </div>
+<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;PWCRYPT_API <span class="keywordtype">void</span> <a class="code" href="pwcrypt_8h.html#a18d545562b8f74e21100f6a14d613b28">pwcrypt_disable_fprintf</a>();</div>
+<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160; </div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;<span class="preprocessor">#define pwcrypt_fprintf pwcrypt_fprintf_fptr</span></div>
+<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160; </div>
+<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;PWCRYPT_API <span class="keywordtype">void</span> <a class="code" href="pwcrypt_8h.html#aac72db1955e04857e0e50a63f4c59da6">dev_urandom</a>(uint8_t* output_buffer, <span class="keywordtype">size_t</span> output_buffer_size);</div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160; </div>
+<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;PWCRYPT_API <span class="keywordtype">size_t</span> <a class="code" href="pwcrypt_8h.html#a8b789bb15ef9d8e702d1e4b85d48cd1a">pwcrypt_get_filesize</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* filepath);</div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160; </div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;PWCRYPT_API <span class="keywordtype">int</span> <a class="code" href="pwcrypt_8h.html#aa726149ed428fff3a13f0a1c896ef521">pwcrypt_assess_password_strength</a>(<span class="keyword">const</span> uint8_t* password, <span class="keywordtype">size_t</span> password_length);</div>
+<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160; </div>
+<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;PWCRYPT_API <span class="keywordtype">int</span> <a class="code" href="pwcrypt_8h.html#ae3b74220da0f642aa964b92a9821a775">pwcrypt_encrypt</a>(<span class="keyword">const</span> uint8_t* input, <span class="keywordtype">size_t</span> input_length, uint32_t compress, <span class="keyword">const</span> uint8_t* password, <span class="keywordtype">size_t</span> password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t** output, <span class="keywordtype">size_t</span>* output_length, uint32_t output_base64);</div>
+<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160; </div>
+<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;PWCRYPT_API <span class="keywordtype">int</span> <a class="code" href="pwcrypt_8h.html#a00031169442634cd2a34d277ef8185da">pwcrypt_decrypt</a>(<span class="keyword">const</span> uint8_t* encrypted_data, <span class="keywordtype">size_t</span> encrypted_data_length, <span class="keyword">const</span> uint8_t* password, <span class="keywordtype">size_t</span> password_length, uint8_t** output, <span class="keywordtype">size_t</span>* output_length);</div>
+<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160; </div>
+<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;PWCRYPT_API <span class="keywordtype">void</span> <a class="code" href="pwcrypt_8h.html#a89b74b36ff7f8f22d8fc203937883c4a">pwcrypt_free</a>(<span class="keywordtype">void</span>* ptr);</div>
+<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160; </div>
+<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;} <span class="comment">// extern &quot;C&quot;</span></div>
+<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160; </div>
+<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;<span class="preprocessor">#endif // PWCRYPT_H</span></div>
 </div><!-- fragment --></div><!-- contents -->
-<div class="ttc" id="apwcrypt_8h_html_ac7aa530cf42eadb118a20507854195d3"><div class="ttname"><a href="pwcrypt_8h.html#ac7aa530cf42eadb118a20507854195d3">pwcrypt_assess_password_strength</a></div><div class="ttdeci">int pwcrypt_assess_password_strength(const uint8_t *password, size_t password_length)</div></div>
-<div class="ttc" id="apwcrypt_8h_html_aabbf40cd5fc584f5e34dfb286524b19f"><div class="ttname"><a href="pwcrypt_8h.html#aabbf40cd5fc584f5e34dfb286524b19f">PWCRYPT_INVALID_ARGS_ERROR_MSG</a></div><div class="ttdeci">static const char PWCRYPT_INVALID_ARGS_ERROR_MSG[]</div><div class="ttdef"><b>Definition:</b> pwcrypt.h:44</div></div>
-<div class="ttc" id="apwcrypt_8h_html_ad8cd7dda7eacdd1a66ffb11275100a98"><div class="ttname"><a href="pwcrypt_8h.html#ad8cd7dda7eacdd1a66ffb11275100a98">pwcrypt_is_fprintf_enabled</a></div><div class="ttdeci">unsigned char pwcrypt_is_fprintf_enabled()</div></div>
-<div class="ttc" id="apwcrypt_8h_html_a8304a144cc4d671ab912fe0917f5d1a0"><div class="ttname"><a href="pwcrypt_8h.html#a8304a144cc4d671ab912fe0917f5d1a0">pwcrypt_get_filesize</a></div><div class="ttdeci">static size_t pwcrypt_get_filesize(const char *filepath)</div><div class="ttdef"><b>Definition:</b> pwcrypt.h:235</div></div>
-<div class="ttc" id="apwcrypt_8h_html_a3aaf0e9ee19e484057cbbcc2d64972d9"><div class="ttname"><a href="pwcrypt_8h.html#a3aaf0e9ee19e484057cbbcc2d64972d9">pwcrypt_enable_fprintf</a></div><div class="ttdeci">void pwcrypt_enable_fprintf()</div></div>
-<div class="ttc" id="apwcrypt_8h_html_ac7042035dbcc4f674046fd0eab086801"><div class="ttname"><a href="pwcrypt_8h.html#ac7042035dbcc4f674046fd0eab086801">pwcrypt_disable_fprintf</a></div><div class="ttdeci">void pwcrypt_disable_fprintf()</div></div>
-<div class="ttc" id="apwcrypt_8h_html_a7081d496a5e483ea348a71d4c2dd6bf6"><div class="ttname"><a href="pwcrypt_8h.html#a7081d496a5e483ea348a71d4c2dd6bf6">pwcrypt_encrypt</a></div><div class="ttdeci">int pwcrypt_encrypt(const uint8_t *input, size_t input_length, uint32_t compress, const uint8_t *password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t **output, size_t *output_length, uint32_t output_base64)</div></div>
-<div class="ttc" id="apwcrypt_8h_html_a88b271476d5fc9cdae5169f5df797c23"><div class="ttname"><a href="pwcrypt_8h.html#a88b271476d5fc9cdae5169f5df797c23">pwcrypt_decrypt</a></div><div class="ttdeci">int pwcrypt_decrypt(const uint8_t *encrypted_data, size_t encrypted_data_length, const uint8_t *password, size_t password_length, uint8_t **output, size_t *output_length)</div></div>
-<div class="ttc" id="apwcrypt_8h_html_a7a88f7a04a14965811d62a1fb7b978e2"><div class="ttname"><a href="pwcrypt_8h.html#a7a88f7a04a14965811d62a1fb7b978e2">pwcrypt_printvoid</a></div><div class="ttdeci">static int pwcrypt_printvoid(FILE *stream, const char *format,...)</div><div class="ttdef"><b>Definition:</b> pwcrypt.h:183</div></div>
-<div class="ttc" id="apwcrypt_8h_html_a00cfc9fb0fb9021683177dcdfe898dd4"><div class="ttname"><a href="pwcrypt_8h.html#a00cfc9fb0fb9021683177dcdfe898dd4">EMPTY64</a></div><div class="ttdeci">static const uint8_t EMPTY64[64]</div><div class="ttdef"><b>Definition:</b> pwcrypt.h:49</div></div>
-<div class="ttc" id="apwcrypt_8h_html_aa689a5dedcc46f81436012f82cccd40b"><div class="ttname"><a href="pwcrypt_8h.html#aa689a5dedcc46f81436012f82cccd40b">dev_urandom</a></div><div class="ttdeci">static void dev_urandom(uint8_t *output_buffer, const size_t output_buffer_size)</div><div class="ttdef"><b>Definition:</b> pwcrypt.h:209</div></div>
+<div class="ttc" id="apwcrypt_8h_html_aac72db1955e04857e0e50a63f4c59da6"><div class="ttname"><a href="pwcrypt_8h.html#aac72db1955e04857e0e50a63f4c59da6">dev_urandom</a></div><div class="ttdeci">PWCRYPT_API void dev_urandom(uint8_t *output_buffer, size_t output_buffer_size)</div></div>
+<div class="ttc" id="apwcrypt_8h_html_a18d545562b8f74e21100f6a14d613b28"><div class="ttname"><a href="pwcrypt_8h.html#a18d545562b8f74e21100f6a14d613b28">pwcrypt_disable_fprintf</a></div><div class="ttdeci">PWCRYPT_API void pwcrypt_disable_fprintf()</div></div>
+<div class="ttc" id="apwcrypt_8h_html_a242b34b03148c9502c8e0d15a304ab26"><div class="ttname"><a href="pwcrypt_8h.html#a242b34b03148c9502c8e0d15a304ab26">pwcrypt_enable_fprintf</a></div><div class="ttdeci">PWCRYPT_API void pwcrypt_enable_fprintf()</div></div>
+<div class="ttc" id="apwcrypt_8h_html_aabbf40cd5fc584f5e34dfb286524b19f"><div class="ttname"><a href="pwcrypt_8h.html#aabbf40cd5fc584f5e34dfb286524b19f">PWCRYPT_INVALID_ARGS_ERROR_MSG</a></div><div class="ttdeci">static const char PWCRYPT_INVALID_ARGS_ERROR_MSG[]</div><div class="ttdef"><b>Definition:</b> pwcrypt.h:51</div></div>
+<div class="ttc" id="apwcrypt_8h_html_ae3b74220da0f642aa964b92a9821a775"><div class="ttname"><a href="pwcrypt_8h.html#ae3b74220da0f642aa964b92a9821a775">pwcrypt_encrypt</a></div><div class="ttdeci">PWCRYPT_API int pwcrypt_encrypt(const uint8_t *input, size_t input_length, uint32_t compress, const uint8_t *password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t **output, size_t *output_length, uint32_t output_base64)</div></div>
+<div class="ttc" id="apwcrypt_8h_html_a00031169442634cd2a34d277ef8185da"><div class="ttname"><a href="pwcrypt_8h.html#a00031169442634cd2a34d277ef8185da">pwcrypt_decrypt</a></div><div class="ttdeci">PWCRYPT_API int pwcrypt_decrypt(const uint8_t *encrypted_data, size_t encrypted_data_length, const uint8_t *password, size_t password_length, uint8_t **output, size_t *output_length)</div></div>
+<div class="ttc" id="apwcrypt_8h_html_ae7965106b230f9a7bb86d0c1e78c55c5"><div class="ttname"><a href="pwcrypt_8h.html#ae7965106b230f9a7bb86d0c1e78c55c5">pwcrypt_is_fprintf_enabled</a></div><div class="ttdeci">PWCRYPT_API unsigned char pwcrypt_is_fprintf_enabled()</div></div>
+<div class="ttc" id="apwcrypt_8h_html_aa726149ed428fff3a13f0a1c896ef521"><div class="ttname"><a href="pwcrypt_8h.html#aa726149ed428fff3a13f0a1c896ef521">pwcrypt_assess_password_strength</a></div><div class="ttdeci">PWCRYPT_API int pwcrypt_assess_password_strength(const uint8_t *password, size_t password_length)</div></div>
+<div class="ttc" id="apwcrypt_8h_html_a8b789bb15ef9d8e702d1e4b85d48cd1a"><div class="ttname"><a href="pwcrypt_8h.html#a8b789bb15ef9d8e702d1e4b85d48cd1a">pwcrypt_get_filesize</a></div><div class="ttdeci">PWCRYPT_API size_t pwcrypt_get_filesize(const char *filepath)</div></div>
+<div class="ttc" id="apwcrypt_8h_html_a89b74b36ff7f8f22d8fc203937883c4a"><div class="ttname"><a href="pwcrypt_8h.html#a89b74b36ff7f8f22d8fc203937883c4a">pwcrypt_free</a></div><div class="ttdeci">PWCRYPT_API void pwcrypt_free(void *ptr)</div></div>
+<div class="ttc" id="apwcrypt_8h_html_a7a88f7a04a14965811d62a1fb7b978e2"><div class="ttname"><a href="pwcrypt_8h.html#a7a88f7a04a14965811d62a1fb7b978e2">pwcrypt_printvoid</a></div><div class="ttdeci">static int pwcrypt_printvoid(FILE *stream, const char *format,...)</div><div class="ttdef"><b>Definition:</b> pwcrypt.h:190</div></div>
+<div class="ttc" id="apwcrypt_8h_html_a00cfc9fb0fb9021683177dcdfe898dd4"><div class="ttname"><a href="pwcrypt_8h.html#a00cfc9fb0fb9021683177dcdfe898dd4">EMPTY64</a></div><div class="ttdeci">static const uint8_t EMPTY64[64]</div><div class="ttdef"><b>Definition:</b> pwcrypt.h:56</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by &#160;<a href="http://www.doxygen.org/index.html">

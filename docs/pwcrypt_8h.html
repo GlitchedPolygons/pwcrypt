@@ -79,15 +79,23 @@ $(function() {
 <div class="textblock"><code>#include &lt;stdio.h&gt;</code><br />
 <code>#include &lt;stdint.h&gt;</code><br />
 <code>#include &lt;stddef.h&gt;</code><br />
+<code>#include &lt;mbedtls/gcm.h&gt;</code><br />
+<code>#include &lt;mbedtls/base64.h&gt;</code><br />
+<code>#include &lt;mbedtls/chachapoly.h&gt;</code><br />
+<code>#include &lt;mbedtls/platform_util.h&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for pwcrypt.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="pwcrypt_8h__incl.png" border="0" usemap="#include_2pwcrypt_8h" alt=""/></div>
 <map name="include_2pwcrypt_8h" id="include_2pwcrypt_8h">
-<area shape="rect" title="Encrypt and decrypt strings symmetrically using Argon2id key derivation + either AES&#45;256 (GCM) or Cha..." alt="" coords="63,5,185,32"/>
+<area shape="rect" title="Encrypt and decrypt strings symmetrically using Argon2id key derivation + either AES&#45;256 (GCM) or Cha..." alt="" coords="265,5,388,32"/>
 <area shape="rect" title=" " alt="" coords="5,80,67,107"/>
 <area shape="rect" title=" " alt="" coords="91,80,157,107"/>
 <area shape="rect" title=" " alt="" coords="181,80,249,107"/>
+<area shape="rect" title=" " alt="" coords="273,80,381,107"/>
+<area shape="rect" title=" " alt="" coords="405,80,531,107"/>
+<area shape="rect" title=" " alt="" coords="555,80,704,107"/>
+<area shape="rect" title=" " alt="" coords="729,80,882,107"/>
 </map>
 </div>
 </div>
@@ -95,9 +103,12 @@ Include dependency graph for pwcrypt.h:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:a6f984651db551e9e4b63d1e011208749"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749">PWCRYPT_VERSION</a>&#160;&#160;&#160;310</td></tr>
+<tr class="memitem:a26276e2814a267951aa22441200aea65"><td class="memItemLeft" align="right" valign="top"><a id="a26276e2814a267951aa22441200aea65"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>PWCRYPT_API</b></td></tr>
+<tr class="separator:a26276e2814a267951aa22441200aea65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f984651db551e9e4b63d1e011208749"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749">PWCRYPT_VERSION</a>&#160;&#160;&#160;311</td></tr>
 <tr class="separator:a6f984651db551e9e4b63d1e011208749"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f">PWCRYPT_VERSION_STR</a>&#160;&#160;&#160;&quot;3.1.0&quot;</td></tr>
+<tr class="memitem:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f">PWCRYPT_VERSION_STR</a>&#160;&#160;&#160;&quot;3.1.1&quot;</td></tr>
 <tr class="separator:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f42bd2f1c4b44339f65fbde2b369826"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a2f42bd2f1c4b44339f65fbde2b369826">PWCRYPT_Z_CHUNKSIZE</a>&#160;&#160;&#160;(1024 * 256)</td></tr>
 <tr class="separator:a2f42bd2f1c4b44339f65fbde2b369826"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -141,28 +152,30 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ad8cd7dda7eacdd1a66ffb11275100a98"><td class="memItemLeft" align="right" valign="top">unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#ad8cd7dda7eacdd1a66ffb11275100a98">pwcrypt_is_fprintf_enabled</a> ()</td></tr>
-<tr class="separator:ad8cd7dda7eacdd1a66ffb11275100a98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7965106b230f9a7bb86d0c1e78c55c5"><td class="memItemLeft" align="right" valign="top">PWCRYPT_API unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#ae7965106b230f9a7bb86d0c1e78c55c5">pwcrypt_is_fprintf_enabled</a> ()</td></tr>
+<tr class="separator:ae7965106b230f9a7bb86d0c1e78c55c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a88f7a04a14965811d62a1fb7b978e2"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a7a88f7a04a14965811d62a1fb7b978e2">pwcrypt_printvoid</a> (FILE *stream, const char *format,...)</td></tr>
 <tr class="separator:a7a88f7a04a14965811d62a1fb7b978e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3aaf0e9ee19e484057cbbcc2d64972d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a3aaf0e9ee19e484057cbbcc2d64972d9">pwcrypt_enable_fprintf</a> ()</td></tr>
-<tr class="separator:a3aaf0e9ee19e484057cbbcc2d64972d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac7042035dbcc4f674046fd0eab086801"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#ac7042035dbcc4f674046fd0eab086801">pwcrypt_disable_fprintf</a> ()</td></tr>
-<tr class="separator:ac7042035dbcc4f674046fd0eab086801"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa689a5dedcc46f81436012f82cccd40b"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#aa689a5dedcc46f81436012f82cccd40b">dev_urandom</a> (uint8_t *output_buffer, const size_t output_buffer_size)</td></tr>
-<tr class="separator:aa689a5dedcc46f81436012f82cccd40b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8304a144cc4d671ab912fe0917f5d1a0"><td class="memItemLeft" align="right" valign="top">static size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a8304a144cc4d671ab912fe0917f5d1a0">pwcrypt_get_filesize</a> (const char *filepath)</td></tr>
-<tr class="separator:a8304a144cc4d671ab912fe0917f5d1a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac7aa530cf42eadb118a20507854195d3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#ac7aa530cf42eadb118a20507854195d3">pwcrypt_assess_password_strength</a> (const uint8_t *password, size_t password_length)</td></tr>
-<tr class="separator:ac7aa530cf42eadb118a20507854195d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7081d496a5e483ea348a71d4c2dd6bf6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a7081d496a5e483ea348a71d4c2dd6bf6">pwcrypt_encrypt</a> (const uint8_t *input, size_t input_length, uint32_t compress, const uint8_t *password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t **output, size_t *output_length, uint32_t output_base64)</td></tr>
-<tr class="separator:a7081d496a5e483ea348a71d4c2dd6bf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88b271476d5fc9cdae5169f5df797c23"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a88b271476d5fc9cdae5169f5df797c23">pwcrypt_decrypt</a> (const uint8_t *encrypted_data, size_t encrypted_data_length, const uint8_t *password, size_t password_length, uint8_t **output, size_t *output_length)</td></tr>
-<tr class="separator:a88b271476d5fc9cdae5169f5df797c23"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a242b34b03148c9502c8e0d15a304ab26"><td class="memItemLeft" align="right" valign="top">PWCRYPT_API void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a242b34b03148c9502c8e0d15a304ab26">pwcrypt_enable_fprintf</a> ()</td></tr>
+<tr class="separator:a242b34b03148c9502c8e0d15a304ab26"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18d545562b8f74e21100f6a14d613b28"><td class="memItemLeft" align="right" valign="top">PWCRYPT_API void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a18d545562b8f74e21100f6a14d613b28">pwcrypt_disable_fprintf</a> ()</td></tr>
+<tr class="separator:a18d545562b8f74e21100f6a14d613b28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac72db1955e04857e0e50a63f4c59da6"><td class="memItemLeft" align="right" valign="top">PWCRYPT_API void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#aac72db1955e04857e0e50a63f4c59da6">dev_urandom</a> (uint8_t *output_buffer, size_t output_buffer_size)</td></tr>
+<tr class="separator:aac72db1955e04857e0e50a63f4c59da6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b789bb15ef9d8e702d1e4b85d48cd1a"><td class="memItemLeft" align="right" valign="top">PWCRYPT_API size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a8b789bb15ef9d8e702d1e4b85d48cd1a">pwcrypt_get_filesize</a> (const char *filepath)</td></tr>
+<tr class="separator:a8b789bb15ef9d8e702d1e4b85d48cd1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa726149ed428fff3a13f0a1c896ef521"><td class="memItemLeft" align="right" valign="top">PWCRYPT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#aa726149ed428fff3a13f0a1c896ef521">pwcrypt_assess_password_strength</a> (const uint8_t *password, size_t password_length)</td></tr>
+<tr class="separator:aa726149ed428fff3a13f0a1c896ef521"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3b74220da0f642aa964b92a9821a775"><td class="memItemLeft" align="right" valign="top">PWCRYPT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#ae3b74220da0f642aa964b92a9821a775">pwcrypt_encrypt</a> (const uint8_t *input, size_t input_length, uint32_t compress, const uint8_t *password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t **output, size_t *output_length, uint32_t output_base64)</td></tr>
+<tr class="separator:ae3b74220da0f642aa964b92a9821a775"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00031169442634cd2a34d277ef8185da"><td class="memItemLeft" align="right" valign="top">PWCRYPT_API int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a00031169442634cd2a34d277ef8185da">pwcrypt_decrypt</a> (const uint8_t *encrypted_data, size_t encrypted_data_length, const uint8_t *password, size_t password_length, uint8_t **output, size_t *output_length)</td></tr>
+<tr class="separator:a00031169442634cd2a34d277ef8185da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a89b74b36ff7f8f22d8fc203937883c4a"><td class="memItemLeft" align="right" valign="top">PWCRYPT_API void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a89b74b36ff7f8f22d8fc203937883c4a">pwcrypt_free</a> (void *ptr)</td></tr>
+<tr class="separator:a89b74b36ff7f8f22d8fc203937883c4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:aabbf40cd5fc584f5e34dfb286524b19f"><td class="memItemLeft" align="right" valign="top">static const char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#aabbf40cd5fc584f5e34dfb286524b19f">PWCRYPT_INVALID_ARGS_ERROR_MSG</a> [] = &quot;pwcrypt: Invalid arguments! Please run \&quot;pwcrypt-- help\&quot; to find out how to use this program.\n&quot;</td></tr>
+<tr class="memitem:aabbf40cd5fc584f5e34dfb286524b19f"><td class="memItemLeft" align="right" valign="top">static const char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#aabbf40cd5fc584f5e34dfb286524b19f">PWCRYPT_INVALID_ARGS_ERROR_MSG</a> [] = &quot;pwcrypt: Invalid arguments! Please run \&quot;pwcrypt --help\&quot; to find out how to use this program.\n&quot;</td></tr>
 <tr class="separator:aabbf40cd5fc584f5e34dfb286524b19f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a00cfc9fb0fb9021683177dcdfe898dd4"><td class="memItemLeft" align="right" valign="top">static const uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a00cfc9fb0fb9021683177dcdfe898dd4">EMPTY64</a> [64]</td></tr>
 <tr class="separator:a00cfc9fb0fb9021683177dcdfe898dd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -462,7 +475,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define PWCRYPT_VERSION&#160;&#160;&#160;310</td>
+          <td class="memname">#define PWCRYPT_VERSION&#160;&#160;&#160;311</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -477,7 +490,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define PWCRYPT_VERSION_STR&#160;&#160;&#160;&quot;3.1.0&quot;</td>
+          <td class="memname">#define PWCRYPT_VERSION_STR&#160;&#160;&#160;&quot;3.1.1&quot;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -501,17 +514,14 @@ Variables</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="aa689a5dedcc46f81436012f82cccd40b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa689a5dedcc46f81436012f82cccd40b">&#9670;&nbsp;</a></span>dev_urandom()</h2>
+<a id="aac72db1955e04857e0e50a63f4c59da6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aac72db1955e04857e0e50a63f4c59da6">&#9670;&nbsp;</a></span>dev_urandom()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static void dev_urandom </td>
+          <td class="memname">PWCRYPT_API void dev_urandom </td>
           <td>(</td>
           <td class="paramtype">uint8_t *&#160;</td>
           <td class="paramname"><em>output_buffer</em>, </td>
@@ -519,7 +529,7 @@ Variables</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const size_t&#160;</td>
+          <td class="paramtype">size_t&#160;</td>
           <td class="paramname"><em>output_buffer_size</em>&#160;</td>
         </tr>
         <tr>
@@ -528,11 +538,6 @@ Variables</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 <p>(Tries to) read from <code>/dev/urandom</code> (or Windows equivalent, yeah...) filling the given <code>output_buffer</code> with <code>output_buffer_size</code> random bytes. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -544,14 +549,14 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a id="ac7aa530cf42eadb118a20507854195d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac7aa530cf42eadb118a20507854195d3">&#9670;&nbsp;</a></span>pwcrypt_assess_password_strength()</h2>
+<a id="aa726149ed428fff3a13f0a1c896ef521"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa726149ed428fff3a13f0a1c896ef521">&#9670;&nbsp;</a></span>pwcrypt_assess_password_strength()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int pwcrypt_assess_password_strength </td>
+          <td class="memname">PWCRYPT_API int pwcrypt_assess_password_strength </td>
           <td>(</td>
           <td class="paramtype">const uint8_t *&#160;</td>
           <td class="paramname"><em>password</em>, </td>
@@ -580,14 +585,14 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a id="a88b271476d5fc9cdae5169f5df797c23"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a88b271476d5fc9cdae5169f5df797c23">&#9670;&nbsp;</a></span>pwcrypt_decrypt()</h2>
+<a id="a00031169442634cd2a34d277ef8185da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a00031169442634cd2a34d277ef8185da">&#9670;&nbsp;</a></span>pwcrypt_decrypt()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int pwcrypt_decrypt </td>
+          <td class="memname">PWCRYPT_API int pwcrypt_decrypt </td>
           <td>(</td>
           <td class="paramtype">const uint8_t *&#160;</td>
           <td class="paramname"><em>encrypted_data</em>, </td>
@@ -629,7 +634,7 @@ Variables</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Decrypts a string or a byte array that was encrypted using <a class="el" href="pwcrypt_8h.html#a7081d496a5e483ea348a71d4c2dd6bf6">pwcrypt_encrypt()</a>. </p>
+<p>Decrypts a string or a byte array that was encrypted using <a class="el" href="pwcrypt_8h.html#ae3b74220da0f642aa964b92a9821a775">pwcrypt_encrypt()</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">encrypted_data</td><td>The ciphertext to decrypt. </td></tr>
@@ -646,14 +651,14 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a id="ac7042035dbcc4f674046fd0eab086801"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac7042035dbcc4f674046fd0eab086801">&#9670;&nbsp;</a></span>pwcrypt_disable_fprintf()</h2>
+<a id="a18d545562b8f74e21100f6a14d613b28"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18d545562b8f74e21100f6a14d613b28">&#9670;&nbsp;</a></span>pwcrypt_disable_fprintf()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void pwcrypt_disable_fprintf </td>
+          <td class="memname">PWCRYPT_API void pwcrypt_disable_fprintf </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -664,14 +669,14 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a id="a3aaf0e9ee19e484057cbbcc2d64972d9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3aaf0e9ee19e484057cbbcc2d64972d9">&#9670;&nbsp;</a></span>pwcrypt_enable_fprintf()</h2>
+<a id="a242b34b03148c9502c8e0d15a304ab26"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a242b34b03148c9502c8e0d15a304ab26">&#9670;&nbsp;</a></span>pwcrypt_enable_fprintf()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void pwcrypt_enable_fprintf </td>
+          <td class="memname">PWCRYPT_API void pwcrypt_enable_fprintf </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -682,14 +687,14 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a id="a7081d496a5e483ea348a71d4c2dd6bf6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7081d496a5e483ea348a71d4c2dd6bf6">&#9670;&nbsp;</a></span>pwcrypt_encrypt()</h2>
+<a id="ae3b74220da0f642aa964b92a9821a775"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae3b74220da0f642aa964b92a9821a775">&#9670;&nbsp;</a></span>pwcrypt_encrypt()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int pwcrypt_encrypt </td>
+          <td class="memname">PWCRYPT_API int pwcrypt_encrypt </td>
           <td>(</td>
           <td class="paramtype">const uint8_t *&#160;</td>
           <td class="paramname"><em>input</em>, </td>
@@ -770,10 +775,10 @@ Variables</h2></td></tr>
 <p>Encrypts an input string of data symmetrically with a password. </p>
 <p>The password string is fed into a customizable amount of Argon2id iterations to derive a 256-bit symmetric key, with which the input will be encrypted and written into the output buffer. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">input</td><td>The input string to encrypt. </td></tr>
-    <tr><td class="paramname">input_length</td><td>Length of the <code>input</code> string argument. </td></tr>
+    <tr><td class="paramname">input</td><td>The input data to encrypt. </td></tr>
+    <tr><td class="paramname">input_length</td><td>Length of the <code>input</code> data array argument. </td></tr>
     <tr><td class="paramname">compress</td><td>Should the input data be compressed before being encrypted? Pass <code>0</code> for no compression, or a compression level from <code>1</code> to <code>9</code> to pass to the deflate algorithm (<code>6</code> is a healthy default value to use for this). </td></tr>
-    <tr><td class="paramname">password</td><td>The password string with which to encrypt the <code>input</code> argument (this will be used to derive a 256-bit symmetric encryption key (e.g. AES-256 key) using Argon2id). </td></tr>
+    <tr><td class="paramname">password</td><td>The password string (ideally a UTF8-encoded byte array, but you can obviously also encrypt using a file) with which to encrypt the <code>input</code> argument (this will be used to derive a 256-bit symmetric encryption key (e.g. AES-256 key) using Argon2id). </td></tr>
     <tr><td class="paramname">password_length</td><td>Length of the <code>password</code> string argument. </td></tr>
     <tr><td class="paramname">argon2_cost_t</td><td>The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric encryption key. Pass <code>0</code> to use the default value of <a class="el" href="pwcrypt_8h.html#a44275f6b5f0879ead495ddfce628e0e3">PWCRYPT_ARGON2_T_COST</a>. </td></tr>
     <tr><td class="paramname">argon2_cost_m</td><td>The Argon2 memory cost parameter (in KiB) to use for key derivation. Pass <code>0</code> to use the default value of <a class="el" href="pwcrypt_8h.html#a1df1498104833d580084582d6d22be37">PWCRYPT_ARGON2_M_COST</a>. </td></tr>
@@ -789,28 +794,44 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a id="a8304a144cc4d671ab912fe0917f5d1a0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8304a144cc4d671ab912fe0917f5d1a0">&#9670;&nbsp;</a></span>pwcrypt_get_filesize()</h2>
+<a id="a89b74b36ff7f8f22d8fc203937883c4a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a89b74b36ff7f8f22d8fc203937883c4a">&#9670;&nbsp;</a></span>pwcrypt_free()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static size_t pwcrypt_get_filesize </td>
+          <td class="memname">PWCRYPT_API void pwcrypt_free </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>ptr</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Wrapper around <code>free()</code> (mainly useful for C# interop). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ptr</td><td>The memory to free (typically the output of one of the two main pwcrypt functions). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a8b789bb15ef9d8e702d1e4b85d48cd1a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b789bb15ef9d8e702d1e4b85d48cd1a">&#9670;&nbsp;</a></span>pwcrypt_get_filesize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">PWCRYPT_API size_t pwcrypt_get_filesize </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
           <td class="paramname"><em>filepath</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 <p>Retrieve the size of a file. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -818,18 +839,18 @@ Variables</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The file size if retrieval succeeded; <code>0</code> if getting the file size failed for some reason. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The file size (in bytes) if retrieval succeeded; <code>0</code> if getting the file size failed for some reason. </dd></dl>
 
 </div>
 </div>
-<a id="ad8cd7dda7eacdd1a66ffb11275100a98"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad8cd7dda7eacdd1a66ffb11275100a98">&#9670;&nbsp;</a></span>pwcrypt_is_fprintf_enabled()</h2>
+<a id="ae7965106b230f9a7bb86d0c1e78c55c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae7965106b230f9a7bb86d0c1e78c55c5">&#9670;&nbsp;</a></span>pwcrypt_is_fprintf_enabled()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">unsigned char pwcrypt_is_fprintf_enabled </td>
+          <td class="memname">PWCRYPT_API unsigned char pwcrypt_is_fprintf_enabled </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -944,7 +965,7 @@ Variables</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const char PWCRYPT_INVALID_ARGS_ERROR_MSG[] = &quot;pwcrypt: Invalid arguments! Please run \&quot;pwcrypt-- help\&quot; to find out how to use this program.\n&quot;</td>
+          <td class="memname">const char PWCRYPT_INVALID_ARGS_ERROR_MSG[] = &quot;pwcrypt: Invalid arguments! Please run \&quot;pwcrypt --help\&quot; to find out how to use this program.\n&quot;</td>
         </tr>
       </table>
   </td>
