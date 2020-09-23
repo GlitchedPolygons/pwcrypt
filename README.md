@@ -14,6 +14,7 @@
 `git clone --recursive https://github.com/GlitchedPolygons/pwcrypt.git`
 
 ### How to use the library
+
 Just add **pwcrypt** as a git submodule to your project (e.g. into some `lib/` or `deps/` folder inside your project's repo; `{repo_root}/lib/` is used here in the following example).
 
 ```
@@ -32,6 +33,22 @@ The [`build.bat`](https://github.com/GlitchedPolygons/pwcrypt/blob/master/build.
 #### Linking
 
 If you use [CMake](https://cmake.org) you can just `add_subdirectory(path_to_submodule)` and then `target_link_libraries(your_project PRIVATE pwcrypt)` inside your CMakeLists.txt file.
+
+### Building from source
+
+#### CLI & Static library
+
+This builds the pwcrypt CLI program (statically linked) + pwcrypt static lib (without its MbedTLS dependencies though; those you'd need to manually gather and link yourself from `build/mbedtls/library`!)
+
+```bash
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -Dpwcrypt_PACKAGE=On ..
+cmake --build . --config Release
+```
+
+#### DLL/Shared library build
+
+
 
 ### How to use the CLI
 
