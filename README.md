@@ -26,10 +26,6 @@ If you don't want to use git submodules, you can also start vendoring a specific
 
 Check out the [API docs](https://glitchedpolygons.github.io/pwcrypt/files.html) or the [`pwcrypt.h`](https://github.com/GlitchedPolygons/pwcrypt/blob/master/include/pwcrypt.h) header file to find out how to call the encrypt/decrypt functions in C.
 
-#### Note for Windows users
-
-The [`build.bat`](https://github.com/GlitchedPolygons/pwcrypt/blob/master/build.bat) script needs to be run with the _"x64 Native Tools Command Prompt for Visual Studio 2019"_ as an admin, NOT with the standard cmd.exe! 
-
 #### Linking
 
 If you use [CMake](https://cmake.org) you can just `add_subdirectory(path_to_submodule)` and then `target_link_libraries(your_project PRIVATE pwcrypt)` inside your CMakeLists.txt file.
@@ -53,6 +49,7 @@ mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=On -Dpwcrypt_BUILD_DLL=On -Dpwcrypt_PACKAGE=On -Dpwcrypt_ONLY_BUILD_LIB=On ..
 cmake --build . --config Release
 ```
+If the build succeeds, you should now have a new `.tar.gz` file inside the `build/` directory!
 
 ### How to use the CLI
 
