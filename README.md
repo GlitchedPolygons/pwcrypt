@@ -48,7 +48,11 @@ cmake --build . --config Release
 
 #### DLL/Shared library build
 
-
+```bash
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=On -Dpwcrypt_BUILD_DLL=On -Dpwcrypt_PACKAGE=On -Dpwcrypt_ONLY_BUILD_LIB=On ..
+cmake --build . --config Release
+```
 
 ### How to use the CLI
 
