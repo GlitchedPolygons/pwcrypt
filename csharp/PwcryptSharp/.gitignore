@@ -170,11 +170,11 @@ ASALocalRun/
 # JetBrains IDE files
 **/.idea
 
+!lib/**
+!src/lib/**
+
 # Because KDE...
 **/.directory
 
 # Because macOS...
-*.DS_Store
-
-!lib/**
-!src/lib/**
+**/*.DS_Store
