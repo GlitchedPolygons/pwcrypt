@@ -259,6 +259,24 @@ PWCRYPT_API int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint3
 PWCRYPT_API int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** output, size_t* output_length);
 
 /**
+ * Gets the current pwcrypt version number (numeric).
+ * @return Pwcrypt version number (32-bit unsigned integer).
+ */
+PWCRYPT_API uint32_t pwcrypt_get_version_nr();
+
+/**
+ * Gets the current Argon2 version number used by pwcrypt (numeric).
+ * @return Argon2 version number (32-bit unsigned integer).
+ */
+PWCRYPT_API uint32_t pwcrypt_get_argon2_version_nr();
+
+/**
+ * Gets the current pwcrypt version number as a nicely-formatted, human-readable string.
+ * @return Pwcrypt version number (MAJOR.MINOR.PATCH)
+ */
+PWCRYPT_API char* pwcrypt_get_version_nr_string();
+
+/**
  * Wrapper around <c>free()</c> (mainly useful for C# interop).
  * @param ptr The memory to free (typically the output of one of the two main pwcrypt functions).
  */

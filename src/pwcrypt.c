@@ -64,6 +64,21 @@ void pwcrypt_disable_fprintf()
     pwcrypt_fprintf_fptr = &pwcrypt_printvoid;
 }
 
+uint32_t pwcrypt_get_version_nr()
+{
+    return PWCRYPT_V;
+}
+
+uint32_t pwcrypt_get_argon2_version_nr()
+{
+    return ARGON2_V;
+}
+
+char* pwcrypt_get_version_nr_string()
+{
+    return PWCRYPT_VERSION_STR;
+}
+
 size_t pwcrypt_get_filesize(const char* filepath)
 {
     size_t filesize = 0;
@@ -85,7 +100,7 @@ size_t pwcrypt_get_filesize(const char* filepath)
 
     filesize = (size_t)i.QuadPart;
 
-    exit:
+exit:
     CloseHandle(f);
     return filesize;
 #else

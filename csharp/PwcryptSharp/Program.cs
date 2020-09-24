@@ -130,7 +130,7 @@ namespace GlitchedPolygons.PwcryptSharp
         }
 
         #endregion
-        
+
         #region Function mapping
 
         private delegate void FreeDelegate(IntPtr mem);
@@ -140,6 +140,12 @@ namespace GlitchedPolygons.PwcryptSharp
         private delegate void DisableFprintfDelegate();
 
         private delegate bool IsFprintfEnabledDelegate();
+
+        private delegate IntPtr GetVersionNumberStringDelegate();
+
+        private delegate uint GetVersionNumberDelegate();
+
+        private delegate uint GetArgon2VersionNumberDelegate();
 
         private delegate void DevUrandomDelegate(
             [MarshalAs(UnmanagedType.LPArray)] byte[] outputArray,
@@ -190,6 +196,9 @@ namespace GlitchedPolygons.PwcryptSharp
         private readonly EncryptDelegate encryptDelegate;
         private readonly DecryptDelegate decryptDelegate;
         private readonly FreeDelegate freeDelegate;
+        private readonly GetVersionNumberDelegate getVersionNumberDelegate;
+        private readonly GetArgon2VersionNumberDelegate getArgon2VersionNumberDelegate;
+        private readonly GetVersionNumberStringDelegate getVersionNumberStringDelegate;
 
         private readonly IntPtr lib;
         private readonly ISharedLibLoadUtils loadUtils;
@@ -281,6 +290,24 @@ namespace GlitchedPolygons.PwcryptSharp
                 goto hell;
             }
 
+            IntPtr getVersionNumber = loadUtils.GetProcAddress(lib, "pwcrypt_get_version_nr");
+            if (getVersionNumber == IntPtr.Zero)
+            {
+                goto hell;
+            }
+
+            IntPtr getVersionNumberString = loadUtils.GetProcAddress(lib, "pwcrypt_get_version_nr_string");
+            if (getVersionNumberString == IntPtr.Zero)
+            {
+                goto hell;
+            }
+
+            IntPtr getArgon2VersionNumber = loadUtils.GetProcAddress(lib, "pwcrypt_get_argon2_version_nr");
+            if (getArgon2VersionNumber == IntPtr.Zero)
+            {
+                goto hell;
+            }
+
             IntPtr devUrandom = loadUtils.GetProcAddress(lib, "dev_urandom");
             if (devUrandom == IntPtr.Zero)
             {
@@ -320,6 +347,9 @@ namespace GlitchedPolygons.PwcryptSharp
             enableFprintfDelegate = Marshal.GetDelegateForFunctionPointer<EnableFprintfDelegate>(enableFprintf);
             disableFprintfDelegate = Marshal.GetDelegateForFunctionPointer<DisableFprintfDelegate>(disableFprintf);
             isFprintfEnabledDelegate = Marshal.GetDelegateForFunctionPointer<IsFprintfEnabledDelegate>(isFprintfEnabled);
+            getVersionNumberDelegate = Marshal.GetDelegateForFunctionPointer<GetVersionNumberDelegate>(getVersionNumber);
+            getVersionNumberStringDelegate = Marshal.GetDelegateForFunctionPointer<GetVersionNumberStringDelegate>(getVersionNumberString);
+            getArgon2VersionNumberDelegate = Marshal.GetDelegateForFunctionPointer<GetArgon2VersionNumberDelegate>(getArgon2VersionNumber);
             devUrandomDelegate = Marshal.GetDelegateForFunctionPointer<DevUrandomDelegate>(devUrandom);
             getFilesizeDelegate = Marshal.GetDelegateForFunctionPointer<GetFilesizeDelegate>(getFilesize);
             assessPasswordStrengthDelegate = Marshal.GetDelegateForFunctionPointer<AssessPasswordStrengthDelegate>(assessPasswordStrength);
@@ -332,7 +362,7 @@ namespace GlitchedPolygons.PwcryptSharp
             hell:
             throw new Exception($"Failed to load one or more functions from the shared library \"{LoadedLibraryPath}\"!");
         }
-        
+
         private static byte[] MarshalReadBytes(IntPtr array, ulong arrayLength, int bufferSize = 1024 * 256)
         {
             using var ms = new MemoryStream((int)arrayLength);
@@ -418,6 +448,34 @@ namespace GlitchedPolygons.PwcryptSharp
         }
 
         /// <summary>
+        /// Gets the current pwcrypt version number (numeric).
+        /// </summary>
+        /// <returns>Pwcrypt version number (32-bit unsigned integer).</returns>
+        public uint GetVersionNumber()
+        {
+            return getVersionNumberDelegate();
+        }
+
+        /// <summary>
+        /// Gets the current Argon2 version number used by pwcrypt (numeric).
+        /// </summary>
+        /// <returns>Argon2 version number (32-bit unsigned integer).</returns>
+        public uint GetArgon2VersionNumber()
+        {
+            return getArgon2VersionNumberDelegate();
+        }
+
+        /// <summary>
+        /// Gets the current pwcrypt version number as a nicely-formatted, human-readable string.
+        /// </summary>
+        /// <returns>Pwcrypt version number (MAJOR.MINOR.PATCH)</returns>
+        public string GetVersionNumberString()
+        {
+            IntPtr str = getVersionNumberStringDelegate();
+            return Marshal.PtrToStringUTF8(str);
+        }
+
+        /// <summary>
         /// Encrypts an input string of data symmetrically with a password. <para> </para>
         /// The password string is fed into a customizable amount of Argon2id iterations to derive a 256-bit symmetric key, with which the input will be encrypted and written into the output buffer.
         /// </summary>
@@ -494,6 +552,9 @@ namespace GlitchedPolygons.PwcryptSharp
 
             byte[] rnd = pwcrypt.GetRandomBytes(32);
             Console.WriteLine("Here's 32 random bytes (Base64-encoded): " + Convert.ToBase64String(rnd) + Environment.NewLine);
+
+            Console.WriteLine($"Pwcrypt Version Number: {pwcrypt.GetVersionNumberString()} ({pwcrypt.GetVersionNumber()})" + Environment.NewLine);
+            Console.WriteLine($"Argon2 version number used by this version of pwcrypt: {pwcrypt.GetArgon2VersionNumber()}" + Environment.NewLine);
 
             Console.WriteLine("Is the password \"test test\" strong enough? -> " + pwcrypt.IsPasswordStrongEnough("test") + Environment.NewLine);
             Console.WriteLine("Is the password \"TEst/_123.!\" strong enough? -> " + pwcrypt.IsPasswordStrongEnough("TEstTeSt_123.!") + Environment.NewLine);
