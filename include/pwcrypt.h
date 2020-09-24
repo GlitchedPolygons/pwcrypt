@@ -40,10 +40,6 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <mbedtls/gcm.h>
-#include <mbedtls/base64.h>
-#include <mbedtls/chachapoly.h>
-#include <mbedtls/platform_util.h>
 
 /**
  * Error message for invalid CLI arguments.
@@ -76,12 +72,12 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Current version of the used pwcrypt library.
  */
-#define PWCRYPT_VERSION 311
+#define PWCRYPT_VERSION 312
 
 /**
  * Current version of the used pwcrypt library (nicely-formatted string).
  */
-#define PWCRYPT_VERSION_STR "3.1.1"
+#define PWCRYPT_VERSION_STR "3.1.2"
 
 /**
  * Default chunksize to use for compressing and decompressing buffers.

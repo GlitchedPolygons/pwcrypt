@@ -23,6 +23,11 @@
 #include <ccrush.h>
 #include <assert.h>
 
+#include <mbedtls/gcm.h>
+#include <mbedtls/base64.h>
+#include <mbedtls/chachapoly.h>
+#include <mbedtls/platform_util.h>
+
 #ifdef _WIN32
 #define WIN32_NO_STATUS
 #include <windows.h>

@@ -20,7 +20,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 set(${PROJECT_NAME}_MAJOR 3)
 set(${PROJECT_NAME}_MINOR 1)
-set(${PROJECT_NAME}_PATCH 1)
+set(${PROJECT_NAME}_PATCH 2)
 set(${PROJECT_NAME}_VERSION_STRING "${${PROJECT_NAME}_MAJOR}.${${PROJECT_NAME}_MINOR}.${${PROJECT_NAME}_PATCH}")
 
 option(ENABLE_TESTING "Build MbedTLS tests." OFF)
@@ -120,6 +120,7 @@ if (NOT ${${PROJECT_NAME}_ONLY_BUILD_LIB})
 
     add_executable(${PROJECT_NAME}_cli
             ${CMAKE_CURRENT_LIST_DIR}/src/main.c
+            ${${PROJECT_NAME}_SRC_FILES}
             )
 
     target_include_directories(${PROJECT_NAME}_cli
@@ -130,7 +131,6 @@ if (NOT ${${PROJECT_NAME}_ONLY_BUILD_LIB})
             )
 
     target_link_libraries(${PROJECT_NAME}_cli
-            PUBLIC ${PROJECT_NAME}
             PUBLIC ${${PROJECT_NAME}_DEPS_TARGETS}
             )
 
