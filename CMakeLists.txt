@@ -60,14 +60,6 @@ set(${PROJECT_NAME}_SRC_FILES
 
 add_library(${PROJECT_NAME} ${${PROJECT_NAME}_SRC_FILES})
 
-if (${${PROJECT_NAME}_BUILD_DLL} OR BUILD_SHARED_LIBS)
-    set_target_properties(${PROJECT_NAME}
-            PROPERTIES
-            VERSION ${${PROJECT_NAME}_VERSION_STRING}
-            SOVERSION ${${PROJECT_NAME}_MAJOR}
-            )
-endif ()
-
 if (NOT TARGET mbedtls)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/mbedtls mbedtls)
 endif ()
@@ -76,7 +68,8 @@ if (${${PROJECT_NAME}_BUILD_DLL} OR BUILD_SHARED_LIBS)
     set_property(TARGET mbedtls PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_property(TARGET mbedx509 PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_property(TARGET mbedcrypto PROPERTY POSITION_INDEPENDENT_CODE ON)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+    set_target_properties(${PROJECT_NAME}
+            PROPERTIES
             VERSION ${${PROJECT_NAME}_VERSION_STRING}
             SOVERSION ${${PROJECT_NAME}_MAJOR}
             )
@@ -139,6 +132,8 @@ if (NOT ${${PROJECT_NAME}_ONLY_BUILD_LIB})
             RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/bin/debug"
             RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/bin/release"
             )
+
+    add_dependencies(${PROJECT_NAME}_cli ${PROJECT_NAME})
 endif ()
 
 if (${${PROJECT_NAME}_ENABLE_TESTS})
