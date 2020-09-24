@@ -10,13 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="lib\x64\linux\libpwcrypt.so.3.1.1">
+    <None Update="lib\x64\linux\libpwcrypt.so.3.1.2">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="lib\x64\windows\pwcrypt.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="lib\x64\mac\libpwcrypt.3.1.1.dylib">
+    <None Update="lib\x64\mac\libpwcrypt.3.1.2.dylib">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
