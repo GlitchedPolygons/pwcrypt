@@ -139,7 +139,7 @@ namespace GlitchedPolygons.PwcryptSharp
 
         private delegate void DisableFprintfDelegate();
 
-        private delegate bool IsFprintfEnabledDelegate();
+        private delegate byte IsFprintfEnabledDelegate();
 
         private delegate IntPtr GetVersionNumberStringDelegate();
 
@@ -402,7 +402,11 @@ namespace GlitchedPolygons.PwcryptSharp
         /// <summary>
         /// Check whether this library is allowed to fprintf() into stdout or not.
         /// </summary>
-        public bool IsConsoleLoggingEnabled => isFprintfEnabledDelegate();
+        public bool IsConsoleLoggingEnabled()
+        {
+            byte r = isFprintfEnabledDelegate();
+            return r != 0;
+        }
 
         /// <summary>
         /// Retrieve the size of a file.
@@ -546,7 +550,7 @@ namespace GlitchedPolygons.PwcryptSharp
             using var pwcrypt = new PwcryptSharpContext();
 
             pwcrypt.EnableConsoleLogging();
-            Console.WriteLine("Allow fprintf: " + pwcrypt.IsConsoleLoggingEnabled + Environment.NewLine);
+            Console.WriteLine("Allow fprintf: " + pwcrypt.IsConsoleLoggingEnabled() + Environment.NewLine);
 
             Console.WriteLine("File size of the executing assembly: " + pwcrypt.GetFilesize(Assembly.GetExecutingAssembly().Location) + Environment.NewLine);
 
@@ -589,7 +593,7 @@ namespace GlitchedPolygons.PwcryptSharp
                 Console.WriteLine($"Decrypted:   {Encoding.UTF8.GetString(decrypted)}\n");
 
             pwcrypt.DisableConsoleLogging();
-            Console.WriteLine("Allow fprintf: " + pwcrypt.IsConsoleLoggingEnabled);
+            Console.WriteLine("Allow fprintf: " + pwcrypt.IsConsoleLoggingEnabled());
         }
     }
 }
