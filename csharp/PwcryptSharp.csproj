@@ -10,15 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="lib\x64\linux\libpwcrypt.so.3.1.2">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="lib\x64\windows\pwcrypt.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="lib\x64\mac\libpwcrypt.3.1.2.dylib">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="$(MSBuildThisFileDirectory)lib\**" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
 </Project>
