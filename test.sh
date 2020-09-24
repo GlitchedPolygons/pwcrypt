@@ -15,12 +15,30 @@
 #  limitations under the License.
 
 PROJECT_NAME="pwcrypt"
+
 REPO=$(dirname "$0")
+
+
+PREVCC="$CC"
+PREVCXX="$CXX"
+
+if command -v clang &> /dev/null
+then
+    echo "-- Clang found on system, great! Long live LLVM! :D"
+    export CC=clang
+    export CXX=clang++
+fi
+
 cov=Off
 if [ "$1" = "cov" ]; then cov=On; fi
 rm -rf "$REPO"/build
 mkdir -p "$REPO"/build && cd "$REPO"/build || exit
 cmake -DBUILD_SHARED_LIBS=Off -DUSE_SHARED_MBEDTLS_LIBRARY=Off "-D${PROJECT_NAME}_ENABLE_TESTS=On" "-D${PROJECT_NAME}_ONLY_BUILD_LIB=On" -DENABLE_COVERAGE="${cov}" -DCMAKE_BUILD_TYPE=Debug ..
 cmake --build . --config Debug || exit
+
+export CC="$PREVCC"
+export CXX="$PREVCXX"
+
 ./run_tests || ./Debug/run_tests.exe || exit
+
 cd "$REPO" || exit
