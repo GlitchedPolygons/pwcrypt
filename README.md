@@ -26,30 +26,31 @@ If you don't want to use git submodules, you can also start vendoring a specific
 
 Check out the [API docs](https://glitchedpolygons.github.io/pwcrypt/files.html) or the [`pwcrypt.h`](https://github.com/GlitchedPolygons/pwcrypt/blob/master/include/pwcrypt.h) header file to find out how to call the encrypt/decrypt functions in C.
 
-#### Linking
-
-If you use [CMake](https://cmake.org) you can just `add_subdirectory(path_to_submodule)` and then `target_link_libraries(your_project PRIVATE pwcrypt)` inside your CMakeLists.txt file.
-
 ### Building from source
 
-#### CLI & Static library
-
-This builds the pwcrypt CLI program (statically linked) + pwcrypt static lib (without its MbedTLS dependencies though; those you'd need to manually gather and link yourself from `build/mbedtls/library`!)
+#### CLI program (statically linked) + pwcrypt DLL/Shared library build
 
 ```bash
-mkdir -p build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -Dpwcrypt_PACKAGE=On ..
-cmake --build . --config Release
+bash build.sh
 ```
+This works on Windows too: just use the [Git Bash for Windows](https://git-scm.com/download/win) CLI!
 
-#### DLL/Shared library build
-
-```bash
-mkdir -p build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=On -Dpwcrypt_BUILD_DLL=On -Dpwcrypt_PACKAGE=On -Dpwcrypt_ONLY_BUILD_LIB=On ..
-cmake --build . --config Release
-```
 If the build succeeds, you should now have a new `.tar.gz` file inside the `build/` directory!
+
+#### Static library
+
+This builds the pwcrypt as a static lib (without its MbedTLS dependencies though; those you'd need to manually gather and link yourself from `build/mbedtls/library`!)
+
+```bash
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -Dpwcrypt_PACKAGE=On -Dpwcrypt_ONLY_BUILD_LIB=On ..
+cmake --build . --config Release
+```
+
+### Linking
+
+If you use [CMake](https://cmake.org) you don't need to build from source externally: 
+you can just `add_subdirectory(path_to_git_submodule)` and then `target_link_libraries(your_project PRIVATE pwcrypt)` inside your CMakeLists.txt file.
 
 ### How to use the CLI
 
