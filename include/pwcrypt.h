@@ -249,7 +249,6 @@ PWCRYPT_API int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint3
  * Decrypts a string or a byte array that was encrypted using pwcrypt_encrypt(). <p>
  * @param encrypted_data The ciphertext to decrypt.
  * @param encrypted_data_length Length of the \p encrypted_data argument (string length or byte array size).
- * @param encrypted_data_base64 Is the input \p encrypted_data base64-encoded?
  * @param password The decryption password.
  * @param password_length Length of the \p password argument.
  * @param output Pointer to the output buffer where to write the decrypted data into. This will be allocated and NUL-terminated automatically on success; if anything fails, this will be left untouched! So you only need to free this if decryption succeeds.
