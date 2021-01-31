@@ -2,6 +2,7 @@ version: 1.0.{build}
 image: 
   - Ubuntu2004
   - macos
+  - macos-mojave
   - Visual Studio 2017
 for:
   -
