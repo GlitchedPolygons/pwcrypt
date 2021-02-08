@@ -122,7 +122,7 @@ In this case, the `{input}` text argument will be treated as the path of the fil
 <pre>
 pwcrypt_cli e "/home/someuser/secret.png" \
      "Extremely Safe Encryption 1337 PW" \
-     --file="/home/someuser/enrypted-secret.dat" \
+     --file="/home/someuser/enrypted-secret.png.pwcrypt" \
      --compression=0 \
      --algorithm=chachapoly
 </pre>
