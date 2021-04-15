@@ -72,12 +72,12 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Current version of the used pwcrypt library.
  */
-#define PWCRYPT_VERSION 320
+#define PWCRYPT_VERSION 400
 
 /**
  * Current version of the used pwcrypt library (nicely-formatted string).
  */
-#define PWCRYPT_VERSION_STR "3.2.0"
+#define PWCRYPT_VERSION_STR "4.0.0"
 
 /**
  * Default chunksize to use for compressing and decompressing buffers.
@@ -112,7 +112,7 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Error code for invalid arguments passed to a pwcrypt function.
  */
-#define PWCRYPT_ERROR_INVALID_ARGS -1
+#define PWCRYPT_ERROR_INVALID_ARGS (-1)
 
 /**
  * Error code "out of memory", uh oh...

@@ -287,14 +287,29 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     if (output_base64)
         output_base64 = 1;
 
-    memcpy(output_buffer, &PWCRYPT_V, 4);
-    memcpy(output_buffer + 4, &algo, 4);
-    memcpy(output_buffer + 8, &compress, 4);
-    memcpy(output_buffer + 12, &output_base64, 4);
-    memcpy(output_buffer + 16, &ARGON2_V, 4);
-    memcpy(output_buffer + 20, &argon2_cost_t, 4);
-    memcpy(output_buffer + 24, &argon2_cost_m, 4);
-    memcpy(output_buffer + 28, &argon2_parallelism, 4);
+    uint32_t bigendian = htonl(pwcrypt_get_version_nr());
+    memcpy(output_buffer, &bigendian, 4);
+
+    bigendian = htonl(algo);
+    memcpy(output_buffer + 4, &bigendian, 4);
+
+    bigendian = htonl(compress);
+    memcpy(output_buffer + 8, &bigendian, 4);
+
+    bigendian = htonl(output_base64);
+    memcpy(output_buffer + 12, &bigendian, 4);
+
+    bigendian = htonl(pwcrypt_get_argon2_version_nr());
+    memcpy(output_buffer + 16, &bigendian, 4);
+
+    bigendian = htonl(argon2_cost_t);
+    memcpy(output_buffer + 20, &bigendian, 4);
+
+    bigendian = htonl(argon2_cost_m);
+    memcpy(output_buffer + 24, &bigendian, 4);
+
+    bigendian = htonl(argon2_parallelism);
+    memcpy(output_buffer + 28, &bigendian, 4);
 
     // Generate random salt and iv:
     dev_urandom(output_buffer + 32, 32 + 16);
@@ -529,6 +544,14 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
     memcpy(salt, input + 32, 32);
     memcpy(iv, input + 64, 16);
     memcpy(tag, input + 80, 16);
+
+    pwcrypt_version_number = ntohl(pwcrypt_version_number);
+    pwcrypt_algo_id = ntohl(pwcrypt_algo_id);
+    pwcrypt_compressed = ntohl(pwcrypt_compressed);
+    argon2_version_number = ntohl(argon2_version_number);
+    argon2_cost_t = ntohl(argon2_cost_t);
+    argon2_cost_m = ntohl(argon2_cost_m);
+    argon2_parallelism = ntohl(argon2_parallelism);
 
     const size_t decrypted_length = (input_length - 96);
     uint8_t* decrypted = malloc(decrypted_length);
