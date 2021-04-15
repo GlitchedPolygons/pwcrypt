@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
 #endif
 
 static const uint32_t PWCRYPT_V = (uint32_t)PWCRYPT_VERSION;
