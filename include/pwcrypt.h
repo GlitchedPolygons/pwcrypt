@@ -79,25 +79,33 @@ static const uint8_t EMPTY64[64] = {
  */
 #define PWCRYPT_VERSION_STR "4.1.0"
 
+#ifndef PWCRYPT_Z_CHUNKSIZE
 /**
  * Default chunksize to use for compressing and decompressing buffers.
  */
 #define PWCRYPT_Z_CHUNKSIZE (1024 * 256)
+#endif
 
+#ifndef PWCRYPT_ARGON2_T_COST
 /**
  * Default Argon2 time cost parameter to use for key derivation if nothing else was specified.
  */
 #define PWCRYPT_ARGON2_T_COST 4
+#endif
 
+#ifndef PWCRYPT_ARGON2_M_COST
 /**
  * Default Argon2 memory cost parameter to use for key derivation if nothing else was specified.
  */
 #define PWCRYPT_ARGON2_M_COST (1024 * 256)
+#endif
 
+#ifndef PWCRYPT_ARGON2_PARALLELISM
 /**
  * Default Argon2 degree of parallelism parameter if nothing else was specified.
  */
 #define PWCRYPT_ARGON2_PARALLELISM 2
+#endif
 
 /**
  * Algo ID for the (default) AES256-GCM encryption algorithm.
@@ -109,6 +117,12 @@ static const uint8_t EMPTY64[64] = {
  */
 #define PWCRYPT_ALGO_ID_CHACHA20_POLY1305 1
 
+#ifndef PWCRYPT_FILE_BUFFER_SIZE
+/**
+ * The size in bytes of the file's background buffer.
+ */
+#define PWCRYPT_FILE_BUFFER_SIZE (1024 * 256)
+#endif
 /**
  * Error code for invalid arguments passed to a pwcrypt function.
  */
@@ -234,7 +248,7 @@ PWCRYPT_API int pwcrypt_assess_password_strength(const uint8_t* password, size_t
 
 /**
  * Encrypts an input string of data symmetrically with a password. <p>
- * The password string is fed into a customizable amount of Argon2id iterations to derive a 256-bit symmetric key, with which the input will be encrypted and written into the output buffer.
+ * The password string is fed into a customizable amount of Argon2id iterations to derive a <strong>256-bit symmetric key</strong>, with which the input will be encrypted and written into the output buffer.
  * @param input The input data to encrypt.
  * @param input_length Length of the \p input data array argument.
  * @param compress Should the input data be compressed before being encrypted? Pass <c>0</c> for no compression, or a compression level from <c>1</c> to <c>9</c> to pass to the deflate algorithm (<c>6</c> is a healthy default value to use for this).
@@ -252,6 +266,24 @@ PWCRYPT_API int pwcrypt_assess_password_strength(const uint8_t* password, size_t
 PWCRYPT_API int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress, const uint8_t* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint8_t** output, size_t* output_length, uint32_t output_base64);
 
 /**
+ * Encrypts a file symmetrically with a password. <p>
+ * The password string is fed into a customizable amount of Argon2id iterations to derive a <strong>256-bit symmetric key</strong>, with which the input will be encrypted and written into the output buffer.
+ * @param input_file_path Full path to the file that needs to be encrypted. Must be NUL-terminated and its \c strlen() must be equal to the \p input_file_path_length parameter.
+ * @param input_file_path_length Length of the \p input_file_path string.
+ * @param compress Should the input data be compressed before being encrypted? Pass <c>0</c> for no compression, or a compression level from <c>1</c> to <c>9</c> to pass to the deflate algorithm (<c>6</c> is a healthy default value to use for this).
+ * @param password The password string (ideally a UTF8-encoded byte array, but you can obviously also encrypt using a file) with which to encrypt the \p input argument (this will be used to derive a 256-bit symmetric encryption key (e.g. AES-256 key) using Argon2id).
+ * @param password_length Length of the \p password string argument.
+ * @param argon2_cost_t The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric encryption key. Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_T_COST.
+ * @param argon2_cost_m The Argon2 memory cost parameter (in KiB) to use for key derivation.  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_M_COST.
+ * @param argon2_parallelism Degree of parallelism to use when deriving the symmetric encryption key from the password with Argon2 (number of parallel threads).  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_PARALLELISM.
+ * @param algo Which encryption algo to use (see the top of the pwcrypt.h header file for more infos).
+ * @param output_file_path This is the full output file path where to write the encrypted file into.
+ * @param output_file_path_length Length of the \p output_file_path string.
+ * @return <c>0</c> on success; non-zero error codes if something fails.
+ */
+PWCRYPT_API int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_length, uint32_t compress, const uint8_t* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, const char* output_file_path, size_t output_file_path_length);
+
+/**
  * Decrypts a string or a byte array that was encrypted using pwcrypt_encrypt(). <p>
  * @param encrypted_data The ciphertext to decrypt.
  * @param encrypted_data_length Length of the \p encrypted_data argument (string length or byte array size).
@@ -262,6 +294,18 @@ PWCRYPT_API int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint3
  * @return <c>0</c> on success; non-zero error codes if something fails.
  */
 PWCRYPT_API int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** output, size_t* output_length);
+
+/**
+ * Decrypts a file that was encrypted using pwcrypt_encrypt_file().
+ * @param input_file_path Full path to the file that needs to be decrypted. Must be NUL-terminated and its \c strlen() must be equal to the \p input_file_path_length parameter.
+ * @param input_file_path_length Length of the \p input_file_path string.
+ * @param password The decryption password.
+ * @param password_length Length of the \p password argument.
+ * @param output_file_path This is the full output file path where to write the decrypted file into.
+ * @param output_file_path_length Length of the \p output_file_path string.
+ * @return <c>0</c> on success; non-zero error codes if something fails.
+ */
+PWCRYPT_API int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_length, const uint8_t* password, size_t password_length, const char* output_file_path, size_t output_file_path_length);
 
 /**
  * Gets the current pwcrypt version number (numeric).

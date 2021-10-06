@@ -19,7 +19,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 set(${PROJECT_NAME}_MAJOR 4)
-set(${PROJECT_NAME}_MINOR 0)
+set(${PROJECT_NAME}_MINOR 1)
 set(${PROJECT_NAME}_PATCH 0)
 set(${PROJECT_NAME}_VERSION_STRING "${${PROJECT_NAME}_MAJOR}.${${PROJECT_NAME}_MINOR}.${${PROJECT_NAME}_PATCH}")
 
@@ -97,6 +97,7 @@ if (UNIX AND NOT ANDROID)
 endif ()
 
 if (WIN32)
+    add_compile_definitions("_CRT_SECURE_NO_WARNINGS=1")
     target_link_libraries(${PROJECT_NAME} PUBLIC bcrypt)
 endif ()
 
