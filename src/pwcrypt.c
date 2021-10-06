@@ -164,7 +164,9 @@ void pwcrypt_get_temp_filepath(char output_buffer[256])
     snprintf(file, sizeof(file), "pwcrypt-%llu-%s", (unsigned long long)utc, rnds);
 
 #ifdef _WIN32
-    // todo
+    wchar_t wpath[128] = { 0x00 };
+    const DWORD wpathlen = GetTempPathW(128, wpath);
+    WideCharToMultiByte(CP_UTF8, 0, wpath, (int)wpathlen, path, 128, NULL, NULL);
 #else
     snprintf(path, sizeof(path), "/var/tmp/");
 #endif
