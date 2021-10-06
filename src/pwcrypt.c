@@ -143,6 +143,35 @@ void dev_urandom(uint8_t* output_buffer, const size_t output_buffer_size)
     }
 }
 
+void pwcrypt_get_temp_filepath(char output_buffer[256])
+{
+    const time_t utc = time(NULL);
+
+    uint8_t rnd[16];
+    dev_urandom(rnd, sizeof(rnd));
+
+    char rnds[16] = { 0x00 };
+    char path[128] = { 0x00 };
+    char file[128] = { 0x00 };
+    const static char chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-_()";
+    const size_t chars_size = sizeof(chars) - 1;
+
+    for (int i = 0; i < sizeof(rnds) - 1; ++i)
+    {
+        rnds[i] = chars[(size_t)rnd[i] % chars_size];
+    }
+
+    snprintf(file, sizeof(file), "pwcrypt-%llu-%s", (unsigned long long)utc, rnds);
+
+#ifdef _WIN32
+    // todo
+#else
+    snprintf(path, sizeof(path), "/var/tmp/");
+#endif
+
+    snprintf(output_buffer, 256, "%s%s", path, file);
+}
+
 void pwcrypt_free(void* ptr)
 {
     free(ptr);

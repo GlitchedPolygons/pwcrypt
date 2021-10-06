@@ -72,12 +72,12 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Current version of the used pwcrypt library.
  */
-#define PWCRYPT_VERSION 400
+#define PWCRYPT_VERSION 410
 
 /**
  * Current version of the used pwcrypt library (nicely-formatted string).
  */
-#define PWCRYPT_VERSION_STR "4.0.0"
+#define PWCRYPT_VERSION_STR "4.1.0"
 
 /**
  * Default chunksize to use for compressing and decompressing buffers.
@@ -210,6 +210,12 @@ PWCRYPT_API void pwcrypt_disable_fprintf();
  * @param output_buffer_size How many random bytes to write into \p output_buffer
  */
 PWCRYPT_API void dev_urandom(uint8_t* output_buffer, size_t output_buffer_size);
+
+/**
+ * Gets a completely random, temporary file name (usually located within \c /var/tmp).
+ * @param output_buffer Where to write the temporary file path into (must be a writeable char buffer of at least 256B).
+ */
+PWCRYPT_API void pwcrypt_get_temp_filepath(char output_buffer[256]);
 
 /**
  * Retrieve the size of a file.
