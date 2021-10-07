@@ -542,7 +542,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     r = ccrush_compress_file(input_file_path, temp_file_path, 4096, (int)compress);
     if (r != 0)
     {
-        pwcrypt_fprintf(stderr, "pwcrypt: Compression of input file before encryption failed! \"ccrush_compress\" returned: %d\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: Compression of input file before encryption failed! \"ccrush_compress_file\" returned: %d\n", r);
         r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
         goto exit;
     }
@@ -650,16 +650,16 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
 
     if (fwrite(salt_and_iv, 1, sizeof(salt_and_iv), output_file) != sizeof(salt_and_iv))
     {
-        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write salt and/or IV to output file.\n", bigendian);
+        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write salt and/or IV to output file.\n");
         r = PWCRYPT_ERROR_FILE_FAILURE;
         goto exit;
     }
 
-    // Write out 16 times "0x00" as the GCM tag to advance the FILE* counter;
+    // Write out 16 times "0x00" as the GCM tag/MAC value to advance the FILE* counter;
     // the mbedtls_gcm_finish function will write the tag out to a temporary buffer only AFTER encryption successfully finished.
     if (fwrite(EMPTY64, 1, 16, output_file) != 16)
     {
-        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write GCM tag initial padding of pure zeroes to output file.\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write initial padding of pure zeroes to output file's GCM tag/MAC slot.\n");
         r = PWCRYPT_ERROR_FILE_FAILURE;
         goto exit;
     }
@@ -1022,11 +1022,8 @@ exit:
     mbedtls_platform_zeroize(tag, sizeof(tag));
     mbedtls_platform_zeroize(salt, sizeof(salt));
 
-    if (input != NULL)
-    {
-        mbedtls_platform_zeroize(input, input_length);
-        free(input);
-    }
+    mbedtls_platform_zeroize(input, input_length);
+    free(input);
 
     if (decrypted != NULL)
     {
@@ -1039,5 +1036,174 @@ exit:
 
 int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_length, const uint8_t* password, size_t password_length, const char* output_file_path, size_t output_file_path_length)
 {
+    if (input_file_path == NULL || strlen(input_file_path) != input_file_path_length || output_file_path == NULL || strlen(output_file_path) != output_file_path_length || password == NULL || password_length < 6)
+    {
+        return PWCRYPT_ERROR_INVALID_ARGS;
+    }
+
+    assert(sizeof(uint8_t) == 1);
+    assert(sizeof(uint32_t) == 4);
+
     // todo
+
+    int r = -1;
+
+    uint8_t key[32];
+    memset(key, 0x00, sizeof(key));
+
+    size_t temp_counter = 0;
+    uint8_t temp_in_buffer[PWCRYPT_FILE_BUFFER_SIZE];
+    uint8_t temp_out_buffer[PWCRYPT_FILE_BUFFER_SIZE];
+
+    const size_t temp_in_buffer_size = sizeof(temp_in_buffer);
+    const size_t temp_out_buffer_size = sizeof(temp_out_buffer);
+
+    char temp_file_path[256];
+    memset(temp_file_path, 0x00, sizeof(temp_file_path));
+
+    pwcrypt_get_temp_filepath(temp_file_path);
+
+    FILE* temp_file = NULL;
+    FILE* input_file = fopen(input_file_path, "rb");
+    FILE* output_file = fopen(output_file_path, "wb");
+
+    if (input_file == NULL || output_file == NULL)
+    {
+        return PWCRYPT_ERROR_FILE_FAILURE;
+    }
+
+    mbedtls_gcm_context aes_ctx;
+    mbedtls_gcm_init(&aes_ctx);
+
+    mbedtls_chachapoly_context chachapoly_ctx;
+    mbedtls_chachapoly_init(&chachapoly_ctx);
+
+    uint8_t iv[16];
+    uint8_t tag[16];
+    uint8_t salt[32];
+    uint32_t pwcrypt_version_number, pwcrypt_algo_id, pwcrypt_compressed, argon2_version_number, argon2_cost_t, argon2_cost_m, argon2_parallelism;
+
+    // [0 - 3]      (4B)   uint32_t:     Pwcrypt Version Number
+    // [4 - 7]      (4B)   uint32_t:     Pwcrypt Algo ID
+    // [8 - 11]     (4B)   uint32_t:     Pwcrypt Compression Enabled
+    // [12 - 15]    (4B)   uint32_t:     Pwcrypt Base64 Encoded
+    // [16 - 19]    (4B)   uint32_t:     Argon2 Version Number
+    // [20 - 23]    (4B)   uint32_t:     Argon2 Cost T
+    // [24 - 27]    (4B)   uint32_t:     Argon2 Cost M
+    // [28 - 31]    (4B)   uint32_t:     Argon2 Parallelism
+    // [32 - 63]    (32B)  uint8_t[32]:  Argon2 Salt
+    // [64 - 79]    (16B)  uint8_t[16]:  AES-256 GCM IV (or 12B ChaCha20-Poly1305 IV, zero-padded)
+    // [80 - 95]    (16B)  uint8_t[16]:  AES-256 GCM Tag (or ChaCha20-Poly1305 Tag)
+    // [96 - ...]   Ciphertext
+
+    memcpy(&pwcrypt_version_number, input, 4);
+    memcpy(&pwcrypt_algo_id, input + 4, 4);
+    memcpy(&pwcrypt_compressed, input + 8, 4);
+    memcpy(&argon2_version_number, input + 16, 4); // [12 - 15] (input_base64_encoded) is copied earlier (see above).
+    memcpy(&argon2_cost_t, input + 20, 4);
+    memcpy(&argon2_cost_m, input + 24, 4);
+    memcpy(&argon2_parallelism, input + 28, 4);
+    memcpy(salt, input + 32, 32);
+    memcpy(iv, input + 64, 16);
+    memcpy(tag, input + 80, 16);
+
+    pwcrypt_version_number = ntohl(pwcrypt_version_number);
+    pwcrypt_algo_id = ntohl(pwcrypt_algo_id);
+    pwcrypt_compressed = ntohl(pwcrypt_compressed);
+    argon2_version_number = ntohl(argon2_version_number);
+    argon2_cost_t = ntohl(argon2_cost_t);
+    argon2_cost_m = ntohl(argon2_cost_m);
+    argon2_parallelism = ntohl(argon2_parallelism);
+
+    r = argon2_hash(argon2_cost_t, argon2_cost_m, argon2_parallelism, password, password_length, salt, sizeof(salt), key, sizeof(key), NULL, 0, Argon2_id, argon2_version_number);
+    if (r != ARGON2_OK)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: argon2id failure! \"argon2_hash\" returned: %d\n", r);
+        r = PWCRYPT_ERROR_ARGON2_FAILURE;
+        goto exit;
+    }
+
+    if (memcmp(key, EMPTY64, 32) == 0)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Symmetric decryption key derivation failure!\n");
+        r = PWCRYPT_ERROR_ARGON2_FAILURE;
+        goto exit;
+    }
+
+    switch (pwcrypt_algo_id)
+    {
+        case PWCRYPT_ALGO_ID_AES256_GCM: {
+            r = mbedtls_gcm_setkey(&aes_ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
+            if (r != 0)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
+                r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+                goto exit;
+            }
+
+            r = mbedtls_gcm_auth_decrypt(&aes_ctx, decrypted_length, iv, sizeof(iv), NULL, 0, tag, sizeof(tag), input + 96, decrypted);
+            if (r != 0)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_auth_decrypt\" returned: %d\n", r);
+                r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+                goto exit;
+            }
+
+            break;
+        }
+        case PWCRYPT_ALGO_ID_CHACHA20_POLY1305: {
+            r = mbedtls_chachapoly_setkey(&chachapoly_ctx, key);
+            if (r != 0)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_chachapoly_setkey\" returned: %d\n", r);
+                r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+                goto exit;
+            }
+
+            r = mbedtls_chachapoly_auth_decrypt(&chachapoly_ctx, decrypted_length, iv, NULL, 0, tag, input + 96, decrypted);
+            if (r != 0)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_chachapoly_auth_decrypt\" returned: %d\n", r);
+                r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+                goto exit;
+            }
+
+            break;
+        }
+        default: {
+            pwcrypt_fprintf(stderr, "pwcrypt: Invalid algorithm ID. \"%d\" is not a valid pwcrypt algo id!\n", pwcrypt_algo_id);
+            r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+            goto exit;
+        }
+    }
+
+    assert(r == 0);
+
+    r = ccrush_decompress_file(temp_file_path, output_file_path, 4096);
+    if (r != 0)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress_file\" returned: %d\n", r);
+        r = PWCRYPT_ERROR_DECOMPRESSION_FAILURE;
+        goto exit;
+    }
+
+exit:
+
+    mbedtls_gcm_free(&aes_ctx);
+    mbedtls_chachapoly_free(&chachapoly_ctx);
+
+    mbedtls_platform_zeroize(&pwcrypt_version_number, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&pwcrypt_algo_id, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&pwcrypt_compressed, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_version_number, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_cost_t, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_cost_m, sizeof(uint32_t));
+    mbedtls_platform_zeroize(&argon2_parallelism, sizeof(uint32_t));
+
+    mbedtls_platform_zeroize(key, sizeof(key));
+    mbedtls_platform_zeroize(iv, sizeof(iv));
+    mbedtls_platform_zeroize(tag, sizeof(tag));
+    mbedtls_platform_zeroize(salt, sizeof(salt));
+
+    return (r);
 }
