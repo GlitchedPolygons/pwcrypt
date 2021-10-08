@@ -68,20 +68,17 @@ int main(const int argc, const char* argv[])
 
     uint8_t file = 0;
 
-    uint8_t* input = (uint8_t*)text;
-    size_t input_length = text_length;
-
-    FILE* input_file = NULL;
-
     uint8_t* output = NULL;
     size_t output_length = 0;
 
     char output_file_path[PATH_MAX + 1];
     mbedtls_platform_zeroize(output_file_path, sizeof(output_file_path));
 
+    uint32_t cost_m = 0;
+    uint32_t cost_t = 0;
+    uint32_t parallelism = 0;
     uint32_t compression = 8;
     uint32_t algo_id = PWCRYPT_ALGO_ID_AES256_GCM;
-    uint32_t cost_t = 0, cost_m = 0, parallelism = 0;
 
     if (mode_length != 1)
     {
@@ -90,7 +87,7 @@ int main(const int argc, const char* argv[])
         goto exit;
     }
 
-    for (int i = 4; i < argc; i++)
+    for (int i = 4; i < argc; ++i)
     {
         const char* arg = argv[i];
 
@@ -152,7 +149,7 @@ int main(const int argc, const char* argv[])
         case 'e': {
             r = file //
                     ? pwcrypt_encrypt_file(text, text_length, compression, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, output_file_path, strlen(output_file_path)) //
-                    : pwcrypt_encrypt(input, input_length, compression, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, &output, &output_length, (uint32_t)(!file));
+                    : pwcrypt_encrypt((uint8_t*)text, text_length, compression, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, &output, &output_length, (uint32_t)(!file));
 
             if (r != 0)
             {
@@ -161,7 +158,10 @@ int main(const int argc, const char* argv[])
             break;
         }
         case 'd': {
-            r = pwcrypt_decrypt(input, input_length, (uint8_t*)password, password_length, &output, &output_length);
+            r = file //
+                    ? pwcrypt_decrypt_file(text, text_length, (uint8_t*)password, password_length, output_file_path, strlen(output_file_path)) //
+                    : pwcrypt_decrypt((uint8_t*)text, text_length, (uint8_t*)password, password_length, &output, &output_length);
+
             if (r != 0)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Decryption failed!\n");
@@ -181,27 +181,15 @@ int main(const int argc, const char* argv[])
     }
 
 exit:
-    /*
-    if (input_file != NULL)
-    {
-        fclose(input_file);
-        mbedtls_platform_zeroize(&input_file, sizeof(FILE*));
-    }
-
-    if (file && input != NULL)
-    {
-        mbedtls_platform_zeroize(input, input_length);
-        free(input);
-    }
 
     if (output != NULL)
     {
         mbedtls_platform_zeroize(output, output_length);
         free(output);
-    }*/
+    }
 
     mbedtls_platform_zeroize(&file, sizeof(uint8_t));
-    mbedtls_platform_zeroize(&input, sizeof(uint8_t*));
+    mbedtls_platform_zeroize(&text, sizeof(uint8_t*));
     mbedtls_platform_zeroize(&output, sizeof(uint8_t*));
     mbedtls_platform_zeroize(&compression, sizeof(uint32_t));
     mbedtls_platform_zeroize(&algo_id, sizeof(uint32_t));
