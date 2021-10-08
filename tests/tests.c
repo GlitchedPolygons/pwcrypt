@@ -296,8 +296,10 @@ static void encrypt_and_decrypt_chachapoly_string_nocompression_nobase64_success
     TEST_CHECK(decrypted_length == 64);
     TEST_CHECK(strcmp((char*)decrypted, "Lorem ipsum dolor sick fuck amend something something...........") == 0);
 
-    free(out);
-    free(decrypted);
+    (void)pwcrypt_get_version_nr_string();
+
+    pwcrypt_free(out);
+    pwcrypt_free(decrypted);
 }
 
 static void encrypt_with_invalid_params_fails()
