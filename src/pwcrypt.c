@@ -1058,7 +1058,7 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
     FILE* temp_file = NULL;
     FILE* input_file = fopen(input_file_path, "rb");
 
-    if (input_file == NULL)
+    if (input_file == NULL || pwcrypt_get_filesize(input_file_path) <= 96)
     {
         return PWCRYPT_ERROR_FILE_FAILURE;
     }
