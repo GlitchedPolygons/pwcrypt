@@ -148,6 +148,113 @@ static void encrypt_and_decrypt_chachapoly_file_success()
     remove(tmp_dec_file);
 }
 
+static void encrypt_and_decrypt_aes256_gcm_file_wrong_pw_fail()
+{
+    char tmp_in_file[256] = { 0x00 };
+    char tmp_out_file[256] = { 0x00 };
+    char tmp_dec_file[256] = { 0x00 };
+
+    pwcrypt_get_temp_filepath(tmp_in_file);
+    pwcrypt_get_temp_filepath(tmp_out_file);
+    pwcrypt_get_temp_filepath(tmp_dec_file);
+
+    FILE* tmp_in_file_fp = fopen(tmp_in_file, "wb");
+    fwrite("TEST STRING HERE !!!", 1, 20, tmp_in_file_fp);
+    fclose(tmp_in_file_fp);
+
+    int r = pwcrypt_encrypt_file(tmp_in_file, strlen(tmp_in_file), 6, (uint8_t*)"Test Password 456 ^^ ~ ?  ¨", 27, 0, 0, 0, 0, tmp_out_file, strlen(tmp_out_file));
+
+    TEST_CHECK(r == 0);
+    TEST_CHECK(pwcrypt_get_filesize(tmp_in_file) != pwcrypt_get_filesize(tmp_out_file));
+
+    r = pwcrypt_decrypt_file(tmp_out_file, strlen(tmp_out_file), (uint8_t*)"WRONG Password 111 ^^ ~ ?  ¨", 28, tmp_dec_file, strlen(tmp_dec_file));
+
+    TEST_CHECK(r == PWCRYPT_ERROR_DECRYPTION_FAILURE);
+
+    remove(tmp_in_file);
+    remove(tmp_out_file);
+    remove(tmp_dec_file);
+}
+
+static void encrypt_and_decrypt_chachapoly_file_wrong_pw_fail()
+{
+    char tmp_in_file[256] = { 0x00 };
+    char tmp_out_file[256] = { 0x00 };
+    char tmp_dec_file[256] = { 0x00 };
+
+    pwcrypt_get_temp_filepath(tmp_in_file);
+    pwcrypt_get_temp_filepath(tmp_out_file);
+    pwcrypt_get_temp_filepath(tmp_dec_file);
+
+    FILE* tmp_in_file_fp = fopen(tmp_in_file, "wb");
+    fwrite("TEST STRING HERE !!!", 1, 20, tmp_in_file_fp);
+    fclose(tmp_in_file_fp);
+
+    int r = pwcrypt_encrypt_file(tmp_in_file, strlen(tmp_in_file), 6, (uint8_t*)"Test Password 456 ^^ ~ ?  ¨", 27, 0, 0, 0, 1, tmp_out_file, strlen(tmp_out_file));
+
+    TEST_CHECK(r == 0);
+    TEST_CHECK(pwcrypt_get_filesize(tmp_in_file) != pwcrypt_get_filesize(tmp_out_file));
+
+    r = pwcrypt_decrypt_file(tmp_out_file, strlen(tmp_out_file), (uint8_t*)"WRONG Password 111 ^^ ~ ?  ¨", 28, tmp_dec_file, strlen(tmp_dec_file));
+
+    TEST_CHECK(r == PWCRYPT_ERROR_DECRYPTION_FAILURE);
+
+    remove(tmp_in_file);
+    remove(tmp_out_file);
+    remove(tmp_dec_file);
+}
+
+static void encrypt_and_decrypt_file_wrong_args_fail()
+{
+    char tmp_in_file[256] = { 0x00 };
+    char tmp_out_file[256] = { 0x00 };
+    char tmp_dec_file[256] = { 0x00 };
+
+    pwcrypt_get_temp_filepath(tmp_in_file);
+    pwcrypt_get_temp_filepath(tmp_out_file);
+    pwcrypt_get_temp_filepath(tmp_dec_file);
+
+    int r = pwcrypt_encrypt_file(NULL, strlen(tmp_in_file), 6, (uint8_t*)"Test Password 456 ^^ ~ ?  ¨", 27, 0, 0, 0, 0, tmp_out_file, strlen(tmp_out_file));
+
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_encrypt_file(tmp_in_file, strlen(tmp_in_file) - 3, 6, (uint8_t*)"Test Password 456 ^^ ~ ?  ¨", 27, 0, 0, 0, 0, tmp_out_file, strlen(tmp_out_file));
+
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_encrypt_file(tmp_in_file, strlen(tmp_in_file), 6, NULL, 27, 0, 0, 0, 0, tmp_out_file, strlen(tmp_out_file));
+
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_encrypt_file(tmp_in_file, strlen(tmp_in_file), 6, (uint8_t*)"Test Password 456 ^^ ~ ?  ¨", 27, 0, 0, 0, 0, NULL, strlen(tmp_out_file));
+
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_encrypt_file(tmp_in_file, strlen(tmp_in_file), 6, (uint8_t*)"Test Password 456 ^^ ~ ?  ¨", 27, 0, 0, 0, 0, tmp_out_file, strlen(tmp_out_file) - 3);
+
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_decrypt_file(NULL, strlen(tmp_out_file), (uint8_t*)"WRONG Password 111 ^^ ~ ?  ¨", 28, tmp_dec_file, strlen(tmp_dec_file));
+
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_decrypt_file(tmp_out_file, strlen(tmp_out_file) - 3, (uint8_t*)"WRONG Password 111 ^^ ~ ?  ¨", 28, tmp_dec_file, strlen(tmp_dec_file));
+
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_decrypt_file(tmp_out_file, strlen(tmp_out_file), NULL, 28, tmp_dec_file, strlen(tmp_dec_file));
+
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_decrypt_file(tmp_out_file, strlen(tmp_out_file), (uint8_t*)"WRONG Password 111 ^^ ~ ?  ¨", 28, NULL, strlen(tmp_dec_file));
+
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+
+    r = pwcrypt_decrypt_file(tmp_out_file, strlen(tmp_out_file), (uint8_t*)"WRONG Password 111 ^^ ~ ?  ¨", 28, tmp_dec_file, strlen(tmp_dec_file) - 3);
+
+    TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
+}
+
 static void encrypt_and_decrypt_chachapoly_string_success()
 {
     uint8_t* out = NULL;
@@ -412,6 +519,9 @@ TEST_LIST = {
     { "encrypt_and_decrypt_with_wrong_PW_fails", encrypt_and_decrypt_with_wrong_PW_fails }, //
     { "encrypt_and_decrypt_aes256_gcm_file_success", encrypt_and_decrypt_aes256_gcm_file_success }, //
     { "encrypt_and_decrypt_chachapoly_file_success", encrypt_and_decrypt_chachapoly_file_success }, //
+    { "encrypt_and_decrypt_aes256_gcm_file_wrong_pw_fail", encrypt_and_decrypt_aes256_gcm_file_wrong_pw_fail }, //
+    { "encrypt_and_decrypt_chachapoly_file_wrong_pw_fail", encrypt_and_decrypt_chachapoly_file_wrong_pw_fail }, //
+    { "encrypt_and_decrypt_file_wrong_args_fail", encrypt_and_decrypt_file_wrong_args_fail }, //
     //
     // ----------------------------------------------------------------------------------------------------------
     //
