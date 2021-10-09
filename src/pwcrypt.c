@@ -533,7 +533,9 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
 
     if (input_file == NULL || output_file == NULL)
     {
-        return PWCRYPT_ERROR_FILE_FAILURE;
+        pwcrypt_fprintf(stderr, "pwcrypt: \"pwcrypt_encrypt_file\" function failed to open input and/or output file.");
+        r = PWCRYPT_ERROR_FILE_FAILURE;
+        goto exit;
     }
 
     r = ccrush_compress_file(input_file_path, temp_file_path, 4096, (int)compress);

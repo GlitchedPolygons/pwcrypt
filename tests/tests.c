@@ -218,6 +218,10 @@ static void encrypt_and_decrypt_file_wrong_args_fail()
 
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
+    r = pwcrypt_encrypt_file(tmp_in_file, strlen(tmp_in_file), 6, (uint8_t*)"Weak Pw", 7, 0, 0, 0, 0, tmp_out_file, strlen(tmp_out_file));
+    
+    TEST_CHECK(r != 0);
+
     r = pwcrypt_encrypt_file(tmp_in_file, strlen(tmp_in_file) - 3, 6, (uint8_t*)"Test Password 456 ^^ ~ ?  ¨", 27, 0, 0, 0, 0, tmp_out_file, strlen(tmp_out_file));
 
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
