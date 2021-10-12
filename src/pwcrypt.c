@@ -809,8 +809,11 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
 
 exit:
 
-    fclose(input_file);
-    fclose(output_file);
+    if (input_file != NULL)
+        fclose(input_file);
+
+    if (output_file != NULL)
+        fclose(output_file);
 
     mbedtls_gcm_free(&aes_ctx);
     mbedtls_chachapoly_free(&chachapoly_ctx);
@@ -1333,7 +1336,8 @@ exit:
         mbedtls_platform_zeroize(temp_file_path, sizeof(temp_file_path));
     }
 
-    fclose(input_file);
+    if (input_file != NULL)
+        fclose(input_file);
 
     mbedtls_gcm_free(&aes_ctx);
     mbedtls_chachapoly_free(&chachapoly_ctx);
