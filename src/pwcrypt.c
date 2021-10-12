@@ -133,6 +133,12 @@ static inline FILE* pwcrypt_fopen(const char* filename, const char* mode)
     MultiByteToWideChar(CP_UTF8, 0, filename, -1, wname + 4, PWCRYPT_MAX_WIN_FILEPATH_LENGTH - 4);
     MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, 256);
 
+    for (int i = 0; i < PWCRYPT_MAX_WIN_FILEPATH_LENGTH; ++i)
+    {
+        if (wname[i] == L'/')
+            wname[i] = L'\\';
+    }
+
     return _wfopen(wname, wmode);
 #else // Hope that the fopen() implementation on whatever platform you're on accepts UTF-8 encoded strings. For most *nix environments, this holds true :)
     return fopen(filename, mode);
