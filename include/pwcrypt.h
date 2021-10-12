@@ -185,6 +185,13 @@ static const uint8_t EMPTY64[64] = {
  */
 #define PWCRYPT_MAX(x, y) (((x) > (y)) ? (x) : (y))
 
+#ifndef PWCRYPT_MAX_WIN_FILEPATH_LENGTH
+/**
+ * Maximum file path length on NTFS.
+ */
+#define PWCRYPT_MAX_WIN_FILEPATH_LENGTH (1024 * 32)
+#endif
+
 /**
  * Checks whether pwcrypt fprintf is enabled (whether errors are fprintfed into stderr).
  * @return Whether errors are fprintfed into stderr or not.

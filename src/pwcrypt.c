@@ -125,10 +125,12 @@ exit:
 static inline FILE* pwcrypt_fopen(const char* filename, const char* mode)
 {
 #ifdef _WIN32
-    wchar_t wname[1024 * 32] = { 0x00 };
+    wchar_t wname[PWCRYPT_MAX_WIN_FILEPATH_LENGTH] = { 0x00 };
     wchar_t wmode[256] = { 0x00 };
 
-    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wname, 1024 * 32);
+    wsprintfW(wname, L"\\\\?\\");
+
+    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wname + 4, PWCRYPT_MAX_WIN_FILEPATH_LENGTH - 4);
     MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, 256);
 
     return _wfopen(wname, wmode);
