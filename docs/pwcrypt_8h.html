@@ -98,9 +98,9 @@ Macros</h2></td></tr>
 <tr class="memitem:a26276e2814a267951aa22441200aea65"><td class="memItemLeft" align="right" valign="top"><a id="a26276e2814a267951aa22441200aea65"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>PWCRYPT_API</b></td></tr>
 <tr class="separator:a26276e2814a267951aa22441200aea65"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f984651db551e9e4b63d1e011208749"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749">PWCRYPT_VERSION</a>&#160;&#160;&#160;410</td></tr>
+<tr class="memitem:a6f984651db551e9e4b63d1e011208749"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749">PWCRYPT_VERSION</a>&#160;&#160;&#160;411</td></tr>
 <tr class="separator:a6f984651db551e9e4b63d1e011208749"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f">PWCRYPT_VERSION_STR</a>&#160;&#160;&#160;&quot;4.1.0&quot;</td></tr>
+<tr class="memitem:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f">PWCRYPT_VERSION_STR</a>&#160;&#160;&#160;&quot;4.1.1&quot;</td></tr>
 <tr class="separator:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f42bd2f1c4b44339f65fbde2b369826"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a2f42bd2f1c4b44339f65fbde2b369826">PWCRYPT_Z_CHUNKSIZE</a>&#160;&#160;&#160;(1024 * 256)</td></tr>
 <tr class="separator:a2f42bd2f1c4b44339f65fbde2b369826"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -496,7 +496,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define PWCRYPT_VERSION&#160;&#160;&#160;410</td>
+          <td class="memname">#define PWCRYPT_VERSION&#160;&#160;&#160;411</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -511,7 +511,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define PWCRYPT_VERSION_STR&#160;&#160;&#160;&quot;4.1.0&quot;</td>
+          <td class="memname">#define PWCRYPT_VERSION_STR&#160;&#160;&#160;&quot;4.1.1&quot;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -722,7 +722,7 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 <p>Decrypts a file that was encrypted using <a class="el" href="pwcrypt_8h.html#aabd2e48a2b1472367e51aa23ffa66cc0">pwcrypt_encrypt_file()</a>. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">input_file_path</td><td>Full path to the file that needs to be decrypted. Must be NUL-terminated and its <code>strlen()</code> must be equal to the <code>input_file_path_length</code> parameter. </td></tr>
+    <tr><td class="paramname">input_file_path</td><td>Full path to the file that needs to be decrypted. Must be UTF-8 encoded. Must be NUL-terminated and its <code>strlen()</code> must be equal to the <code>input_file_path_length</code> parameter. </td></tr>
     <tr><td class="paramname">input_file_path_length</td><td>Length of the <code>input_file_path</code> string. </td></tr>
     <tr><td class="paramname">password</td><td>The decryption password. </td></tr>
     <tr><td class="paramname">password_length</td><td>Length of the <code>password</code> argument. </td></tr>
@@ -960,7 +960,7 @@ Variables</h2></td></tr>
 <p>Encrypts a file symmetrically with a password. </p>
 <p>The password string is fed into a customizable amount of Argon2id iterations to derive a <b>256-bit symmetric key</b>, with which the input will be encrypted and written into the output buffer. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">input_file_path</td><td>Full path to the file that needs to be encrypted. Must be NUL-terminated and its <code>strlen()</code> must be equal to the <code>input_file_path_length</code> parameter. </td></tr>
+    <tr><td class="paramname">input_file_path</td><td>Full path to the file that needs to be encrypted. Must be UTF-8 encoded. Must be NUL-terminated and its <code>strlen()</code> must be equal to the <code>input_file_path_length</code> parameter. </td></tr>
     <tr><td class="paramname">input_file_path_length</td><td>Length of the <code>input_file_path</code> string. </td></tr>
     <tr><td class="paramname">compress</td><td>Should the input data be compressed before being encrypted? Pass <code>0</code> for no compression, or a compression level from <code>1</code> to <code>9</code> to pass to the deflate algorithm (<code>6</code> is a healthy default value to use for this). </td></tr>
     <tr><td class="paramname">password</td><td>The password string (ideally a UTF8-encoded byte array, but you can obviously also encrypt using a file) with which to encrypt the <code>input</code> argument (this will be used to derive a 256-bit symmetric encryption key (e.g. AES-256 key) using Argon2id). </td></tr>

@@ -72,12 +72,12 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Current version of the used pwcrypt library.
  */
-#define PWCRYPT_VERSION 410
+#define PWCRYPT_VERSION 411
 
 /**
  * Current version of the used pwcrypt library (nicely-formatted string).
  */
-#define PWCRYPT_VERSION_STR "4.1.0"
+#define PWCRYPT_VERSION_STR "4.1.1"
 
 #ifndef PWCRYPT_Z_CHUNKSIZE
 /**
@@ -269,7 +269,7 @@ PWCRYPT_API int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint3
 /**
  * Encrypts a file symmetrically with a password. <p>
  * The password string is fed into a customizable amount of Argon2id iterations to derive a <strong>256-bit symmetric key</strong>, with which the input will be encrypted and written into the output buffer.
- * @param input_file_path Full path to the file that needs to be encrypted. Must be NUL-terminated and its \c strlen() must be equal to the \p input_file_path_length parameter.
+ * @param input_file_path Full path to the file that needs to be encrypted. Must be UTF-8 encoded. Must be NUL-terminated and its \c strlen() must be equal to the \p input_file_path_length parameter.
  * @param input_file_path_length Length of the \p input_file_path string.
  * @param compress Should the input data be compressed before being encrypted? Pass <c>0</c> for no compression, or a compression level from <c>1</c> to <c>9</c> to pass to the deflate algorithm (<c>6</c> is a healthy default value to use for this).
  * @param password The password string (ideally a UTF8-encoded byte array, but you can obviously also encrypt using a file) with which to encrypt the \p input argument (this will be used to derive a 256-bit symmetric encryption key (e.g. AES-256 key) using Argon2id).
@@ -298,7 +298,7 @@ PWCRYPT_API int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_
 
 /**
  * Decrypts a file that was encrypted using pwcrypt_encrypt_file().
- * @param input_file_path Full path to the file that needs to be decrypted. Must be NUL-terminated and its \c strlen() must be equal to the \p input_file_path_length parameter.
+ * @param input_file_path Full path to the file that needs to be decrypted. Must be UTF-8 encoded. Must be NUL-terminated and its \c strlen() must be equal to the \p input_file_path_length parameter.
  * @param input_file_path_length Length of the \p input_file_path string.
  * @param password The decryption password.
  * @param password_length Length of the \p password argument.

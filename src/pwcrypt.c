@@ -122,6 +122,21 @@ exit:
 #endif
 }
 
+static inline FILE* pwcrypt_fopen(const char* filename, const char* mode)
+{
+#ifdef _WIN32
+    wchar_t wname[1024 * 32] = { 0x00 };
+    wchar_t wmode[256] = { 0x00 };
+
+    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wname, 1024 * 32);
+    MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, 256);
+
+    return _wfopen(wname, wmode);
+#else // Hope that the fopen() implementation on whatever platform you're on accepts UTF-8 encoded strings. For most *nix environments, this holds true :)
+    return fopen(filename, mode);
+#endif
+}
+
 void dev_urandom(uint8_t* output_buffer, const size_t output_buffer_size)
 {
     if (output_buffer != NULL && output_buffer_size > 0)
@@ -129,7 +144,7 @@ void dev_urandom(uint8_t* output_buffer, const size_t output_buffer_size)
 #ifdef _WIN32
         BCryptGenRandom(NULL, output_buffer, (ULONG)output_buffer_size, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
 #else
-        FILE* rnd = fopen("/dev/urandom", "r");
+        FILE* rnd = pwcrypt_fopen("/dev/urandom", "r");
         if (rnd != NULL)
         {
             const size_t n = fread(output_buffer, sizeof(unsigned char), output_buffer_size, rnd);
@@ -528,8 +543,8 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     pwcrypt_get_temp_filepath(temp_file_path);
 
     FILE* temp_file = NULL;
-    FILE* input_file = fopen(input_file_path, "rb");
-    FILE* output_file = fopen(output_file_path, "wb");
+    FILE* input_file = pwcrypt_fopen(input_file_path, "rb");
+    FILE* output_file = pwcrypt_fopen(output_file_path, "wb");
 
     if (input_file == NULL || output_file == NULL)
     {
@@ -546,7 +561,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
         goto exit;
     }
 
-    temp_file = fopen(temp_file_path, "rb");
+    temp_file = pwcrypt_fopen(temp_file_path, "rb");
     if (temp_file == NULL)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Compression of input file before encryption succeeded, but opening its resulting temporary file failed!\n");
@@ -1061,7 +1076,7 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
     pwcrypt_get_temp_filepath(temp_file_path);
 
     FILE* temp_file = NULL;
-    FILE* input_file = fopen(input_file_path, "rb");
+    FILE* input_file = pwcrypt_fopen(input_file_path, "rb");
 
     if (input_file == NULL || pwcrypt_get_filesize(input_file_path) <= 96)
     {
@@ -1192,7 +1207,7 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
         goto exit;
     }
 
-    temp_file = fopen(temp_file_path, "wb");
+    temp_file = pwcrypt_fopen(temp_file_path, "wb");
     if (temp_file == NULL)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Decryption failed due to temporary file access (write access) failure!\n");
