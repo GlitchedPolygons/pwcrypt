@@ -85,8 +85,19 @@ size_t pwcrypt_get_filesize(const char* filepath)
     size_t filesize = 0;
 
 #if _WIN32
-    wchar_t wpath[PWCRYPT_MAX_WIN_FILEPATH_LENGTH] = { 0x00 };
-    MultiByteToWideChar(CP_UTF8, 0, filepath, -1, wpath, PWCRYPT_MAX_WIN_FILEPATH_LENGTH);
+    wchar_t* wpath = malloc(PWCRYPT_MAX_WIN_FILEPATH_LENGTH * sizeof(wchar_t));
+    if (wpath == NULL)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Out of memory...");
+        return 0;
+    }
+
+    if (MultiByteToWideChar(CP_UTF8, 0, filepath, -1, wpath, PWCRYPT_MAX_WIN_FILEPATH_LENGTH) == 0)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Failed to convert the (allegedly) UTF-8 encoded filepath string to Windows Unicode-16 (using wchar_t[])");
+        free(wpath);
+        return 0;
+    }
 
     HANDLE f = CreateFileW(wpath, FILE_ATTRIBUTE_READONLY, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (f == INVALID_HANDLE_VALUE)
@@ -105,6 +116,7 @@ size_t pwcrypt_get_filesize(const char* filepath)
     filesize = (size_t)i.QuadPart;
 
 exit:
+    free(wpath);
     CloseHandle(f);
     return filesize;
 #else
@@ -128,13 +140,21 @@ exit:
 static inline FILE* pwcrypt_fopen(const char* filename, const char* mode)
 {
 #ifdef _WIN32
-    wchar_t wname[PWCRYPT_MAX_WIN_FILEPATH_LENGTH] = { 0x00 };
+    wchar_t* wpath = malloc(PWCRYPT_MAX_WIN_FILEPATH_LENGTH * sizeof(wchar_t));
+    if (wpath == NULL)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Out of memory...");
+        return NULL;
+    }
+
     wchar_t wmode[256] = { 0x00 };
 
-    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wname, PWCRYPT_MAX_WIN_FILEPATH_LENGTH);
+    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wpath, PWCRYPT_MAX_WIN_FILEPATH_LENGTH);
     MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, 256);
 
-    return _wfopen(wname, wmode);
+    FILE* file = _wfopen(wpath, wmode);
+    free(wpath);
+    return file;
 #else // Hope that the fopen() implementation on whatever platform you're on accepts UTF-8 encoded strings. For most *nix environments, this holds true :)
     return fopen(filename, mode);
 #endif
@@ -535,11 +555,8 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     mbedtls_chachapoly_init(&chachapoly_ctx);
 
     size_t temp_counter = 0;
-    uint8_t temp_in_buffer[PWCRYPT_FILE_BUFFER_SIZE];
-    uint8_t temp_out_buffer[PWCRYPT_FILE_BUFFER_SIZE];
-
-    const size_t temp_in_buffer_size = sizeof(temp_in_buffer);
-    const size_t temp_out_buffer_size = sizeof(temp_out_buffer);
+    uint8_t* temp_in_buffer = NULL;
+    uint8_t* temp_out_buffer = NULL;
 
     char temp_file_path[256] = { 0x00 };
 
@@ -553,6 +570,16 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     {
         pwcrypt_fprintf(stderr, "pwcrypt: \"pwcrypt_encrypt_file\" function failed to open input and/or output file.");
         r = PWCRYPT_ERROR_FILE_FAILURE;
+        goto exit;
+    }
+
+    temp_in_buffer = malloc(PWCRYPT_FILE_BUFFER_SIZE);
+    temp_out_buffer = malloc(PWCRYPT_FILE_BUFFER_SIZE);
+
+    if (temp_in_buffer == NULL || temp_out_buffer == NULL)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Out of memory... (failed to allocate internal temporary buffers)");
+        r = PWCRYPT_ERROR_OOM;
         goto exit;
     }
 
@@ -715,7 +742,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
                 goto exit;
             }
 
-            while ((temp_counter = fread(temp_in_buffer, 1, temp_in_buffer_size, temp_file)) != 0)
+            while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, temp_file)) != 0)
             {
                 r = mbedtls_gcm_update(&aes_ctx, temp_counter, temp_in_buffer, temp_out_buffer);
                 if (r != 0)
@@ -775,7 +802,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
                 goto exit;
             }
 
-            while ((temp_counter = fread(temp_in_buffer, 1, temp_in_buffer_size, temp_file)) != 0)
+            while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, temp_file)) != 0)
             {
                 r = mbedtls_chachapoly_update(&chachapoly_ctx, temp_counter, temp_in_buffer, temp_out_buffer);
                 if (r != 0)
@@ -848,6 +875,9 @@ exit:
         remove(temp_file_path);
         mbedtls_platform_zeroize(temp_file_path, sizeof(temp_file_path));
     }
+
+    free(temp_in_buffer);
+    free(temp_out_buffer);
 
     return (r);
 }
@@ -1068,11 +1098,8 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
     uint8_t key[32] = { 0x00 };
 
     size_t temp_counter = 0;
-    uint8_t temp_in_buffer[PWCRYPT_FILE_BUFFER_SIZE];
-    uint8_t temp_out_buffer[PWCRYPT_FILE_BUFFER_SIZE];
-
-    const size_t temp_in_buffer_size = sizeof(temp_in_buffer);
-    const size_t temp_out_buffer_size = sizeof(temp_out_buffer);
+    uint8_t* temp_in_buffer = NULL;
+    uint8_t* temp_out_buffer = NULL;
 
     char temp_file_path[256] = { 0x00 };
 
@@ -1115,6 +1142,16 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
     // [64 - 79]    (16B)  uint8_t[16]:  AES-256 GCM IV (or 12B ChaCha20-Poly1305 IV, zero-padded)
     // [80 - 95]    (16B)  uint8_t[16]:  AES-256 GCM Tag (or ChaCha20-Poly1305 Tag)
     // [96 - ...]   Ciphertext
+
+    temp_in_buffer = malloc(PWCRYPT_FILE_BUFFER_SIZE);
+    temp_out_buffer = malloc(PWCRYPT_FILE_BUFFER_SIZE);
+
+    if (temp_in_buffer == NULL || temp_out_buffer == NULL)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Out of memory... (failed to allocate internal temporary buffers)");
+        r = PWCRYPT_ERROR_OOM;
+        goto exit;
+    }
 
     if (fread(&pwcrypt_version_number, 4, 1, input_file) != 1)
     {
@@ -1243,7 +1280,7 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
                 goto exit;
             }
 
-            while ((temp_counter = fread(temp_in_buffer, 1, temp_in_buffer_size, input_file)) != 0)
+            while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, input_file)) != 0)
             {
                 r = mbedtls_gcm_update(&aes_ctx, temp_counter, temp_in_buffer, temp_out_buffer);
                 if (r != 0)
@@ -1297,7 +1334,7 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
                 goto exit;
             }
 
-            while ((temp_counter = fread(temp_in_buffer, 1, temp_in_buffer_size, input_file)) != 0)
+            while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, input_file)) != 0)
             {
                 r = mbedtls_chachapoly_update(&chachapoly_ctx, temp_counter, temp_in_buffer, temp_out_buffer);
                 if (r != 0)
@@ -1378,6 +1415,9 @@ exit:
     mbedtls_platform_zeroize(iv, sizeof(iv));
     mbedtls_platform_zeroize(tag, sizeof(tag));
     mbedtls_platform_zeroize(salt, sizeof(salt));
+
+    free(temp_in_buffer);
+    free(temp_out_buffer);
 
     return (r);
 }
