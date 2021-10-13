@@ -85,7 +85,10 @@ size_t pwcrypt_get_filesize(const char* filepath)
     size_t filesize = 0;
 
 #if _WIN32
-    HANDLE f = CreateFile(filepath, FILE_ATTRIBUTE_READONLY, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    wchar_t wpath[PWCRYPT_MAX_WIN_FILEPATH_LENGTH] = { 0x00 };
+    MultiByteToWideChar(CP_UTF8, 0, filepath, -1, wpath, PWCRYPT_MAX_WIN_FILEPATH_LENGTH);
+
+    HANDLE f = CreateFileW(wpath, FILE_ATTRIBUTE_READONLY, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (f == INVALID_HANDLE_VALUE)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Failure to open file for reading its size: %s", filepath);
@@ -128,16 +131,8 @@ static inline FILE* pwcrypt_fopen(const char* filename, const char* mode)
     wchar_t wname[PWCRYPT_MAX_WIN_FILEPATH_LENGTH] = { 0x00 };
     wchar_t wmode[256] = { 0x00 };
 
-    wsprintfW(wname, L"\\\\?\\");
-
-    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wname + 4, PWCRYPT_MAX_WIN_FILEPATH_LENGTH - 4);
+    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wname, PWCRYPT_MAX_WIN_FILEPATH_LENGTH);
     MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, 256);
-
-    for (int i = 0; i < PWCRYPT_MAX_WIN_FILEPATH_LENGTH; ++i)
-    {
-        if (wname[i] == L'/')
-            wname[i] = L'\\';
-    }
 
     return _wfopen(wname, wmode);
 #else // Hope that the fopen() implementation on whatever platform you're on accepts UTF-8 encoded strings. For most *nix environments, this holds true :)
@@ -1086,9 +1081,15 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
     FILE* temp_file = NULL;
     FILE* input_file = pwcrypt_fopen(input_file_path, "rb");
 
-    if (input_file == NULL || pwcrypt_get_filesize(input_file_path) <= 96)
+    if (input_file == NULL)
     {
         return PWCRYPT_ERROR_FILE_FAILURE;
+    }
+
+    if (pwcrypt_get_filesize(input_file_path) <= 96)
+    {
+        fclose(input_file);
+        return PWCRYPT_ERROR_DECRYPTION_FAILURE;
     }
 
     mbedtls_gcm_context aes_ctx;
