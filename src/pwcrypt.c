@@ -147,7 +147,10 @@ static inline FILE* pwcrypt_fopen(const char* filename, const char* mode)
         return NULL;
     }
 
-    wchar_t wmode[256] = { 0x00 };
+    wchar_t wmode[256];
+
+    wpath[0] = 0x00;
+    wmode[0] = 0x00;
 
     MultiByteToWideChar(CP_UTF8, 0, filename, -1, wpath, PWCRYPT_MAX_WIN_FILEPATH_LENGTH);
     MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, 256);
