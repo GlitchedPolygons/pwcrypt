@@ -21,8 +21,10 @@
 
 #include "pwcrypt.h"
 
-#if _WIN32
-#define PATH_MAX 260
+#ifdef _WIN32
+#define WIN32_NO_STATUS
+#include <windows.h>
+#undef WIN32_NO_STATUS
 #endif
 
 static const char HELP_TEXT[] = "\n"
@@ -39,7 +41,7 @@ static const char HELP_TEXT[] = "\n"
                                 "-- Decrypting \n\n"
                                 "  pwcrypt_cli d \"EwAAAAQAAAAAAAQAAgAAAFYjNGlNEnNMn5VtyW5hvxnKhdk9i\" \"SUPER-safe Password123_!\" \n";
 
-int main(const int argc, const char* argv[])
+int main(const int argc, char* argv[])
 {
     pwcrypt_enable_fprintf();
 
@@ -55,14 +57,14 @@ int main(const int argc, const char* argv[])
         return PWCRYPT_ERROR_INVALID_ARGS;
     }
 
-    const char* mode = argv[1];
-    const size_t mode_length = strlen(mode);
+    char* mode = argv[1];
+    size_t mode_length = strlen(mode);
 
-    const char* text = argv[2];
-    const size_t text_length = strlen(text);
+    char* text = argv[2];
+    size_t text_length = strlen(text);
 
-    const char* password = argv[3];
-    const size_t password_length = strlen(password);
+    char* password = argv[3];
+    size_t password_length = strlen(password);
 
     int r = -1;
 
@@ -71,14 +73,59 @@ int main(const int argc, const char* argv[])
     uint8_t* output = NULL;
     size_t output_length = 0;
 
-    char output_file_path[PATH_MAX + 1];
-    mbedtls_platform_zeroize(output_file_path, sizeof(output_file_path));
-
     uint32_t cost_m = 0;
     uint32_t cost_t = 0;
     uint32_t parallelism = 0;
     uint32_t compression = 8;
     uint32_t algo_id = PWCRYPT_ALGO_ID_AES256_GCM;
+
+    char* output_file_path = calloc(PWCRYPT_MAX_WIN_FILEPATH_LENGTH + 1, sizeof(char));
+    if (output_file_path == NULL)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Out of memory...");
+        return PWCRYPT_ERROR_OOM;
+    }
+
+#ifdef _WIN32
+    int wargc;
+    LPWSTR* wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
+
+    text_length = wcslen(wargv[2]);
+    password_length = wcslen(wargv[3]);
+
+    const size_t textbuffersize = (text_length * 4) + 1;
+    const size_t passwordbuffersize = (password_length * 4) + 1;
+
+    char* textbuffer = calloc(textbuffersize, sizeof(char));
+    char* passwordbuffer = calloc(passwordbuffersize, sizeof(char));
+
+    if (textbuffer == NULL || passwordbuffer == NULL)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Out of memory...");
+        r = PWCRYPT_ERROR_OOM;
+        goto exit;
+    }
+
+    if (WideCharToMultiByte(CP_UTF8, 0, wargv[2], -1, textbuffer, (int)textbuffersize, NULL, NULL) == 0)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Failed to encode the second CLI argument to UTF-8.");
+        r = PWCRYPT_ERROR_INVALID_ARGS;
+        goto exit;
+    }
+
+    if (WideCharToMultiByte(CP_UTF8, 0, wargv[3], -1, passwordbuffer, (int)passwordbuffersize, NULL, NULL) == 0)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Failed to encode the third CLI argument to UTF-8.");
+        r = PWCRYPT_ERROR_INVALID_ARGS;
+        goto exit;
+    }
+
+    text = textbuffer;
+    password = passwordbuffer;
+
+    text_length = strlen(text);
+    password_length = strlen(password);
+#endif
 
     if (mode_length != 1)
     {
@@ -124,13 +171,22 @@ int main(const int argc, const char* argv[])
         {
             file = 1;
 
-            const int n = snprintf(output_file_path, sizeof(output_file_path), "%s", arg + 7);
-            if (n < 0 || n >= sizeof(output_file_path))
+#ifdef _WIN32
+            if (WideCharToMultiByte(CP_UTF8, 0, wargv[i] + 7, -1, output_file_path, (int)PWCRYPT_MAX_WIN_FILEPATH_LENGTH, NULL, NULL) == 0)
             {
-                pwcrypt_fprintf(stderr, "pwcrypt: Output file path too long: \"%s\" (maximum length is PATH_MAX=%d).\n", text, PATH_MAX);
+                pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Failed to encode the CLI argument \"--file=\" (the output file path) to UTF-8.");
+                r = PWCRYPT_ERROR_INVALID_ARGS;
+                goto exit;
+            }
+#else
+            const int n = snprintf(output_file_path, PWCRYPT_MAX_WIN_FILEPATH_LENGTH, "%s", arg + 7);
+            if (n < 0 || n >= PWCRYPT_MAX_WIN_FILEPATH_LENGTH)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Output file path too long: \"%s\" (maximum length is %d).\n", text, PWCRYPT_MAX_WIN_FILEPATH_LENGTH);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
                 goto exit;
             }
+#endif
 
             continue;
         }
@@ -196,7 +252,14 @@ exit:
     mbedtls_platform_zeroize(&cost_t, sizeof(uint32_t));
     mbedtls_platform_zeroize(&cost_m, sizeof(uint32_t));
     mbedtls_platform_zeroize(&parallelism, sizeof(uint32_t));
-    mbedtls_platform_zeroize(output_file_path, sizeof(output_file_path));
+    mbedtls_platform_zeroize(output_file_path, PWCRYPT_MAX_WIN_FILEPATH_LENGTH + 1);
+    free(output_file_path);
+
+#ifdef _WIN32
+    free(textbuffer);
+    free(passwordbuffer);
+    LocalFree(wargv);
+#endif
 
     return (r);
 }
