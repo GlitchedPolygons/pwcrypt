@@ -98,9 +98,9 @@ Macros</h2></td></tr>
 <tr class="memitem:a26276e2814a267951aa22441200aea65"><td class="memItemLeft" align="right" valign="top"><a id="a26276e2814a267951aa22441200aea65"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>PWCRYPT_API</b></td></tr>
 <tr class="separator:a26276e2814a267951aa22441200aea65"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f984651db551e9e4b63d1e011208749"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749">PWCRYPT_VERSION</a>&#160;&#160;&#160;411</td></tr>
+<tr class="memitem:a6f984651db551e9e4b63d1e011208749"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749">PWCRYPT_VERSION</a>&#160;&#160;&#160;420</td></tr>
 <tr class="separator:a6f984651db551e9e4b63d1e011208749"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f">PWCRYPT_VERSION_STR</a>&#160;&#160;&#160;&quot;4.1.1&quot;</td></tr>
+<tr class="memitem:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f">PWCRYPT_VERSION_STR</a>&#160;&#160;&#160;&quot;4.2.0&quot;</td></tr>
 <tr class="separator:a68dd308da1af04ab1c62abbcc89ede7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f42bd2f1c4b44339f65fbde2b369826"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a2f42bd2f1c4b44339f65fbde2b369826">PWCRYPT_Z_CHUNKSIZE</a>&#160;&#160;&#160;(1024 * 256)</td></tr>
 <tr class="separator:a2f42bd2f1c4b44339f65fbde2b369826"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -140,6 +140,8 @@ Macros</h2></td></tr>
 <tr class="separator:a5c10aadbb67a8f6dd14140e3f707eb08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a52b0ba6632029e9f9d009472b78b77bc"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#a52b0ba6632029e9f9d009472b78b77bc">PWCRYPT_MAX</a>(x,  y)&#160;&#160;&#160;(((x) &gt; (y)) ? (x) : (y))</td></tr>
 <tr class="separator:a52b0ba6632029e9f9d009472b78b77bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf0b9361b17039dbbc49de206db2a8e0"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pwcrypt_8h.html#adf0b9361b17039dbbc49de206db2a8e0">PWCRYPT_MAX_WIN_FILEPATH_LENGTH</a>&#160;&#160;&#160;(1024 * 32)</td></tr>
+<tr class="separator:adf0b9361b17039dbbc49de206db2a8e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a3b3f4c77c4006596e4dc1393529fd5"><td class="memItemLeft" align="right" valign="top"><a id="a3a3b3f4c77c4006596e4dc1393529fd5"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>pwcrypt_fprintf</b>&#160;&#160;&#160;pwcrypt_fprintf_fptr</td></tr>
 <tr class="separator:a3a3b3f4c77c4006596e4dc1393529fd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -460,6 +462,21 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="adf0b9361b17039dbbc49de206db2a8e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf0b9361b17039dbbc49de206db2a8e0">&#9670;&nbsp;</a></span>PWCRYPT_MAX_WIN_FILEPATH_LENGTH</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define PWCRYPT_MAX_WIN_FILEPATH_LENGTH&#160;&#160;&#160;(1024 * 32)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Maximum file path length on NTFS. </p>
+
+</div>
+</div>
 <a id="a5c10aadbb67a8f6dd14140e3f707eb08"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5c10aadbb67a8f6dd14140e3f707eb08">&#9670;&nbsp;</a></span>PWCRYPT_MIN</h2>
 
@@ -496,7 +513,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define PWCRYPT_VERSION&#160;&#160;&#160;411</td>
+          <td class="memname">#define PWCRYPT_VERSION&#160;&#160;&#160;420</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -511,7 +528,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define PWCRYPT_VERSION_STR&#160;&#160;&#160;&quot;4.1.1&quot;</td>
+          <td class="memname">#define PWCRYPT_VERSION_STR&#160;&#160;&#160;&quot;4.2.0&quot;</td>
         </tr>
       </table>
 </div><div class="memdoc">

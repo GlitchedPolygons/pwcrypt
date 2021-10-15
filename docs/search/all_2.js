@@ -33,9 +33,10 @@ var searchData=
   ['pwcrypt_5finvalid_5fargs_5ferror_5fmsg_32',['PWCRYPT_INVALID_ARGS_ERROR_MSG',['../pwcrypt_8h.html#aabbf40cd5fc584f5e34dfb286524b19f',1,'pwcrypt.h']]],
   ['pwcrypt_5fis_5ffprintf_5fenabled_33',['pwcrypt_is_fprintf_enabled',['../pwcrypt_8h.html#ae7965106b230f9a7bb86d0c1e78c55c5',1,'pwcrypt.h']]],
   ['pwcrypt_5fmax_34',['PWCRYPT_MAX',['../pwcrypt_8h.html#a52b0ba6632029e9f9d009472b78b77bc',1,'pwcrypt.h']]],
-  ['pwcrypt_5fmin_35',['PWCRYPT_MIN',['../pwcrypt_8h.html#a5c10aadbb67a8f6dd14140e3f707eb08',1,'pwcrypt.h']]],
-  ['pwcrypt_5fprintvoid_36',['pwcrypt_printvoid',['../pwcrypt_8h.html#a7a88f7a04a14965811d62a1fb7b978e2',1,'pwcrypt.h']]],
-  ['pwcrypt_5fversion_37',['PWCRYPT_VERSION',['../pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749',1,'pwcrypt.h']]],
-  ['pwcrypt_5fversion_5fstr_38',['PWCRYPT_VERSION_STR',['../pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f',1,'pwcrypt.h']]],
-  ['pwcrypt_5fz_5fchunksize_39',['PWCRYPT_Z_CHUNKSIZE',['../pwcrypt_8h.html#a2f42bd2f1c4b44339f65fbde2b369826',1,'pwcrypt.h']]]
+  ['pwcrypt_5fmax_5fwin_5ffilepath_5flength_35',['PWCRYPT_MAX_WIN_FILEPATH_LENGTH',['../pwcrypt_8h.html#adf0b9361b17039dbbc49de206db2a8e0',1,'pwcrypt.h']]],
+  ['pwcrypt_5fmin_36',['PWCRYPT_MIN',['../pwcrypt_8h.html#a5c10aadbb67a8f6dd14140e3f707eb08',1,'pwcrypt.h']]],
+  ['pwcrypt_5fprintvoid_37',['pwcrypt_printvoid',['../pwcrypt_8h.html#a7a88f7a04a14965811d62a1fb7b978e2',1,'pwcrypt.h']]],
+  ['pwcrypt_5fversion_38',['PWCRYPT_VERSION',['../pwcrypt_8h.html#a6f984651db551e9e4b63d1e011208749',1,'pwcrypt.h']]],
+  ['pwcrypt_5fversion_5fstr_39',['PWCRYPT_VERSION_STR',['../pwcrypt_8h.html#a68dd308da1af04ab1c62abbcc89ede7f',1,'pwcrypt.h']]],
+  ['pwcrypt_5fz_5fchunksize_40',['PWCRYPT_Z_CHUNKSIZE',['../pwcrypt_8h.html#a2f42bd2f1c4b44339f65fbde2b369826',1,'pwcrypt.h']]]
 ];
