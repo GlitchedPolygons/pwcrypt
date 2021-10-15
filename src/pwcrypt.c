@@ -737,7 +737,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
                 goto exit;
             }
 
-            r = mbedtls_gcm_starts(&aes_ctx, MBEDTLS_GCM_ENCRYPT, salt_and_iv + 32, 16, NULL, 0);
+            r = mbedtls_gcm_starts(&aes_ctx, MBEDTLS_GCM_ENCRYPT, salt_and_iv + 32, 16);
             if (r != 0)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_starts\" returned: %d\n", r);
@@ -747,7 +747,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
 
             while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, temp_file)) != 0)
             {
-                r = mbedtls_gcm_update(&aes_ctx, temp_counter, temp_in_buffer, temp_out_buffer);
+                r = mbedtls_gcm_update(&aes_ctx, temp_in_buffer, temp_counter, temp_out_buffer, temp_counter, &temp_counter);
                 if (r != 0)
                 {
                     pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_update\" returned: %d\n", r);
@@ -763,7 +763,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
                 }
             }
 
-            r = mbedtls_gcm_finish(&aes_ctx, temp_out_buffer, 16);
+            r = mbedtls_gcm_finish(&aes_ctx, temp_out_buffer + 16, 0, &temp_counter, temp_out_buffer, 16);
             if (r != 0)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_finish\" returned: %d\n", r);
@@ -1275,7 +1275,7 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
                 goto exit;
             }
 
-            r = mbedtls_gcm_starts(&aes_ctx, MBEDTLS_GCM_DECRYPT, iv, sizeof(iv), NULL, 0);
+            r = mbedtls_gcm_starts(&aes_ctx, MBEDTLS_GCM_DECRYPT, iv, sizeof(iv));
             if (r != 0)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_starts\" returned: %d\n", r);
@@ -1285,7 +1285,7 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
 
             while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, input_file)) != 0)
             {
-                r = mbedtls_gcm_update(&aes_ctx, temp_counter, temp_in_buffer, temp_out_buffer);
+                r = mbedtls_gcm_update(&aes_ctx, temp_in_buffer, temp_counter, temp_out_buffer, temp_counter, &temp_counter);
                 if (r != 0)
                 {
                     pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_update\" returned: %d\n", r);
@@ -1301,7 +1301,7 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
                 }
             }
 
-            r = mbedtls_gcm_finish(&aes_ctx, temp_out_buffer, 16);
+            r = mbedtls_gcm_finish(&aes_ctx, temp_out_buffer + 16, 0, &temp_counter, temp_out_buffer, 16);
             if (r != 0)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_finish\" returned: %d\n", r);
