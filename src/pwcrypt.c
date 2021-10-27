@@ -84,7 +84,7 @@ size_t pwcrypt_get_filesize(const char* filepath)
 {
     size_t filesize = 0;
 
-#if _WIN32
+#ifdef _WIN32
     wchar_t* wpath = malloc(PWCRYPT_MAX_WIN_FILEPATH_LENGTH * sizeof(wchar_t));
     if (wpath == NULL)
     {
