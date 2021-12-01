@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['empty64_1',['EMPTY64',['../pwcrypt_8h.html#a00cfc9fb0fb9021683177dcdfe898dd4',1,'pwcrypt.h']]]
+  ['empty64_0',['EMPTY64',['../pwcrypt_8h.html#a00cfc9fb0fb9021683177dcdfe898dd4',1,'pwcrypt.h']]]
 ];
