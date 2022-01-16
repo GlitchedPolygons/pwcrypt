@@ -20,7 +20,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 set(${PROJECT_NAME}_MAJOR 4)
 set(${PROJECT_NAME}_MINOR 2)
-set(${PROJECT_NAME}_PATCH 1)
+set(${PROJECT_NAME}_PATCH 2)
 set(${PROJECT_NAME}_VERSION_STRING "${${PROJECT_NAME}_MAJOR}.${${PROJECT_NAME}_MINOR}.${${PROJECT_NAME}_PATCH}")
 
 option(ENABLE_TESTING "Build MbedTLS tests." OFF)
@@ -36,6 +36,10 @@ option(${PROJECT_NAME}_ONLY_BUILD_LIB "Don't build the pwcrypt executable, but j
 if (${${PROJECT_NAME}_BUILD_DLL})
     add_compile_definitions("PWCRYPT_BUILD_DLL=1")
     set(${PROJECT_NAME}_DLL ON)
+
+    if (WIN32)
+        set(CMAKE_RELEASE_POSTFIX "${${PROJECT_NAME}_MAJOR}")
+    endif()
 endif ()
 
 if (${${PROJECT_NAME}_DLL})
