@@ -135,4 +135,11 @@ So make sure to only confirm commands that you know won't cause losses!
 You want the nice graphical stuff huh? The fully visualized presentation. With colors 'n' design n' stuff. We get it!
 
 There is a (commercial) [Android app](https://play.google.com/store/apps/details?id=com.glitchedpolygons.pwcrypt) on the Google Play store called "psíthyros" that uses and wraps this library. It presents a very usable and accessible way of interacting with pwcrypt (for text messages, mainly).
-The desktop client will follow soon too!
+
+<a href="https://play.google.com/store/apps/details?id=com.glitchedpolygons.pwcrypt"><img src="https://files.glitchedpolygons.com/api/v1/files/lr51n950no5bq2vm" width="150"></a>
+
+The desktop client is available for the x64 CPU architecture on Windows, Linux and Mac. Check it out here on [the glitchedpolygons.com store](https://glitchedpolygons.com/projects/software/psithyros)!
+
+---
+
+[![Qt GUI Screenshot](https://files.glitchedpolygons.com/api/v1/files/gx9piwkhenm5n9c8)](https://glitchedpolygons.com/projects/software/psithyros)
