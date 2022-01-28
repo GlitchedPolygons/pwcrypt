@@ -1,5 +1,6 @@
 # pwcrypt
 ## Easy peasy, password-based symmetric encryption squeezy
+### Encrypt files and text messages with a password
 
 [![CircleCI](https://circleci.com/gh/GlitchedPolygons/pwcrypt/tree/master.svg?style=shield)](https://circleci.com/gh/GlitchedPolygons/pwcrypt/tree/master)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/addkmk08sytildbp/branch/master?svg=true)](https://ci.appveyor.com/project/GlitchedPolygons/pwcrypt/branch/master)
