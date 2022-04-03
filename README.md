@@ -72,7 +72,7 @@ The pwcrypt command line interface works using the following (relatively rigid) 
 - [Optional params for encryption]
 
 ```
-pwcrypt_cli {e|d} {input} {password} \
+pwcrypt {e|d} {input} {password} \
      [--time-cost=INT] \
      [--memory-cost=INT] \
      [--parallelism=INT] \
@@ -83,7 +83,7 @@ pwcrypt_cli {e|d} {input} {password} \
 
 #### Encrypting
 
-`pwcrypt_cli e "My string to encrypt" "VERY-safe_password123!"`
+`pwcrypt e "My string to encrypt" "VERY-safe_password123!"`
 
 You can append the following **optional** (integer) arguments for controlling key-derivation with [Argon2](https://github.com/P-H-C/phc-winner-argon2) at the end:
 
@@ -108,7 +108,7 @@ Append `--algorithm=chachapoly` at the end to use the [ChaCha20-Poly1305](https:
 
 #### Decrypting
 
-`pwcrypt_cli d "EwAAAAQAAAAAAAQAAgAAAFYjNGlNEnNMn5VtyW5hvxnKhdk9i" "Decryption Password 123 !!!"`
+`pwcrypt d "EwAAAAQAAAAAAAQAAgAAAFYjNGlNEnNMn5VtyW5hvxnKhdk9i" "Decryption Password 123 !!!"`
 
 ### Files instead of strings
 
@@ -120,7 +120,7 @@ In this case, the `{input}` text argument will be treated as the path of the fil
 * Example:
 
 <pre>
-pwcrypt_cli e "/home/someuser/secret.png" \
+pwcrypt e "/home/someuser/secret.png" \
      "Extremely Safe Encryption 1337 PW" \
      --file="/home/someuser/enrypted-secret.png.pwcrypt" \
      --compression=0 \
