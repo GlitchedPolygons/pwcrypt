@@ -34,12 +34,12 @@ static const char HELP_TEXT[] = "\n"
                                 "Encrypt and decrypt strings using passwords. \n"
                                 "The strings are compressed and then encrypted by deriving a symmetric encryption key from the password using Argon2. \n\n"
                                 "Usage: \n\n"
-                                "pwcrypt_cli \\\n\t{e|d} {input} {password} \\\n\t[--time-cost=INT] \\\n\t[--memory-cost=INT] \\\n\t[--parallelism=INT] \\\n\t[--compression=INT] \\\n\t[--algorithm=aes256-gcm|chachapoly] \\\n\t[--file=OUTPUT_FILE_PATH]\n\n"
+                                "pwcrypt \\\n\t{e|d} {input} {password} \\\n\t[--time-cost=INT] \\\n\t[--memory-cost=INT] \\\n\t[--parallelism=INT] \\\n\t[--compression=INT] \\\n\t[--algorithm=aes256-gcm|chachapoly] \\\n\t[--file=OUTPUT_FILE_PATH]\n\n"
                                 "Examples: \n\n"
                                 "-- Encrypting \n\n"
-                                "  pwcrypt_cli e \"My string to encrypt.\" \"SUPER-safe Password123_!\" \n\n"
+                                "  pwcrypt e \"My string to encrypt.\" \"SUPER-safe Password123_!\" \n\n"
                                 "-- Decrypting \n\n"
-                                "  pwcrypt_cli d \"EwAAAAQAAAAAAAQAAgAAAFYjNGlNEnNMn5VtyW5hvxnKhdk9i\" \"SUPER-safe Password123_!\" \n";
+                                "  pwcrypt d \"EwAAAAQAAAAAAAQAAgAAAFYjNGlNEnNMn5VtyW5hvxnKhdk9i\" \"SUPER-safe Password123_!\" \n";
 
 int main(const int argc, char* argv[])
 {
