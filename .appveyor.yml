@@ -3,23 +3,7 @@ image:
   - Ubuntu2004
   - macos-mojave
   - macos
-  - Visual Studio 2017
-  - Visual Studio 2019
   - Visual Studio 2022
-
-environment:
-  matrix:
-    - ARCH: amd64
-    - ARCH: arm64
-
-matrix:
-  exclude:
-    - image: Visual Studio 2017
-      ARCH: arm64
-    - image: Visual Studio 2019
-      ARCH: arm64
-    - image: Visual Studio 2022
-      ARCH: arm64
 
 for:
   -
@@ -65,30 +49,6 @@ for:
     build_script:
     - sh: sudo rm -rf build
     - sh: bash -eo pipefail build.sh
-    artifacts:
-    - path: 'build\*.tar.gz'
-  -
-    matrix:
-      only:
-        - image: Visual Studio 2017
-    install:
-    - cmd: git submodule update --init --recursive
-    before_build:
-    - cmd: call test.bat
-    build_script:
-    - cmd: call build.bat
-    artifacts:
-    - path: 'build\*.tar.gz'
-  -
-    matrix:
-      only:
-        - image: Visual Studio 2019
-    install:
-    - cmd: git submodule update --init --recursive
-    before_build:
-    - cmd: call test.bat
-    build_script:
-    - cmd: call build.bat
     artifacts:
     - path: 'build\*.tar.gz'
   -
