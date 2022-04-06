@@ -4,6 +4,8 @@ image:
   - macos-mojave
   - macos
   - Visual Studio 2017
+  - Visual Studio 2019
+  - Visual Studio 2022
 
 environment:
   matrix:
@@ -13,6 +15,10 @@ environment:
 matrix:
   exclude:
     - image: Visual Studio 2017
+      ARCH: arm64
+    - image: Visual Studio 2019
+      ARCH: arm64
+    - image: Visual Studio 2022
       ARCH: arm64
 
 for:
@@ -65,6 +71,30 @@ for:
     matrix:
       only:
         - image: Visual Studio 2017
+    install:
+    - cmd: git submodule update --init --recursive
+    before_build:
+    - cmd: call test.bat
+    build_script:
+    - cmd: call build.bat
+    artifacts:
+    - path: 'build\*.tar.gz'
+  -
+    matrix:
+      only:
+        - image: Visual Studio 2019
+    install:
+    - cmd: git submodule update --init --recursive
+    before_build:
+    - cmd: call test.bat
+    build_script:
+    - cmd: call build.bat
+    artifacts:
+    - path: 'build\*.tar.gz'
+  -
+    matrix:
+      only:
+        - image: Visual Studio 2022
     install:
     - cmd: git submodule update --init --recursive
     before_build:
