@@ -4,6 +4,17 @@ image:
   - macos-mojave
   - macos
   - Visual Studio 2017
+
+environment:
+  matrix:
+    - ARCH: amd64
+    - ARCH: arm64
+
+matrix:
+  exclude:
+    - image: Visual Studio 2017
+      ARCH: arm64
+
 for:
   -
     matrix:
