@@ -69,6 +69,7 @@ int main(const int argc, char* argv[])
     int r = -1;
 
     uint8_t file = 0;
+    const uint8_t use_stdin = (*text == '-' && text_length == 1);
 
     uint8_t* output = NULL;
     size_t output_length = 0;
@@ -200,12 +201,23 @@ int main(const int argc, char* argv[])
         }
     }
 
+    FILE* output_file = file //
+                            ? pwcrypt_fopen(output_file_path, "wb")
+                            : stdout;
+
     switch (*mode)
     {
         case 'e': {
-            r = file //
-                    ? pwcrypt_encrypt_file(text, text_length, compression, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, output_file_path, strlen(output_file_path)) //
-                    : pwcrypt_encrypt((uint8_t*)text, text_length, compression, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, &output, &output_length, (uint32_t)(!file));
+            if (use_stdin)
+            {
+                r = pwcrypt_encrypt_file_raw(stdin, output_file, compression, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, 0, file);
+            }
+            else
+            {
+                r = file                                                                                                                                                                              //
+                        ? pwcrypt_encrypt_file(text, text_length, compression, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, output_file_path, strlen(output_file_path)) //
+                        : pwcrypt_encrypt((uint8_t*)text, text_length, compression, (uint8_t*)password, password_length, cost_t, cost_m, parallelism, algo_id, &output, &output_length, 1);
+            }
 
             if (r != 0)
             {
@@ -214,9 +226,16 @@ int main(const int argc, char* argv[])
             break;
         }
         case 'd': {
-            r = file //
-                    ? pwcrypt_decrypt_file(text, text_length, (uint8_t*)password, password_length, output_file_path, strlen(output_file_path)) //
-                    : pwcrypt_decrypt((uint8_t*)text, text_length, (uint8_t*)password, password_length, &output, &output_length);
+            if (use_stdin)
+            {
+                r = pwcrypt_decrypt_file_raw(stdin, output_file, (uint8_t*)password, password_length, 0, file);
+            }
+            else
+            {
+                r = file                                                                                                                           //
+                        ? pwcrypt_decrypt_file(text, text_length, (uint8_t*)password, password_length, output_file_path, strlen(output_file_path)) //
+                        : pwcrypt_decrypt((uint8_t*)text, text_length, (uint8_t*)password, password_length, &output, &output_length);
+            }
 
             if (r != 0)
             {
@@ -229,6 +248,11 @@ int main(const int argc, char* argv[])
             r = PWCRYPT_ERROR_INVALID_ARGS;
             goto exit;
         }
+    }
+
+    if (output_file != NULL && output_file != stdout)
+    {
+        fclose(output_file);
     }
 
     if (r == 0 && output != NULL && !file)

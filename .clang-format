@@ -4,7 +4,7 @@ BreakBeforeInheritanceComma: true
 
 BreakConstructorInitializersBeforeComma: true
 
-ColumnLimit: 256
+ColumnLimit: 512
 
 CommentPragmas: "^!|^:"
 

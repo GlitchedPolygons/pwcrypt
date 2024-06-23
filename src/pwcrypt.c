@@ -14,6 +14,19 @@
    limitations under the License.
 */
 
+/* mmap() replacement for Windows
+ *
+ * Author: Mike Frysinger <vapier@gentoo.org>
+ * Placed into the public domain
+ */
+
+/* References:
+ * CreateFileMapping: http://msdn.microsoft.com/en-us/library/aa366537(VS.85).aspx
+ * CloseHandle:       http://msdn.microsoft.com/en-us/library/ms724211(VS.85).aspx
+ * MapViewOfFile:     http://msdn.microsoft.com/en-us/library/aa366761(VS.85).aspx
+ * UnmapViewOfFile:   http://msdn.microsoft.com/en-us/library/aa366882(VS.85).aspx
+ */
+
 #include "pwcrypt.h"
 
 #include <ctype.h>
@@ -33,12 +46,18 @@
 #include <windows.h>
 #undef WIN32_NO_STATUS
 #include <bcrypt.h>
+#include <fcntl.h>
+#include <io.h>
 #else
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
+#endif
+
+#ifdef __BORLANDC__
+#define _setmode setmode
 #endif
 
 static const uint32_t PWCRYPT_V = (uint32_t)PWCRYPT_VERSION;
@@ -134,32 +153,6 @@ exit:
 exit:
     mbedtls_platform_zeroize(&stbuf, sizeof(stbuf));
     return filesize;
-#endif
-}
-
-static inline FILE* pwcrypt_fopen(const char* filename, const char* mode)
-{
-#ifdef _WIN32
-    wchar_t* wpath = malloc(PWCRYPT_MAX_WIN_FILEPATH_LENGTH * sizeof(wchar_t));
-    if (wpath == NULL)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Out of memory...");
-        return NULL;
-    }
-
-    wchar_t wmode[256];
-
-    wpath[0] = 0x00;
-    wmode[0] = 0x00;
-
-    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wpath, PWCRYPT_MAX_WIN_FILEPATH_LENGTH);
-    MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, 256);
-
-    FILE* file = _wfopen(wpath, wmode);
-    free(wpath);
-    return file;
-#else // Hope that the fopen() implementation on whatever platform you're on accepts UTF-8 encoded strings. For most *nix environments, this holds true :)
-    return fopen(filename, mode);
 #endif
 }
 
@@ -536,9 +529,9 @@ exit:
     return (r);
 }
 
-int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_length, uint32_t compress, const uint8_t* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, const char* output_file_path, size_t output_file_path_length)
+int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compress, const uint8_t* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint32_t close_input_file, uint32_t close_output_file)
 {
-    if (input_file_path == NULL || input_file_path_length != strlen(input_file_path) || password == NULL || output_file_path == NULL || output_file_path_length != strlen(output_file_path))
+    if (input_file == NULL || password == NULL || output_file == NULL || input_file == output_file)
     {
         return PWCRYPT_ERROR_INVALID_ARGS;
     }
@@ -549,6 +542,17 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
         return (r);
     }
 
+#ifdef _WIN32
+    if (input_file == stdin)
+    {
+        _setmode(_fileno(stdin), _O_BINARY);
+    }
+    if (output_file == stdout)
+    {
+        _setmode(_fileno(stdout), _O_BINARY);
+    }
+#endif
+
     uint8_t key[32] = { 0x00 };
 
     mbedtls_gcm_context aes_ctx;
@@ -557,27 +561,43 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     mbedtls_chachapoly_context chachapoly_ctx;
     mbedtls_chachapoly_init(&chachapoly_ctx);
 
+    size_t output_size = 96; // 96 bytes is the size of the output header that is prepended to the actual ciphertext.
     size_t temp_counter = 0;
     uint8_t* temp_in_buffer = NULL;
     uint8_t* temp_out_buffer = NULL;
 
     char temp_file_path[256] = { 0x00 };
+    char temp_output_file_path[256] = { 0x00 };
 
     pwcrypt_get_temp_filepath(temp_file_path);
-
-    FILE* temp_file = NULL;
-    FILE* input_file = pwcrypt_fopen(input_file_path, "rb");
-    FILE* output_file = pwcrypt_fopen(output_file_path, "wb");
-
-    if (input_file == NULL || output_file == NULL)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: \"pwcrypt_encrypt_file\" function failed to open input and/or output file.");
-        r = PWCRYPT_ERROR_FILE_FAILURE;
-        goto exit;
-    }
+    pwcrypt_get_temp_filepath(temp_output_file_path);
 
     temp_in_buffer = malloc(PWCRYPT_FILE_BUFFER_SIZE);
     temp_out_buffer = malloc(PWCRYPT_FILE_BUFFER_SIZE);
+
+    // Create a temporary file for storing the compressed blob (pre-encryption).
+    FILE* temp_file = pwcrypt_fopen(temp_file_path, "wb");
+
+    FILE* temp_output_file;
+
+    if (output_file == stdout)
+    {
+        // Another temporary file is required for the output if we're writing to stdout,
+        // since the GCM-Tag/MAC can only be known AFTER encryption and must be inserted
+        // at the 80th position of the ciphertext (and fseek shouldn't be used on stdout).
+        temp_output_file = pwcrypt_fopen(temp_output_file_path, "wb");
+    }
+    else
+    {
+        temp_output_file = output_file;
+    }
+
+    if (temp_file == NULL || temp_output_file == NULL)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Failed to open temporary file!\n");
+        r = PWCRYPT_ERROR_FILE_FAILURE;
+        goto exit;
+    }
 
     if (temp_in_buffer == NULL || temp_out_buffer == NULL)
     {
@@ -586,7 +606,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
         goto exit;
     }
 
-    r = ccrush_compress_file(input_file_path, temp_file_path, 4096, (int)compress);
+    r = ccrush_compress_file_raw(input_file, temp_file, 4096, (int)compress, 0, 1);
     if (r != 0)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Compression of input file before encryption failed! \"ccrush_compress_file\" returned: %d\n", r);
@@ -628,7 +648,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
         argon2_parallelism = PWCRYPT_ARGON2_PARALLELISM;
 
     uint32_t bigendian = htonl(pwcrypt_get_version_nr());
-    if (fwrite(&bigendian, 4, 1, output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write pwcrypt version number \"%d\" header to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -636,7 +656,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     }
 
     bigendian = htonl(algo);
-    if (fwrite(&bigendian, 4, 1, output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write pwcrypt algo id to the output file.\n");
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -644,7 +664,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     }
 
     bigendian = htonl(compress);
-    if (fwrite(&bigendian, 4, 1, output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write pwcrypt compression parameter \"%d\" to the output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -652,7 +672,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     }
 
     bigendian = 0;
-    if (fwrite(&bigendian, 4, 1, output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write pwcrypt base64 parameter as header (value = 0) to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -660,7 +680,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     }
 
     bigendian = htonl(pwcrypt_get_argon2_version_nr());
-    if (fwrite(&bigendian, 4, 1, output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write Argon2 version number \"%d\" header to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -668,7 +688,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     }
 
     bigendian = htonl(argon2_cost_t);
-    if (fwrite(&bigendian, 4, 1, output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write Argon2 time cost parameter \"%d\" as header to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -676,7 +696,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     }
 
     bigendian = htonl(argon2_cost_m);
-    if (fwrite(&bigendian, 4, 1, output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write Argon2 memory cost parameter \"%d\" as header to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -684,7 +704,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     }
 
     bigendian = htonl(argon2_parallelism);
-    if (fwrite(&bigendian, 4, 1, output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write Argon2 parallelism parameter \"%d\" as header to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -695,7 +715,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
     uint8_t salt_and_iv[32 + 16];
     dev_urandom(salt_and_iv, sizeof(salt_and_iv));
 
-    if (fwrite(salt_and_iv, 1, sizeof(salt_and_iv), output_file) != sizeof(salt_and_iv))
+    if (fwrite(salt_and_iv, 1, sizeof(salt_and_iv), temp_output_file) != sizeof(salt_and_iv))
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write salt and/or IV to output file.\n");
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -704,7 +724,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
 
     // Write out 16 times "0x00" as the GCM tag/MAC value to advance the FILE* counter;
     // the mbedtls_gcm_finish function will write the tag out to a temporary buffer only AFTER encryption successfully finished.
-    if (fwrite(EMPTY64, 1, 16, output_file) != 16)
+    if (fwrite(EMPTY64, 1, 16, temp_output_file) != 16)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write initial padding of pure zeroes to output file's GCM tag/MAC slot.\n");
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -755,12 +775,14 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
                     goto exit;
                 }
 
-                if (fwrite(temp_out_buffer, 1, temp_counter, output_file) != temp_counter)
+                if (fwrite(temp_out_buffer, 1, temp_counter, temp_output_file) != temp_counter)
                 {
                     pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write %xu bytes to disk.\n", temp_counter);
                     r = PWCRYPT_ERROR_FILE_FAILURE;
                     goto exit;
                 }
+
+                output_size += temp_counter;
             }
 
             r = mbedtls_gcm_finish(&aes_ctx, temp_out_buffer + 16, 0, &temp_counter, temp_out_buffer, 16);
@@ -771,7 +793,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
                 goto exit;
             }
 
-            r = fseek(output_file, 80, SEEK_SET);
+            r = fseek(temp_output_file, 80, SEEK_SET);
             if (r != 0)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out GCM tag value to output file. \"fseek\" returned: %d\n", r);
@@ -779,7 +801,7 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
                 goto exit;
             }
 
-            if (fwrite(temp_out_buffer, 1, 16, output_file) != 16)
+            if (fwrite(temp_out_buffer, 1, 16, temp_output_file) != 16)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out GCM tag value to output file. \"fwrite\" did not succeed in writing out the full 16 bytes...\n");
                 r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -815,12 +837,14 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
                     goto exit;
                 }
 
-                if (fwrite(temp_out_buffer, 1, temp_counter, output_file) != temp_counter)
+                if (fwrite(temp_out_buffer, 1, temp_counter, temp_output_file) != temp_counter)
                 {
                     pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write %xu bytes to disk.\n", temp_counter);
                     r = PWCRYPT_ERROR_FILE_FAILURE;
                     goto exit;
                 }
+
+                output_size += temp_counter;
             }
 
             r = mbedtls_chachapoly_finish(&chachapoly_ctx, temp_out_buffer);
@@ -831,15 +855,15 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
                 goto exit;
             }
 
-            r = fseek(output_file, 80, SEEK_SET);
+            r = fseek(temp_output_file, 80, SEEK_SET);
             if (r != 0)
             {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out GCM tag value to output file. \"fseek\" returned: %d\n", r);
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out 128-bit MAC value to output file. \"fseek\" returned: %d\n", r);
                 r = PWCRYPT_ERROR_FILE_FAILURE;
                 goto exit;
             }
 
-            if (fwrite(temp_out_buffer, 1, 16, output_file) != 16)
+            if (fwrite(temp_out_buffer, 1, 16, temp_output_file) != 16)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out 128-bit MAC value to output file. \"fwrite\" did not succeed in writing out the full 16 bytes...\n");
                 r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -855,13 +879,58 @@ int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_len
         }
     }
 
+    if (output_file == stdout)
+    {
+        fclose(temp_output_file);
+        temp_output_file = pwcrypt_fopen(temp_output_file_path, "rb");
+        if (temp_output_file == NULL)
+        {
+            pwcrypt_fprintf(stderr, "pwcrypt: Failed to open temporary output file!\n");
+            r = PWCRYPT_ERROR_FILE_FAILURE;
+            goto exit;
+        }
+
+        size_t n = 0;
+
+        while (n < output_size)
+        {
+            size_t nr = fread(temp_out_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, temp_output_file);
+
+            int e = ferror(temp_output_file);
+
+            if (e != 0)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write encrypted result into stdout. \"ferror\" returned non-zero code: %d\n", e);
+                r = PWCRYPT_ERROR_FILE_FAILURE;
+                goto exit;
+            }
+
+            size_t nw = fwrite(temp_out_buffer, 1, nr, stdout);
+
+            if (nr != nw)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write encrypted result into stdout. \"fwrite\" returned a different amount of bytes written into stdout than \"fread\" has read from the temporary file buffer: bytes read = %d | bytes written = %d\n", nr, nw);
+                r = PWCRYPT_ERROR_FILE_FAILURE;
+                goto exit;
+            }
+
+            n += nw;
+        }
+    }
+
 exit:
 
-    if (input_file != NULL)
+    if (close_input_file)
         fclose(input_file);
 
-    if (output_file != NULL)
+    if (close_output_file)
         fclose(output_file);
+
+    if (temp_file != NULL)
+        fclose(temp_file);
+
+    if (output_file == stdout && temp_output_file != NULL)
+        fclose(temp_output_file);
 
     mbedtls_gcm_free(&aes_ctx);
     mbedtls_chachapoly_free(&chachapoly_ctx);
@@ -872,17 +941,50 @@ exit:
     mbedtls_platform_zeroize(temp_in_buffer, sizeof(temp_in_buffer));
     mbedtls_platform_zeroize(temp_out_buffer, sizeof(temp_out_buffer));
 
-    if (temp_file != NULL)
-    {
-        fclose(temp_file);
-        remove(temp_file_path);
-        mbedtls_platform_zeroize(temp_file_path, sizeof(temp_file_path));
-    }
+    remove(temp_file_path);
+    mbedtls_platform_zeroize(temp_file_path, sizeof(temp_file_path));
+
+    remove(temp_output_file_path);
+    mbedtls_platform_zeroize(temp_output_file_path, sizeof(temp_output_file_path));
 
     free(temp_in_buffer);
     free(temp_out_buffer);
 
     return (r);
+}
+
+int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_length, uint32_t compress, const uint8_t* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, const char* output_file_path, size_t output_file_path_length)
+{
+    if (input_file_path == NULL || input_file_path_length != strlen(input_file_path) || password == NULL || output_file_path == NULL || output_file_path_length != strlen(output_file_path))
+    {
+        return PWCRYPT_ERROR_INVALID_ARGS;
+    }
+
+    int r = pwcrypt_assess_password_strength(password, password_length);
+    if (r != 0)
+    {
+        return (r);
+    }
+
+    FILE* input_file = pwcrypt_fopen(input_file_path, "rb");
+    FILE* output_file = pwcrypt_fopen(output_file_path, "wb");
+
+    if (input_file == NULL || output_file == NULL)
+    {
+        if (input_file != NULL)
+        {
+            fclose(input_file);
+        }
+        if (output_file != NULL)
+        {
+            fclose(output_file);
+        }
+        pwcrypt_fprintf(stderr, "pwcrypt: \"pwcrypt_encrypt_file\" function failed to open input and/or output file.");
+        r = PWCRYPT_ERROR_FILE_FAILURE;
+        return (r);
+    }
+
+    return pwcrypt_encrypt_file_raw(input_file, output_file, compress, password, password_length, argon2_cost_t, argon2_cost_m, argon2_parallelism, algo, 1, 1);
 }
 
 int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length, const uint8_t* password, size_t password_length, uint8_t** output, size_t* output_length)
@@ -1086,15 +1188,26 @@ exit:
     return (r);
 }
 
-int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_length, const uint8_t* password, size_t password_length, const char* output_file_path, size_t output_file_path_length)
+int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t* password, size_t password_length, uint32_t close_input_file, uint32_t close_output_file)
 {
-    if (input_file_path == NULL || strlen(input_file_path) != input_file_path_length || output_file_path == NULL || strlen(output_file_path) != output_file_path_length || password == NULL || password_length < 6)
+    if (input_file == NULL || output_file == NULL || input_file == output_file || password == NULL || password_length < 6)
     {
         return PWCRYPT_ERROR_INVALID_ARGS;
     }
 
     assert(sizeof(uint8_t) == 1);
     assert(sizeof(uint32_t) == 4);
+
+#ifdef _WIN32
+    if (input_file == stdin)
+    {
+        _setmode(_fileno(stdin), _O_BINARY);
+    }
+    if (output_file == stdout)
+    {
+        _setmode(_fileno(stdout), _O_BINARY);
+    }
+#endif
 
     int r = -1;
 
@@ -1104,23 +1217,10 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
     uint8_t* temp_in_buffer = NULL;
     uint8_t* temp_out_buffer = NULL;
 
+    FILE* temp_file = NULL;
     char temp_file_path[256] = { 0x00 };
 
     pwcrypt_get_temp_filepath(temp_file_path);
-
-    FILE* temp_file = NULL;
-    FILE* input_file = pwcrypt_fopen(input_file_path, "rb");
-
-    if (input_file == NULL)
-    {
-        return PWCRYPT_ERROR_FILE_FAILURE;
-    }
-
-    if (pwcrypt_get_filesize(input_file_path) <= 96)
-    {
-        fclose(input_file);
-        return PWCRYPT_ERROR_DECRYPTION_FAILURE;
-    }
 
     mbedtls_gcm_context aes_ctx;
     mbedtls_gcm_init(&aes_ctx);
@@ -1177,9 +1277,10 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
         goto exit;
     }
 
-    if ((r = fseek(input_file, 4, SEEK_CUR)) != 0)
+    uint32_t unused = 0;
+    if (fread(&unused, 4, 1, input_file) != 1)
     {
-        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure while reading the input file's pwcrypt header block. \"fseek\" returned error code \"%d\" while trying to seek forward 4 bytes.\n", r);
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure while reading the input file's pwcrypt header block while trying to seek forward 4 bytes.\n", r);
         r = PWCRYPT_ERROR_FILE_FAILURE;
         goto exit;
     }
@@ -1384,7 +1485,15 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
 
     fclose(temp_file);
 
-    r = ccrush_decompress_file(temp_file_path, output_file_path, 4096);
+    temp_file = pwcrypt_fopen(temp_file_path, "rb");
+    if (temp_file == NULL)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failed due to temporary file access (read access) failure!\n");
+        r = PWCRYPT_ERROR_FILE_FAILURE;
+        goto exit;
+    }
+
+    r = ccrush_decompress_file_raw(temp_file, output_file, 4096, 0, 0);
     if (r != 0)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress_file\" returned: %d\n", r);
@@ -1395,13 +1504,16 @@ int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_len
 exit:
 
     if (temp_file != NULL)
-    {
-        remove(temp_file_path);
-        mbedtls_platform_zeroize(temp_file_path, sizeof(temp_file_path));
-    }
+        fclose(temp_file);
 
-    if (input_file != NULL)
+    if (close_input_file)
         fclose(input_file);
+
+    if (close_output_file)
+        fclose(output_file);
+
+    remove(temp_file_path);
+    mbedtls_platform_zeroize(temp_file_path, sizeof(temp_file_path));
 
     mbedtls_gcm_free(&aes_ctx);
     mbedtls_chachapoly_free(&chachapoly_ctx);
@@ -1423,4 +1535,60 @@ exit:
     free(temp_out_buffer);
 
     return (r);
+}
+
+int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_length, const uint8_t* password, size_t password_length, const char* output_file_path, size_t output_file_path_length)
+{
+    if (input_file_path == NULL || strlen(input_file_path) != input_file_path_length || output_file_path == NULL || strlen(output_file_path) != output_file_path_length || password == NULL || password_length < 6)
+    {
+        return PWCRYPT_ERROR_INVALID_ARGS;
+    }
+
+    assert(sizeof(uint8_t) == 1);
+    assert(sizeof(uint32_t) == 4);
+
+    FILE* input_file = pwcrypt_fopen(input_file_path, "rb");
+    FILE* output_file = pwcrypt_fopen(output_file_path, "wb");
+
+    if (input_file == NULL || output_file == NULL)
+    {
+        if (input_file != NULL)
+        {
+            fclose(input_file);
+        }
+        if (output_file != NULL)
+        {
+            fclose(output_file);
+        }
+        pwcrypt_fprintf(stderr, "pwcrypt: \"pwcrypt_decrypt_file\" function failed to open input and/or output file.");
+        return PWCRYPT_ERROR_FILE_FAILURE;
+    }
+
+    return pwcrypt_decrypt_file_raw(input_file, output_file, password, password_length, 1, 1);
+}
+
+FILE* pwcrypt_fopen(const char* filename, const char* mode)
+{
+#ifdef _WIN32
+    wchar_t* wpath = malloc(PWCRYPT_MAX_WIN_FILEPATH_LENGTH * sizeof(wchar_t));
+    if (wpath == NULL)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Out of memory...");
+        return NULL;
+    }
+
+    wchar_t wmode[256];
+
+    wpath[0] = 0x00;
+    wmode[0] = 0x00;
+
+    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wpath, PWCRYPT_MAX_WIN_FILEPATH_LENGTH);
+    MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, 256);
+
+    FILE* file = _wfopen(wpath, wmode);
+    free(wpath);
+    return file;
+#else // Hope that the fopen() implementation on whatever platform you're on accepts UTF-8 encoded strings. For most *nix environments, this holds true :)
+    return fopen(filename, mode);
+#endif
 }

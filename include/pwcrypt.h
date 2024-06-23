@@ -72,12 +72,12 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Current version of the used pwcrypt library.
  */
-#define PWCRYPT_VERSION 424
+#define PWCRYPT_VERSION 430
 
 /**
  * Current version of the used pwcrypt library (nicely-formatted string).
  */
-#define PWCRYPT_VERSION_STR "4.2.4"
+#define PWCRYPT_VERSION_STR "4.3.0"
 
 #ifndef PWCRYPT_Z_CHUNKSIZE
 /**
@@ -199,7 +199,7 @@ static const uint8_t EMPTY64[64] = {
 PWCRYPT_API unsigned char pwcrypt_is_fprintf_enabled();
 
 /**
- * Like fprintf() except it doesn't do anything. Like printing into <c>/dev/null</c> :D lots of fun!
+ * Like fprintf() except it doesn't do anything. Like printing into \c /dev/null :D lots of fun!
  * @param stream [IGNORED]
  * @param format [IGNORED]
  * @param ... [IGNORED]
@@ -227,7 +227,7 @@ PWCRYPT_API void pwcrypt_disable_fprintf();
 #define pwcrypt_fprintf pwcrypt_fprintf_fptr
 
 /**
- * (Tries to) read from <c>/dev/urandom</c> (or Windows equivalent, yeah...) filling the given \p output_buffer with \p output_buffer_size random bytes.
+ * (Tries to) read from \c /dev/urandom (or Windows equivalent, yeah...) filling the given \p output_buffer with \p output_buffer_size random bytes.
  * @param output_buffer Where to write the random bytes into.
  * @param output_buffer_size How many random bytes to write into \p output_buffer
  */
@@ -242,7 +242,7 @@ PWCRYPT_API void pwcrypt_get_temp_filepath(char output_buffer[256]);
 /**
  * Retrieve the size of a file.
  * @param filepath The file path.
- * @return The file size (in bytes) if retrieval succeeded; <c>0</c> if getting the file size failed for some reason.
+ * @return The file size (in bytes) if retrieval succeeded; \c 0 if getting the file size failed for some reason.
  */
 PWCRYPT_API size_t pwcrypt_get_filesize(const char* filepath);
 
@@ -292,6 +292,24 @@ PWCRYPT_API int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint3
 PWCRYPT_API int pwcrypt_encrypt_file(const char* input_file_path, size_t input_file_path_length, uint32_t compress, const uint8_t* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, const char* output_file_path, size_t output_file_path_length);
 
 /**
+ * Encrypts a file symmetrically with a password. <p>
+ * The password string is fed into a customizable amount of Argon2id iterations to derive a <strong>256-bit symmetric key</strong>, with which the input will be encrypted and written into the output buffer.
+ * @param input_file File that needs to be encrypted. Must not be \c NULL
+ * @param output_file File handle of the output file into which the encryption result should be written into. Must not be \c NULL
+ * @param compress Should the input data be compressed before being encrypted? Pass <c>0</c> for no compression, or a compression level from <c>1</c> to <c>9</c> to pass to the deflate algorithm (<c>6</c> is a healthy default value to use for this).
+ * @param password The password string (ideally a UTF8-encoded byte array, but you can obviously also encrypt using a file) with which to encrypt the \p input argument (this will be used to derive a 256-bit symmetric encryption key (e.g. AES-256 key) using Argon2id).
+ * @param password_length Length of the \p password string argument.
+ * @param argon2_cost_t The Argon2 time cost parameter (number of iterations) to use for deriving the symmetric encryption key. Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_T_COST.
+ * @param argon2_cost_m The Argon2 memory cost parameter (in KiB) to use for key derivation.  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_M_COST.
+ * @param argon2_parallelism Degree of parallelism to use when deriving the symmetric encryption key from the password with Argon2 (number of parallel threads).  Pass <c>0</c> to use the default value of #PWCRYPT_ARGON2_PARALLELISM.
+ * @param algo Which encryption algo to use (see the top of the pwcrypt.h header file for more infos).
+ * @param close_input_file Should the input file handle be <c>fclose</c>'d after usage? Pass <c>0</c> for "false" and anything else for "true".
+ * @param close_output_file Should the output file handle be <c>fclose</c>'d after usage? Pass <c>0</c> for "false" and anything else for "true".
+ * @return <c>0</c> on success; non-zero error codes if something fails.
+ */
+PWCRYPT_API int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compress, const uint8_t* password, size_t password_length, uint32_t argon2_cost_t, uint32_t argon2_cost_m, uint32_t argon2_parallelism, uint32_t algo, uint32_t close_input_file, uint32_t close_output_file);
+
+/**
  * Decrypts a string or a byte array that was encrypted using pwcrypt_encrypt(). <p>
  * @param encrypted_data The ciphertext to decrypt.
  * @param encrypted_data_length Length of the \p encrypted_data argument (string length or byte array size).
@@ -316,6 +334,18 @@ PWCRYPT_API int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_
 PWCRYPT_API int pwcrypt_decrypt_file(const char* input_file_path, size_t input_file_path_length, const uint8_t* password, size_t password_length, const char* output_file_path, size_t output_file_path_length);
 
 /**
+ * Decrypts a file that was encrypted using pwcrypt_encrypt_file() or pwcrypt_encrypt_file_raw().
+ * @param input_file File to decrypt. Must not be \c NULL
+ * @param output_file File handle of the output file into which to write the decrypted result. Must not be \c NULL
+ * @param password The decryption password.
+ * @param password_length Length of the \p password argument.
+ * @param close_input_file Should the input file handle be <c>fclose</c>'d after usage? Pass <c>0</c> for "false" and anything else for "true".
+ * @param close_output_file Should the output file handle be <c>fclose</c>'d after usage? Pass <c>0</c> for "false" and anything else for "true".
+ * @return <c>0</c> on success; non-zero error codes if something fails.
+ */
+PWCRYPT_API int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t* password, size_t password_length, uint32_t close_input_file, uint32_t close_output_file);
+
+/**
  * Gets the current pwcrypt version number (numeric).
  * @return Pwcrypt version number (32-bit unsigned integer).
  */
@@ -338,6 +368,14 @@ PWCRYPT_API char* pwcrypt_get_version_nr_string();
  * @param ptr The memory to free (typically the output of one of the two main pwcrypt functions).
  */
 PWCRYPT_API void pwcrypt_free(void* ptr);
+
+/**
+ * Wrapper around \c fopen()
+ * @param filename File path.
+ * @param mode File open mode ("r", "w", "rb", etc...)
+ * @return \c FILE* or \c null
+ */
+PWCRYPT_API FILE* pwcrypt_fopen(const char* filename, const char* mode);
 
 #ifdef __cplusplus
 } // extern "C"
