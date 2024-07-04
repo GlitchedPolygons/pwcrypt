@@ -53,16 +53,16 @@ namespace GlitchedPolygons.PwcryptSharp
         {
             const int RTLD_NOW = 2;
 
-            [DllImport("libdl.so")]
+            [DllImport("libdl.so.2")]
             private static extern IntPtr dlopen(String fileName, int flags);
 
-            [DllImport("libdl.so")]
+            [DllImport("libdl.so.2")]
             private static extern IntPtr dlsym(IntPtr handle, String symbol);
 
-            [DllImport("libdl.so")]
+            [DllImport("libdl.so.2")]
             private static extern int dlclose(IntPtr handle);
 
-            [DllImport("libdl.so")]
+            [DllImport("libdl.so.2")]
             private static extern IntPtr dlerror();
 
             public IntPtr LoadLibrary(string fileName)
