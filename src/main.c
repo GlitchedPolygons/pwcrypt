@@ -250,11 +250,6 @@ int main(const int argc, char* argv[])
         }
     }
 
-    if (output_file != NULL && output_file != stdout)
-    {
-        fclose(output_file);
-    }
-
     if (r == 0 && output != NULL && !file)
     {
         pwcrypt_fprintf(stdout, "%s\n", output);

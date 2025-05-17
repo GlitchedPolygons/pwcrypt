@@ -72,12 +72,12 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Current version of the used pwcrypt library.
  */
-#define PWCRYPT_VERSION 430
+#define PWCRYPT_VERSION 431
 
 /**
  * Current version of the used pwcrypt library (nicely-formatted string).
  */
-#define PWCRYPT_VERSION_STR "4.3.0"
+#define PWCRYPT_VERSION_STR "4.3.1"
 
 #ifndef PWCRYPT_Z_CHUNKSIZE
 /**
