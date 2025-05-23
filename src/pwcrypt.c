@@ -882,6 +882,12 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
     assert(sizeof(uint8_t) == 1);
     assert(sizeof(uint32_t) == 4);
 
+    uint8_t* decrypted = NULL;
+    size_t decrypted_length = 0;
+
+    uint8_t* cuncrushed = NULL;
+    size_t cuncrushed_size = 0;
+
     size_t input_length = 0;
     uint32_t input_base64_encoded = 0;
     memcpy(&input_base64_encoded, encrypted_data + 12, 4);
@@ -957,8 +963,6 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
     memcpy(&argon2_cost_m, input + 24, 4);
     memcpy(&argon2_parallelism, input + 28, 4);
     memcpy(salt, input + 32, 32);
-    memcpy(iv, input + 64, 16);
-    memcpy(tag, input + 80, 16);
 
     pwcrypt_version_number = ntohl(pwcrypt_version_number);
     pwcrypt_algo_id = ntohl(pwcrypt_algo_id);
@@ -985,12 +989,128 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
 
     if (pwcrypt_version_number >= 440)
     {
-        // TODO: decrypt chunks here
+        uint8_t* i = input + 64;
+
+        size_t processed = 0;
+
+        uint32_t chunk_length = 0;
+
+        while (processed < input_length - 64)
+        {
+            memcpy(iv, i, 16);
+            i += 16;
+
+            memcpy(tag, i, 16);
+            i += 16;
+
+            memcpy(&chunk_length, i, 4);
+            i += 4;
+
+            chunk_length = ntohl(chunk_length);
+
+            if (chunk_length == 0)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! Attempted to read empty chunk from the input file.\n");
+                r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+                goto exit;
+            }
+
+            if (decrypted != NULL)
+            {
+                pwcrypt_free(decrypted);
+                decrypted = NULL;
+            }
+
+            decrypted_length = chunk_length;
+            decrypted = malloc(chunk_length);
+
+            if (decrypted == NULL)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
+                r = PWCRYPT_ERROR_OOM;
+                goto exit;
+            }
+
+            nk
+            // TODO: use chillbuff to grow output buffer here since it's impossible to know the decompressed size beforehand
+            uint8_t* output_buffer = calloc(encrypted_data_length * 2, sizeof(uint8_t));
+            size_t output_buffer_length = 0;
+
+            switch (pwcrypt_algo_id)
+            {
+                case PWCRYPT_ALGO_ID_AES256_GCM: {
+                    r = mbedtls_gcm_setkey(&aes_ctx, MBEDTLS_CIPHER_ID_AES, key, 256);
+                    if (r != 0)
+                    {
+                        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
+                        r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+                        goto exit;
+                    }
+
+                    r = mbedtls_gcm_auth_decrypt(&aes_ctx, decrypted_length, iv, sizeof(iv), NULL, 0, tag, sizeof(tag), i, decrypted);
+                    if (r != 0)
+                    {
+                        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_auth_decrypt\" returned: %d\n", r);
+                        r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+                        goto exit;
+                    }
+
+                    break;
+                }
+                case PWCRYPT_ALGO_ID_CHACHA20_POLY1305: {
+                    r = mbedtls_chachapoly_setkey(&chachapoly_ctx, key);
+                    if (r != 0)
+                    {
+                        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_chachapoly_setkey\" returned: %d\n", r);
+                        r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+                        goto exit;
+                    }
+
+                    r = mbedtls_chachapoly_auth_decrypt(&chachapoly_ctx, decrypted_length, iv, NULL, 0, tag, i, decrypted);
+                    if (r != 0)
+                    {
+                        pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_chachapoly_auth_decrypt\" returned: %d\n", r);
+                        r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+                        goto exit;
+                    }
+
+                    break;
+                }
+                default: {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Invalid algorithm ID. \"%d\" is not a valid pwcrypt algo id!\n", pwcrypt_algo_id);
+                    r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
+                    goto exit;
+                }
+            }
+
+            if (cuncrushed != NULL)
+            {
+                mbedtls_platform_zeroize(cuncrushed, cuncrushed_size);
+                pwcrypt_free(cuncrushed);
+                cuncrushed = NULL;
+            }
+
+            r = ccrush_decompress(decrypted, decrypted_length, PWCRYPT_CCRUSH_BUFFER_SIZE_KIB, &cuncrushed, &cuncrushed_size);
+            if (r != 0)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Decryption succeeded but decompression failed! \"ccrush_decompress\" returned: %d\n", r);
+                r = PWCRYPT_ERROR_DECOMPRESSION_FAILURE;
+                goto exit;
+            }
+
+            i += decrypted_length;
+            processed += decrypted_length + 16 + 16 + 4;
+        }
+
+        ffff
     }
     else
     {
-        const size_t decrypted_length = (input_length - 96);
-        uint8_t* decrypted = malloc(decrypted_length);
+        memcpy(iv, input + 64, 16);
+        memcpy(tag, input + 80, 16);
+
+        decrypted_length = (input_length - 96);
+        decrypted = malloc(decrypted_length);
 
         if (decrypted == NULL)
         {
@@ -1083,6 +1203,13 @@ exit:
     {
         mbedtls_platform_zeroize(decrypted, decrypted_length);
         pwcrypt_free(decrypted);
+    }
+
+    if (cuncrushed != NULL)
+    {
+        mbedtls_platform_zeroize(cuncrushed, cuncrushed_size);
+        pwcrypt_free(cuncrushed);
+        cuncrushed = NULL;
     }
 
     return (r);
@@ -1361,6 +1488,7 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
 
             if (cuncrushed != NULL)
             {
+                mbedtls_platform_zeroize(cuncrushed, cuncrushed_size);
                 ccrush_free(cuncrushed);
                 cuncrushed = NULL;
             }
@@ -1592,6 +1720,13 @@ exit:
 
     if (chunk_buffer_out != NULL)
         pwcrypt_free(chunk_buffer_out);
+
+    if (cuncrushed != NULL)
+    {
+        mbedtls_platform_zeroize(cuncrushed, cuncrushed_size);
+        ccrush_free(cuncrushed);
+        cuncrushed = NULL;
+    }
 
     remove(temp_file_path);
 
