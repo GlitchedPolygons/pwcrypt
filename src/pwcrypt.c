@@ -1405,9 +1405,16 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
     {
         uint32_t chunk_length = 0;
 
-        while (!feof(input_file))
+        for (;;)
         {
-            if (fread(iv, 1, 16, input_file) != 16)
+            temp_counter = fread(iv, 1, 16, input_file);
+
+            if (temp_counter == 0)
+            {
+                goto exit;
+            }
+
+            if (temp_counter != 16)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! Failed to read IV bytes from the input file header block.\n");
                 r = PWCRYPT_ERROR_FILE_FAILURE;
