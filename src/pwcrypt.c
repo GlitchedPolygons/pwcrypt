@@ -291,12 +291,17 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     }
 
     int free_output_buffer = 1;
+    chillbuff output_buffer_2;
+
+    r = chillbuff_init(&output_buffer_2, input_length, sizeof(uint8_t), CHILLBUFF_GROW_DUPLICATIVE);
+    if (r != 0)
+    {
+        pwcrypt_fprintf(stderr, "pwcrypt: Output buffer initialization failed! (out of memory?) \"chillbuff_init\" returned: %d\n", r);
+        return PWCRYPT_ERROR_CHILLBUFF_FAILURE;
+    }
 
     uint8_t* ccrushed = NULL;
     size_t ccrushed_size = 0;
-
-    uint8_t* output_buffer = NULL;
-    size_t output_buffer_size = 0;
 
     uint8_t* output_buffer_base64 = NULL;
     size_t output_buffer_base64_size = 0;
@@ -305,6 +310,9 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     size_t processed = 0;
 
     uint8_t key[32] = { 0x00 };
+    uint8_t salt[32] = { 0x00 };
+    uint8_t iv[16] = { 0x00 };
+    uint8_t tag[16] = { 0x00 };
 
     mbedtls_gcm_context aes_ctx;
     mbedtls_gcm_init(&aes_ctx);
@@ -330,16 +338,6 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     assert(sizeof(uint8_t) == 1);
     assert(sizeof(uint32_t) == 4);
 
-    output_buffer_size = (64 + input_length + (input_length / 2));
-
-    output_buffer = calloc(output_buffer_size, sizeof(uint8_t));
-    if (output_buffer == NULL)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
-        r = PWCRYPT_ERROR_OOM;
-        goto exit;
-    }
-
     if (!argon2_cost_t)
         argon2_cost_t = PWCRYPT_ARGON2_T_COST;
 
@@ -353,33 +351,34 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
         output_base64 = 1;
 
     uint32_t bigendian = htonl(pwcrypt_get_version_nr());
-    memcpy(output_buffer, &bigendian, 4);
+    chillbuff_push_back(&output_buffer_2, &bigendian, 4);
 
     bigendian = htonl(algo);
-    memcpy(output_buffer + 4, &bigendian, 4);
+    chillbuff_push_back(&output_buffer_2, &bigendian, 4);
 
     bigendian = htonl(compress);
-    memcpy(output_buffer + 8, &bigendian, 4);
+    chillbuff_push_back(&output_buffer_2, &bigendian, 4);
 
     bigendian = htonl(output_base64);
-    memcpy(output_buffer + 12, &bigendian, 4);
+    chillbuff_push_back(&output_buffer_2, &bigendian, 4);
 
     bigendian = htonl(pwcrypt_get_argon2_version_nr());
-    memcpy(output_buffer + 16, &bigendian, 4);
+    chillbuff_push_back(&output_buffer_2, &bigendian, 4);
 
     bigendian = htonl(argon2_cost_t);
-    memcpy(output_buffer + 20, &bigendian, 4);
+    chillbuff_push_back(&output_buffer_2, &bigendian, 4);
 
     bigendian = htonl(argon2_cost_m);
-    memcpy(output_buffer + 24, &bigendian, 4);
+    chillbuff_push_back(&output_buffer_2, &bigendian, 4);
 
     bigendian = htonl(argon2_parallelism);
-    memcpy(output_buffer + 28, &bigendian, 4);
+    chillbuff_push_back(&output_buffer_2, &bigendian, 4);
 
     // Generate random salt:
-    dev_urandom(output_buffer + 32, 32);
+    dev_urandom(salt, 32);
+    chillbuff_push_back(&output_buffer_2, salt, 32);
 
-    r = argon2id_hash_raw(argon2_cost_t, argon2_cost_m, argon2_parallelism, password, password_length, output_buffer + 32, 32, key, sizeof(key));
+    r = argon2id_hash_raw(argon2_cost_t, argon2_cost_m, argon2_parallelism, password, password_length, salt, 32, key, sizeof(key));
     if (r != ARGON2_OK)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: argon2id failure! \"argon2id_hash_raw\" returned: %d\n", r);
@@ -393,8 +392,6 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
         goto exit;
     }
-
-    uint8_t* o = output_buffer + 64;
 
     while (processed < input_length)
     {
@@ -413,8 +410,8 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
         }
 
         // Generate random IV and fill tag with temporary random data:
-        dev_urandom(o, 32);
-        o += 32;
+        dev_urandom(iv, 16);
+        dev_urandom(tag, 16);
 
         r = ccrush_compress(input + processed, n, PWCRYPT_CCRUSH_BUFFER_SIZE_KIB, (int)compress, &ccrushed, &ccrushed_size);
         if (r != 0)
@@ -425,8 +422,6 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
         }
 
         bigendian = htonl((uint32_t)ccrushed_size);
-        memcpy(o, &bigendian, 4);
-        o += 4;
 
         switch (algo)
         {
@@ -439,7 +434,7 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
                     goto exit;
                 }
 
-                r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, ccrushed_size, o - 32 - 4, 16, NULL, 0, ccrushed, o, 16, o - 16 - 4);
+                r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, ccrushed_size, iv, 16, NULL, 0, ccrushed, ccrushed, 16, tag);
                 if (r != 0)
                 {
                     pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
@@ -458,7 +453,7 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
                     goto exit;
                 }
 
-                r = mbedtls_chachapoly_encrypt_and_tag(&chachapoly_ctx, ccrushed_size, o - 32 - 4, NULL, 0, ccrushed, o, o - 16 - 4);
+                r = mbedtls_chachapoly_encrypt_and_tag(&chachapoly_ctx, ccrushed_size, iv, NULL, 0, ccrushed, ccrushed, tag);
                 if (r != 0)
                 {
                     pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_chachapoly_encrypt_and_tag\" returned: %d\n", r);
@@ -475,15 +470,17 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
             }
         }
 
-        o += ccrushed_size;
+        chillbuff_push_back(&output_buffer_2, iv, 16);
+        chillbuff_push_back(&output_buffer_2, tag, 16);
+        chillbuff_push_back(&output_buffer_2, &bigendian, 4);
+        chillbuff_push_back(&output_buffer_2, ccrushed, ccrushed_size);
+
         processed += n;
     }
 
-    size_t output_buffer_length = o - output_buffer;
-
     if (output_base64)
     {
-        r = mbedtls_base64_encode(NULL, 0, &output_buffer_base64_length, output_buffer, output_buffer_length);
+        r = mbedtls_base64_encode(NULL, 0, &output_buffer_base64_length, output_buffer_2.array, output_buffer_2.length);
         if (r != MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
         {
             pwcrypt_fprintf(stderr, "pwcrypt: Base64-encoding failed! Assessing encoded output length with \"mbedtls_base64_encode\" returned: %d\n", r);
@@ -501,7 +498,7 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
             goto exit;
         }
 
-        r = mbedtls_base64_encode(output_buffer_base64, output_buffer_base64_size, &output_buffer_base64_length, output_buffer, output_buffer_length);
+        r = mbedtls_base64_encode(output_buffer_base64, output_buffer_base64_size, &output_buffer_base64_length, output_buffer_2.array, output_buffer_2.length);
         if (r != 0)
         {
             pwcrypt_free(output_buffer_base64);
@@ -521,11 +518,11 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     {
         free_output_buffer = 0;
 
-        *output = output_buffer;
+        *output = (uint8_t*)output_buffer_2.array;
 
         if (output_length != NULL)
         {
-            *output_length = output_buffer_length;
+            *output_length = output_buffer_2.length;
         }
     }
 
@@ -541,10 +538,9 @@ exit:
         ccrush_free(ccrushed);
     }
 
-    if (free_output_buffer && output_buffer != NULL)
+    if (free_output_buffer && output_buffer_2.array != NULL)
     {
-        mbedtls_platform_zeroize(output_buffer, output_buffer_size);
-        pwcrypt_free(output_buffer);
+        chillbuff_free(&output_buffer_2);
     }
 
     return (r);
