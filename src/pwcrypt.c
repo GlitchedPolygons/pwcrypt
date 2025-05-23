@@ -1492,8 +1492,6 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
                         goto exit;
                     }
 
-                    printf("\nmeh... %d\n", r);
-
                     break;
                 }
                 case PWCRYPT_ALGO_ID_CHACHA20_POLY1305: {
@@ -1528,8 +1526,6 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
                 ccrush_free(cuncrushed);
                 cuncrushed = NULL;
             }
-
-            printf("\nhmmmm %d\n", r);
 
             r = ccrush_decompress(chunk_buffer_out, chunk_length, PWCRYPT_CCRUSH_BUFFER_SIZE_KIB, &cuncrushed, &cuncrushed_size);
             if (r != 0)
