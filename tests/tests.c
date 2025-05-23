@@ -66,6 +66,19 @@ static void pw_strength_enforcing()
     TEST_CHECK(pwcrypt_assess_password_strength((uint8_t*)"testTEST.,.###..", 16) != 0);
 }
 
+static void test_pwcrypt_memcmp()
+{
+    const uint8_t* s1 = "Lorem ipsum dolor sick fuck amend something something...";
+    const uint8_t* s2 = "Not the same string as the one above";
+    const uint8_t* s3 = "Lorem ipsum dolor sick fuck amend something something...";
+
+    TEST_CHECK(pwcrypt_memcmp(s1,s3, 56) == 0);
+    TEST_CHECK(pwcrypt_memcmp(s1,s3, 32) == 0);
+    TEST_CHECK(pwcrypt_memcmp(s1,s2, 36) != 0);
+    TEST_CHECK(pwcrypt_memcmp(s1,s2, 32) != 0);
+    TEST_CHECK(pwcrypt_memcmp(s1,s2, 56) != 0);
+}
+
 static void encrypt_and_decrypt_aes256_gcm_string_success()
 {
     uint8_t* out = NULL;
@@ -506,6 +519,7 @@ static void encrypt_and_decrypt_with_wrong_PW_fails()
 TEST_LIST = {
     //
     { "nulltest", null_test_success }, //
+    { "test_pwcrypt_memcmp", test_pwcrypt_memcmp }, //
     { "pwcrypt_fprintf_enables_and_disables_correctly", pwcrypt_fprintf_enables_and_disables_correctly }, //
     { "pwcrypt_printvoid_returns_zero", pwcrypt_printvoid_returns_zero }, //
     { "pw_strength_enforcing", pw_strength_enforcing }, //

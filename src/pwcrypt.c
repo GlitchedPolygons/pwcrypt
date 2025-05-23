@@ -387,7 +387,7 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
         goto exit;
     }
 
-    if (memcmp(key, EMPTY64, 32) == 0)
+    if (pwcrypt_memcmp(key, EMPTY64, 32) == 0)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Symmetric encryption key derivation failure!\n");
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
@@ -554,6 +554,8 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
 #endif
 
     uint8_t key[32] = { 0x00 };
+    uint8_t iv[16] = { 0x00 };
+    uint8_t tag[16] = { 0x00 };
 
     mbedtls_gcm_context aes_ctx;
     mbedtls_gcm_init(&aes_ctx);
@@ -561,43 +563,15 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
     mbedtls_chachapoly_context chachapoly_ctx;
     mbedtls_chachapoly_init(&chachapoly_ctx);
 
-    size_t output_size = 96; // 96 bytes is the size of the output header that is prepended to the actual ciphertext.
     size_t temp_counter = 0;
     uint8_t* temp_in_buffer = NULL;
     uint8_t* temp_out_buffer = NULL;
 
-    char temp_file_path[256] = { 0x00 };
-    char temp_output_file_path[256] = { 0x00 };
-
-    pwcrypt_get_temp_filepath(temp_file_path);
-    pwcrypt_get_temp_filepath(temp_output_file_path);
+    uint8_t* ccrushed = NULL;
+    size_t ccrushed_size = 0;
 
     temp_in_buffer = malloc(PWCRYPT_FILE_BUFFER_SIZE);
     temp_out_buffer = malloc(PWCRYPT_FILE_BUFFER_SIZE);
-
-    // Create a temporary file for storing the compressed blob (pre-encryption).
-    FILE* temp_file = pwcrypt_fopen(temp_file_path, "wb");
-
-    FILE* temp_output_file;
-
-    if (output_file == stdout)
-    {
-        // Another temporary file is required for the output if we're writing to stdout,
-        // since the GCM-Tag/MAC can only be known AFTER encryption and must be inserted
-        // at the 80th position of the ciphertext (and fseek shouldn't be used on stdout).
-        temp_output_file = pwcrypt_fopen(temp_output_file_path, "wb");
-    }
-    else
-    {
-        temp_output_file = output_file;
-    }
-
-    if (temp_file == NULL || temp_output_file == NULL)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: Failed to open temporary file!\n");
-        r = PWCRYPT_ERROR_FILE_FAILURE;
-        goto exit;
-    }
 
     if (temp_in_buffer == NULL || temp_out_buffer == NULL)
     {
@@ -606,34 +580,20 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
         goto exit;
     }
 
-    r = ccrush_compress_file_raw(input_file, temp_file, 4096, (int)compress, 0, 1);
-    if (r != 0)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: Compression of input file before encryption failed! \"ccrush_compress_file\" returned: %d\n", r);
-        r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
-        goto exit;
-    }
-
-    temp_file = pwcrypt_fopen(temp_file_path, "rb");
-    if (temp_file == NULL)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: Compression of input file before encryption succeeded, but opening its resulting temporary file failed!\n");
-        r = PWCRYPT_ERROR_FILE_FAILURE;
-        goto exit;
-    }
-
     // [0 - 3]      (4B)   uint32_t:     Pwcrypt Version Number
     // [4 - 7]      (4B)   uint32_t:     Pwcrypt Algo ID
     // [8 - 11]     (4B)   uint32_t:     Pwcrypt Compression Enabled
     // [12 - 15]    (4B)   uint32_t:     Pwcrypt Base64 Encoded
-    // [16 - 19]    (4B)   uint32_t:     Argon2 Version Number
-    // [20 - 23]    (4B)   uint32_t:     Argon2 Cost T
-    // [24 - 27]    (4B)   uint32_t:     Argon2 Cost M
-    // [28 - 31]    (4B)   uint32_t:     Argon2 Parallelism
-    // [32 - 63]    (32B)  uint8_t[32]:  Argon2 Salt
-    // [64 - 79]    (16B)  uint8_t[16]:  AES-256 GCM IV (or 12B ChaCha20-Poly1305 IV, zero-padded)
-    // [80 - 95]    (16B)  uint8_t[16]:  AES-256 GCM Tag (or ChaCha20-Poly1305 Tag)
-    // [96 - ...]   Ciphertext
+    // [16 - 19]\   (4B)   uint32_t:     Argon2 Version Number
+    // [20 - 23] |  (4B)   uint32_t:     Argon2 Cost T
+    // [24 - 27] |  (4B)   uint32_t:     Argon2 Cost M
+    // [28 - 31] |  (4B)   uint32_t:     Argon2 Parallelism
+    // [32 - 63]/   (32B)  uint8_t[32]:  Argon2 Salt
+    // [64 - 79]\   (16B)  uint8_t[16]:  AES-256 GCM IV (or 12B ChaCha20-Poly1305 IV, zero-padded)
+    // [80 - 95] |  (16B)  uint8_t[16]:  AES-256 GCM Tag (or ChaCha20-Poly1305 Tag)
+    // [96 - 99] |  (4B)   uint32_t:     Chunk length
+    // [100 - n]/   (n B)  uint8_t[n]:   Chunk content (compressed + encrypted ciphertext)
+    // [(n+1) - ...]                     (The last 4 sections make up a chunk; there can be as many chunks as needed)
 
     assert(sizeof(uint8_t) == 1);
     assert(sizeof(uint32_t) == 4);
@@ -648,7 +608,7 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
         argon2_parallelism = PWCRYPT_ARGON2_PARALLELISM;
 
     uint32_t bigendian = htonl(pwcrypt_get_version_nr());
-    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write pwcrypt version number \"%d\" header to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -656,7 +616,7 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
     }
 
     bigendian = htonl(algo);
-    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write pwcrypt algo id to the output file.\n");
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -664,7 +624,7 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
     }
 
     bigendian = htonl(compress);
-    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write pwcrypt compression parameter \"%d\" to the output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -672,7 +632,7 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
     }
 
     bigendian = 0;
-    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write pwcrypt base64 parameter as header (value = 0) to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -680,7 +640,7 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
     }
 
     bigendian = htonl(pwcrypt_get_argon2_version_nr());
-    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write Argon2 version number \"%d\" header to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -688,7 +648,7 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
     }
 
     bigendian = htonl(argon2_cost_t);
-    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write Argon2 time cost parameter \"%d\" as header to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -696,7 +656,7 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
     }
 
     bigendian = htonl(argon2_cost_m);
-    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write Argon2 memory cost parameter \"%d\" as header to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
@@ -704,34 +664,25 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
     }
 
     bigendian = htonl(argon2_parallelism);
-    if (fwrite(&bigendian, 4, 1, temp_output_file) != 1)
+    if (fwrite(&bigendian, 4, 1, output_file) != 1)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write Argon2 parallelism parameter \"%d\" as header to output file.\n", bigendian);
         r = PWCRYPT_ERROR_FILE_FAILURE;
         goto exit;
     }
 
-    // Generate random salt and iv:
-    uint8_t salt_and_iv[32 + 16];
-    dev_urandom(salt_and_iv, sizeof(salt_and_iv));
+    // Generate random salt:
+    uint8_t salt[32];
+    dev_urandom(salt, sizeof(salt));
 
-    if (fwrite(salt_and_iv, 1, sizeof(salt_and_iv), temp_output_file) != sizeof(salt_and_iv))
+    if (fwrite(salt, 1, sizeof(salt), output_file) != sizeof(salt))
     {
-        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write salt and/or IV to output file.\n");
+        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write salt to output file.\n");
         r = PWCRYPT_ERROR_FILE_FAILURE;
         goto exit;
     }
 
-    // Write out 16 times "0x00" as the GCM tag/MAC value to advance the FILE* counter;
-    // the mbedtls_gcm_finish function will write the tag out to a temporary buffer only AFTER encryption successfully finished.
-    if (fwrite(EMPTY64, 1, 16, temp_output_file) != 16)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write initial padding of pure zeroes to output file's GCM tag/MAC slot.\n");
-        r = PWCRYPT_ERROR_FILE_FAILURE;
-        goto exit;
-    }
-
-    r = argon2id_hash_raw(argon2_cost_t, argon2_cost_m, argon2_parallelism, password, password_length, salt_and_iv, 32, key, sizeof(key));
+    r = argon2id_hash_raw(argon2_cost_t, argon2_cost_m, argon2_parallelism, password, password_length, salt, 32, key, sizeof(key));
     if (r != ARGON2_OK)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: argon2id failure! \"argon2id_hash_raw\" returned: %d\n", r);
@@ -739,7 +690,7 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
         goto exit;
     }
 
-    if (memcmp(key, EMPTY64, 32) == 0)
+    if (pwcrypt_memcmp(key, EMPTY64, 32) == 0)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Symmetric encryption key derivation failure!\n");
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
@@ -757,55 +708,61 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
                 goto exit;
             }
 
-            r = mbedtls_gcm_starts(&aes_ctx, MBEDTLS_GCM_ENCRYPT, salt_and_iv + 32, 16);
-            if (r != 0)
+            while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, input_file)) != 0)
             {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_starts\" returned: %d\n", r);
-                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-                goto exit;
-            }
+                // Generate random IV:
+                dev_urandom(iv, sizeof(iv));
 
-            while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, temp_file)) != 0)
-            {
-                r = mbedtls_gcm_update(&aes_ctx, temp_in_buffer, temp_counter, temp_out_buffer, temp_counter, &temp_counter);
+                if (ccrushed != NULL)
+                {
+                    ccrush_free(ccrushed);
+                    ccrushed = NULL;
+                }
+
+                r = ccrush_compress(temp_in_buffer, temp_counter, (PWCRYPT_FILE_BUFFER_SIZE / 1024), (int)compress, &ccrushed, &ccrushed_size);
                 if (r != 0)
                 {
-                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_update\" returned: %d\n", r);
+                    pwcrypt_fprintf(stderr, "pwcrypt: Compression of input file before encryption failed! \"ccrush_compress\" returned: %d\n", r);
+                    r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
+                    goto exit;
+                }
+
+                r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, ccrushed_size, iv, 16, NULL, 0, ccrushed, temp_out_buffer, 16, tag);
+                if (r != 0)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
                     r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
                     goto exit;
                 }
 
-                if (fwrite(temp_out_buffer, 1, temp_counter, temp_output_file) != temp_counter)
+                if (fwrite(iv, 1, 16, output_file) != 16)
                 {
-                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write %xu bytes to disk.\n", temp_counter);
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out IV value to output file. \"fwrite\" did not succeed in writing out the full 16 bytes...\n");
                     r = PWCRYPT_ERROR_FILE_FAILURE;
                     goto exit;
                 }
 
-                output_size += temp_counter;
-            }
+                if (fwrite(tag, 1, 16, output_file) != 16)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out GCM tag value to output file. \"fwrite\" did not succeed in writing out the full 16 bytes...\n");
+                    r = PWCRYPT_ERROR_FILE_FAILURE;
+                    goto exit;
+                }
 
-            r = mbedtls_gcm_finish(&aes_ctx, temp_out_buffer + 16, 0, &temp_counter, temp_out_buffer, 16);
-            if (r != 0)
-            {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_finish\" returned: %d\n", r);
-                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-                goto exit;
-            }
+                bigendian = htonl((uint32_t)ccrushed_size); // This is safe as long as the PWCRYPT_FILE_BUFFER_SIZE value doesn't exceed uint32_t's max value.
+                if (fwrite(&bigendian, 4, 1, output_file) != 1)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write chunk length \"%d\" to output file.\n", bigendian);
+                    r = PWCRYPT_ERROR_FILE_FAILURE;
+                    goto exit;
+                }
 
-            r = fseek(temp_output_file, 80, SEEK_SET);
-            if (r != 0)
-            {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out GCM tag value to output file. \"fseek\" returned: %d\n", r);
-                r = PWCRYPT_ERROR_FILE_FAILURE;
-                goto exit;
-            }
-
-            if (fwrite(temp_out_buffer, 1, 16, temp_output_file) != 16)
-            {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out GCM tag value to output file. \"fwrite\" did not succeed in writing out the full 16 bytes...\n");
-                r = PWCRYPT_ERROR_FILE_FAILURE;
-                goto exit;
+                if (fwrite(temp_out_buffer, 1, ccrushed_size, output_file) != ccrushed_size)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out chunk ciphertext to output file. \"fwrite\" did not succeed in writing out the bytes...\n");
+                    r = PWCRYPT_ERROR_FILE_FAILURE;
+                    goto exit;
+                }
             }
 
             break;
@@ -819,55 +776,61 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
                 goto exit;
             }
 
-            r = mbedtls_chachapoly_starts(&chachapoly_ctx, salt_and_iv + 32, MBEDTLS_CHACHAPOLY_ENCRYPT);
-            if (r != 0)
+            while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, input_file)) != 0)
             {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_chachapoly_starts\" returned: %d\n", r);
-                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-                goto exit;
-            }
+                // Generate random IV:
+                dev_urandom(iv, sizeof(iv));
 
-            while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, temp_file)) != 0)
-            {
-                r = mbedtls_chachapoly_update(&chachapoly_ctx, temp_counter, temp_in_buffer, temp_out_buffer);
+                if (ccrushed != NULL)
+                {
+                    ccrush_free(ccrushed);
+                    ccrushed = NULL;
+                }
+
+                r = ccrush_compress(temp_in_buffer, temp_counter, (PWCRYPT_FILE_BUFFER_SIZE / 1024), (int)compress, &ccrushed, &ccrushed_size);
                 if (r != 0)
                 {
-                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_chachapoly_update\" returned: %d\n", r);
+                    pwcrypt_fprintf(stderr, "pwcrypt: Compression of input file before encryption failed! \"ccrush_compress\" returned: %d\n", r);
+                    r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
+                    goto exit;
+                }
+
+                r = mbedtls_chachapoly_encrypt_and_tag(&chachapoly_ctx, ccrushed_size, iv, NULL, 0, ccrushed, temp_out_buffer, tag);
+                if (r != 0)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
                     r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
                     goto exit;
                 }
 
-                if (fwrite(temp_out_buffer, 1, temp_counter, temp_output_file) != temp_counter)
+                if (fwrite(iv, 1, 16, output_file) != 16)
                 {
-                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write %xu bytes to disk.\n", temp_counter);
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out IV value to output file. \"fwrite\" did not succeed in writing out the full 16 bytes...\n");
                     r = PWCRYPT_ERROR_FILE_FAILURE;
                     goto exit;
                 }
 
-                output_size += temp_counter;
-            }
+                if (fwrite(tag, 1, 16, output_file) != 16)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out ChaCha20-Poly1305 tag value to output file. \"fwrite\" did not succeed in writing out the full 16 bytes...\n");
+                    r = PWCRYPT_ERROR_FILE_FAILURE;
+                    goto exit;
+                }
 
-            r = mbedtls_chachapoly_finish(&chachapoly_ctx, temp_out_buffer);
-            if (r != 0)
-            {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_chachapoly_finish\" returned: %d\n", r);
-                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-                goto exit;
-            }
+                bigendian = htonl((uint32_t)ccrushed_size); // This is safe as long as the PWCRYPT_FILE_BUFFER_SIZE value doesn't exceed uint32_t's max value.
+                if (fwrite(&bigendian, 4, 1, output_file) != 1)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write chunk length \"%d\" to output file.\n", bigendian);
+                    r = PWCRYPT_ERROR_FILE_FAILURE;
+                    goto exit;
+                }
 
-            r = fseek(temp_output_file, 80, SEEK_SET);
-            if (r != 0)
-            {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out 128-bit MAC value to output file. \"fseek\" returned: %d\n", r);
-                r = PWCRYPT_ERROR_FILE_FAILURE;
-                goto exit;
-            }
-
-            if (fwrite(temp_out_buffer, 1, 16, temp_output_file) != 16)
-            {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out 128-bit MAC value to output file. \"fwrite\" did not succeed in writing out the full 16 bytes...\n");
-                r = PWCRYPT_ERROR_FILE_FAILURE;
-                goto exit;
+                if (fwrite(temp_out_buffer, 1, ccrushed_size, output_file) != ccrushed_size)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write out chunk ciphertext to output file. \"fwrite\" did not succeed in writing out the bytes...\n");
+                    r = PWCRYPT_ERROR_FILE_FAILURE;
+                    goto exit;
+                }
             }
 
             break;
@@ -879,45 +842,6 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
         }
     }
 
-    if (output_file == stdout)
-    {
-        fclose(temp_output_file);
-        temp_output_file = pwcrypt_fopen(temp_output_file_path, "rb");
-        if (temp_output_file == NULL)
-        {
-            pwcrypt_fprintf(stderr, "pwcrypt: Failed to open temporary output file!\n");
-            r = PWCRYPT_ERROR_FILE_FAILURE;
-            goto exit;
-        }
-
-        size_t n = 0;
-
-        while (n < output_size)
-        {
-            size_t nr = fread(temp_out_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, temp_output_file);
-
-            int e = ferror(temp_output_file);
-
-            if (e != 0)
-            {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write encrypted result into stdout. \"ferror\" returned non-zero code: %d\n", e);
-                r = PWCRYPT_ERROR_FILE_FAILURE;
-                goto exit;
-            }
-
-            size_t nw = fwrite(temp_out_buffer, 1, nr, stdout);
-
-            if (nr != nw)
-            {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! Failed to write encrypted result into stdout. \"fwrite\" returned a different amount of bytes written into stdout than \"fread\" has read from the temporary file buffer: bytes read = %d | bytes written = %d\n", nr, nw);
-                r = PWCRYPT_ERROR_FILE_FAILURE;
-                goto exit;
-            }
-
-            n += nw;
-        }
-    }
-
 exit:
 
     if (close_input_file)
@@ -926,11 +850,8 @@ exit:
     if (close_output_file)
         fclose(output_file);
 
-    if (temp_file != NULL)
-        fclose(temp_file);
-
-    if (output_file == stdout && temp_output_file != NULL)
-        fclose(temp_output_file);
+    if (ccrushed != NULL)
+        ccrush_free(ccrushed);
 
     mbedtls_gcm_free(&aes_ctx);
     mbedtls_chachapoly_free(&chachapoly_ctx);
@@ -941,14 +862,8 @@ exit:
     mbedtls_platform_zeroize(temp_in_buffer, sizeof(temp_in_buffer));
     mbedtls_platform_zeroize(temp_out_buffer, sizeof(temp_out_buffer));
 
-    remove(temp_file_path);
-    mbedtls_platform_zeroize(temp_file_path, sizeof(temp_file_path));
-
-    remove(temp_output_file_path);
-    mbedtls_platform_zeroize(temp_output_file_path, sizeof(temp_output_file_path));
-
-    free(temp_in_buffer);
-    free(temp_out_buffer);
+    pwcrypt_free(temp_in_buffer);
+    pwcrypt_free(temp_out_buffer);
 
     return (r);
 }
@@ -1093,7 +1008,7 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
         goto exit;
     }
 
-    if (memcmp(key, EMPTY64, 32) == 0)
+    if (pwcrypt_memcmp(key, EMPTY64, 32) == 0)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Symmetric decryption key derivation failure!\n");
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
@@ -1350,7 +1265,7 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
         goto exit;
     }
 
-    if (memcmp(key, EMPTY64, 32) == 0)
+    if (pwcrypt_memcmp(key, EMPTY64, 32) == 0)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Symmetric decryption key derivation failure!\n");
         r = PWCRYPT_ERROR_ARGON2_FAILURE;
@@ -1410,7 +1325,7 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
                 goto exit;
             }
 
-            r = memcmp(tag, temp_out_buffer, 16);
+            r = pwcrypt_memcmp(tag, temp_out_buffer, 16);
             if (r != 0)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! The GCM auth tag value (checksum) verification failed... The ciphertext doesn't seem to be authentic and might have been tampered with!\n");
@@ -1464,7 +1379,7 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
                 goto exit;
             }
 
-            r = memcmp(tag, temp_out_buffer, 16);
+            r = pwcrypt_memcmp(tag, temp_out_buffer, 16);
             if (r != 0)
             {
                 pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! The MAC value check failed... The ciphertext doesn't seem to be authentic and might have been tampered with!\n");
@@ -1591,4 +1506,159 @@ FILE* pwcrypt_fopen(const char* filename, const char* mode)
 #else // Hope that the fopen() implementation on whatever platform you're on accepts UTF-8 encoded strings. For most *nix environments, this holds true :)
     return fopen(filename, mode);
 #endif
+}
+
+// https://github.com/GlitchedPolygons/l8w8jwt/pull/52
+int pwcrypt_memcmp(const void* mem1, const void* mem2, size_t n)
+{
+    const unsigned char *c1, *c2;
+    unsigned short d, r, m;
+
+#if USE_VOLATILE_TEMPORARY
+    volatile unsigned short v;
+#else
+    unsigned short v;
+#endif
+
+    c1 = mem1;
+    c2 = mem2;
+
+    r = 0;
+    while (n)
+    {
+        /*
+         * Take the low 8 bits of r (in the range 0x00 to 0xff,
+         * or 0 to 255);
+         * As explained elsewhere, the low 8 bits of r will be zero
+         * if and only if all bytes compared so far were identical;
+         * Zero-extend to a 16-bit type (in the range 0x0000 to
+         * 0x00ff);
+         * Add 255, yielding a result in the range 255 to 510;
+         * Save that in a volatile variable to prevent
+         * the compiler from trying any shortcuts (the
+         * use of a volatile variable depends on "#ifdef
+         * USE_VOLATILE_TEMPORARY", and most compilers won't
+         * need it);
+         * Divide by 256 yielding a result of 1 if the original
+         * value of r was non-zero, or 0 if r was zero;
+         * Subtract 1, yielding 0 if r was non-zero, or -1 if r
+         * was zero;
+         * Convert to unsigned short, yielding 0x0000 if r was
+         * non-zero, or 0xffff if r was zero;
+         * Save in m.
+         */
+        v = ((unsigned short)(unsigned char)r) + 255;
+        m = v / 256 - 1;
+
+        /*
+         * Get the values from *c1 and *c2 as unsigned char (each will
+         * be in the range 0 to 255, or 0x00 to 0xff);
+         * Convert them to signed int values (still in the
+         * range 0 to 255);
+         * Subtract them using signed arithmetic, yielding a
+         * result in the range -255 to +255;
+         * Convert to unsigned short, yielding a result in the range
+         * 0xff01 to 0xffff (for what was previously -255 to
+         * -1), or 0, or in the range 0x0001 to 0x00ff (for what
+         * was previously +1 to +255).
+         */
+        d = (unsigned short)((int)*c1 - (int)*c2);
+
+        /*
+         * If the low 8 bits of r were previously 0, then m
+         * is now 0xffff, so (d & m) is the same as d, so we
+         * effectively copy d to r;
+         * Otherwise, if r was previously non-zero, then m is
+         * now 0, so (d & m) is zero, so leave r unchanged.
+         * Note that the low 8 bits of d will be zero if and
+         * only if d == 0, which happens when *c1 == *c2.
+         * The low 8 bits of r are thus zero if and only if the
+         * entirety of r is zero, which happens if and only if
+         * all bytes compared so far were equal.  As soon as a
+         * non-zero value is stored in r, it remains unchanged
+         * for the remainder of the loop.
+         */
+        r |= (d & m);
+
+        /*
+         * Increment pointers, decrement length, and loop.
+         */
+        ++c1;
+        ++c2;
+        --n;
+    }
+
+    /*
+     * At this point, r is an unsigned value, which will be 0 if the
+     * final result should be zero, or in the range 0x0001 to 0x00ff
+     * (1 to 255) if the final result should be positive, or in the
+     * range 0xff01 to 0xffff (65281 to 65535) if the final result
+     * should be negative.
+     *
+     * We want to convert the unsigned values in the range 0xff01
+     * to 0xffff to signed values in the range -255 to -1, while
+     * converting the other unsigned values to equivalent signed
+     * values (0, or +1 to +255).
+     *
+     * On a machine with two's complement arithmetic, simply copying
+     * the underlying bits (with sign extension if int is wider than
+     * 16 bits) would do the job, so something like this might work:
+     *
+     *     return (int16_t)r;
+     *
+     * However, that invokes implementation-defined behaviour,
+     * because values larger than 32767 can't fit in a signed 16-bit
+     * integer without overflow.
+     *
+     * To avoid any implementation-defined behaviour, we go through
+     * these contortions:
+     *
+     * a. Calculate ((uint32_t)r + 0x8000).  The cast to uint32_t
+     *    it to prevent problems on platforms where int is narrower
+     *    than 32 bits.  If int is a larger than 32-bits, then the
+     *    usual arithmetic conversions cause this addition to be
+     *    done in unsigned int arithmetic.  If int is 32 bits
+     *    or narrower, then this addition is done in uint32_t
+     *    arithmetic.  In either case, no overflow or wraparound
+     *    occurs, and the result from this step has a value that
+     *    will be one of 0x00008000 (32768), or in the range
+     *    0x00008001 to 0x000080ff (32769 to 33023), or in the range
+     *    0x00017f01 to 0x00017fff (98049 to 98303).
+     *
+     * b. Cast the result from (a) to unsigned short.  This effectively
+     *    discards the high bits of the result, in a way that is
+     *    well defined by the C language.  The result from this step
+     *    will be of type unsigned short, and its value will be one of
+     *    0x8000 (32768), or in the range 0x8001 to 0x80ff (32769 to
+     *    33023), or in the range 0x7f01 to 0x7fff (32513 to
+     *    32767).
+     *
+     * c. Cast the result from (b) to int32_t.  We use int32_t
+     *    instead of int because we need a type that's strictly
+     *    larger than 16 bits, and the C standard allows
+     *    implementations where int is only 16 bits.  The result
+     *    from this step will be of type int32_t, and its value wll
+     *    be one of 0x00008000 (32768), or in the range 0x00008001
+     *    to 0x000080ff (32769 to 33023), or in the range 0x00007f01
+     *    to 0x00007fff (32513 to 32767).
+     *
+     * d. Take the result from (c) and subtract 0x8000 (32768) using
+     *    signed int32_t arithmetic.  The result from this step will
+     *    be of type int32_t and the value will be one of
+     *    0x00000000 (0), or in the range 0x00000001 to 0x000000ff
+     *    (+1 to +255), or in the range 0xffffff01 to 0xffffffff
+     *    (-255 to -1).
+     *
+     * e. Cast the result from (d) to int.  This does nothing
+     *    interesting, except to make explicit what would have been
+     *    implicit in the return statement.  The final result is an
+     *    int in the range -255 to +255.
+     *
+     * Unfortunately, compilers don't seem to be good at figuring
+     * out that most of this can be optimised away by careful choice
+     * of register width and sign extension.
+     *
+     */
+    return (/*e*/ int)(/*d*/
+        (/*c*/ int)(/*b*/ unsigned short)(/*a*/ (unsigned int)r + 0x8000) - 0x8000);
 }
