@@ -1326,11 +1326,53 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
 
     if (pwcrypt_version_number >= 440)
     {
-        // todo: decrypt and decompress chunks here
+        uint32_t chunk_length = 0;
 
-        while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, input_file)) != 0)
+    loop:
+
+        if (fread(iv, 1, 16, input_file) != 16)
         {
+            pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! Failed to read IV bytes from the input file header block.\n");
+            r = PWCRYPT_ERROR_FILE_FAILURE;
+            goto exit;
+        }
 
+        if (fread(tag, 1, 16, input_file) != 16)
+        {
+            pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! Failed to read auth tag/MAC from the input file header block.\n");
+            r = PWCRYPT_ERROR_FILE_FAILURE;
+            goto exit;
+        }
+
+        if (fread(&chunk_length, 4, 1, input_file) != 1)
+        {
+            pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! Failed to read chunk length from the input file.\n");
+            r = PWCRYPT_ERROR_FILE_FAILURE;
+            goto exit;
+        }
+
+        chunk_length = ntohl(chunk_length);
+
+        if (chunk_length == 0)
+        {
+            pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! Attempted to read empty chunk from the input file.\n");
+            r = PWCRYPT_ERROR_FILE_FAILURE;
+            goto exit;
+        }
+
+        size_t remaining = chunk_length;
+
+        for (;;)
+        {
+            temp_counter = fread(temp_in_buffer, 1, remaining < PWCRYPT_FILE_BUFFER_SIZE ? remaining : PWCRYPT_FILE_BUFFER_SIZE, input_file);
+
+            if (temp_counter == 0)
+                break;
+
+            remaining -= temp_counter;
+
+            if (remaining == 0)
+                goto loop;
         }
     }
     else
