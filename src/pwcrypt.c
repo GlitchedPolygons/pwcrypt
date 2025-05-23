@@ -1484,13 +1484,15 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
                         goto exit;
                     }
 
-                    r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_DECRYPT, chunk_length, iv, sizeof(iv), NULL, 0, chunk_buffer_in, chunk_buffer_out, sizeof(tag), tag);
+                    r = mbedtls_gcm_auth_decrypt(&aes_ctx, chunk_length, iv, sizeof(iv), NULL, 0, tag, sizeof(tag), chunk_buffer_in, chunk_buffer_out);
                     if (r != 0)
                     {
                         pwcrypt_fprintf(stderr, "pwcrypt: Decryption failure! \"mbedtls_gcm_setkey\" returned: %d\n", r);
                         r = PWCRYPT_ERROR_DECRYPTION_FAILURE;
                         goto exit;
                     }
+
+                    printf("\nmeh... %d\n", r);
 
                     break;
                 }
@@ -1526,6 +1528,8 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
                 ccrush_free(cuncrushed);
                 cuncrushed = NULL;
             }
+
+            printf("\nhmmmm %d\n", r);
 
             r = ccrush_decompress(chunk_buffer_out, chunk_length, PWCRYPT_CCRUSH_BUFFER_SIZE_KIB, &cuncrushed, &cuncrushed_size);
             if (r != 0)
