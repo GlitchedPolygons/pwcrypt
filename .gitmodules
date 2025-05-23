@@ -13,6 +13,3 @@
 [submodule "lib/doxygen-awesome"]
 	path = lib/doxygen-awesome
 	url = https://github.com/GlitchedPolygons/doxygen-awesome-css.git
-[submodule "lib/chillbuff"]
-	path = lib/chillbuff
-	url = https://github.com/GlitchedPolygons/chillbuff
