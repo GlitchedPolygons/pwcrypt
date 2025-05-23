@@ -1330,7 +1330,7 @@ int pwcrypt_decrypt_file_raw(FILE* input_file, FILE* output_file, const uint8_t*
 
         while ((temp_counter = fread(temp_in_buffer, 1, PWCRYPT_FILE_BUFFER_SIZE, input_file)) != 0)
         {
-            
+
         }
     }
     else
