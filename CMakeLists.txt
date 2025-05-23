@@ -90,7 +90,7 @@ if (NOT TARGET ccrush)
 endif ()
 
 if (NOT TARGET chillbuff)
-    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/chillbuff chillbuff)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/ccrush/lib/chillbuff chillbuff)
 endif ()
 
 set_property(TARGET ccrush PROPERTY POSITION_INDEPENDENT_CODE ON)
