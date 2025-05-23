@@ -114,7 +114,7 @@ size_t pwcrypt_get_filesize(const char* filepath)
     if (MultiByteToWideChar(CP_UTF8, 0, filepath, -1, wpath, PWCRYPT_MAX_WIN_FILEPATH_LENGTH) == 0)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: Critical failure! Failed to convert the (allegedly) UTF-8 encoded filepath string to Windows Unicode-16 (using wchar_t[])");
-        free(wpath);
+        pwcrypt_free(wpath);
         return 0;
     }
 
@@ -135,7 +135,7 @@ size_t pwcrypt_get_filesize(const char* filepath)
     filesize = (size_t)i.QuadPart;
 
 exit:
-    free(wpath);
+    pwcrypt_free(wpath);
     CloseHandle(f);
     return filesize;
 #else
@@ -288,12 +288,19 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
         return (r);
     }
 
+    int free_output_buffer = 1;
+
+    uint8_t* ccrushed = NULL;
+    size_t ccrushed_size = 0;
+
     uint8_t* output_buffer = NULL;
-    size_t output_buffer_length = 0;
+    size_t output_buffer_size = 0;
 
     uint8_t* output_buffer_base64 = NULL;
     size_t output_buffer_base64_size = 0;
     size_t output_buffer_base64_length = 0;
+
+    size_t processed = 0;
 
     uint8_t key[32] = { 0x00 };
 
@@ -302,17 +309,6 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
 
     mbedtls_chachapoly_context chachapoly_ctx;
     mbedtls_chachapoly_init(&chachapoly_ctx);
-
-    uint8_t* input_buffer = NULL;
-    size_t input_buffer_length = 0;
-
-    r = ccrush_compress(input, input_length, 256, (int)compress, &input_buffer, &input_buffer_length);
-    if (r != 0)
-    {
-        pwcrypt_fprintf(stderr, "pwcrypt: Compression of input data before encryption failed! \"ccrush_compress\" returned: %d\n", r);
-        r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
-        goto exit;
-    }
 
     // [0 - 3]      (4B)   uint32_t:     Pwcrypt Version Number
     // [4 - 7]      (4B)   uint32_t:     Pwcrypt Algo ID
@@ -332,9 +328,9 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     assert(sizeof(uint8_t) == 1);
     assert(sizeof(uint32_t) == 4);
 
-    output_buffer_length = (96 + input_buffer_length);
+    output_buffer_size = (64 + input_length + (input_length / 2));
 
-    output_buffer = calloc(output_buffer_length, sizeof(uint8_t));
+    output_buffer = calloc(output_buffer_size, sizeof(uint8_t));
     if (output_buffer == NULL)
     {
         pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
@@ -378,8 +374,8 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     bigendian = htonl(argon2_parallelism);
     memcpy(output_buffer + 28, &bigendian, 4);
 
-    // Generate random salt and iv:
-    dev_urandom(output_buffer + 32, 32 + 16);
+    // Generate random salt:
+    dev_urandom(output_buffer + 32, 32);
 
     r = argon2id_hash_raw(argon2_cost_t, argon2_cost_m, argon2_parallelism, password, password_length, output_buffer + 32, 32, key, sizeof(key));
     if (r != ARGON2_OK)
@@ -396,6 +392,8 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
         goto exit;
     }
 
+    uint8_t* o = output_buffer + 64;
+
     switch (algo)
     {
         case PWCRYPT_ALGO_ID_AES256_GCM: {
@@ -407,13 +405,50 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
                 goto exit;
             }
 
-            r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, input_buffer_length, output_buffer + 64, 16, NULL, 0, input_buffer, output_buffer + 96, 16, output_buffer + 80);
-            if (r != 0)
+            while (processed < input_length)
             {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
-                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-                goto exit;
+                size_t n = PWCRYPT_FILE_BUFFER_SIZE;
+                size_t remaining = input_length - processed;
+
+                if (n > remaining)
+                {
+                    n = remaining;
+                }
+
+                if (ccrushed != NULL)
+                {
+                    ccrush_free(ccrushed);
+                    ccrushed = NULL;
+                }
+
+                // Generate random IV and fill tag with temporary random data:
+                dev_urandom(o, 32);
+                o += 32;
+
+                r = ccrush_compress(input + processed, n, PWCRYPT_CCRUSH_BUFFER_SIZE_KIB, (int)compress, &ccrushed, &ccrushed_size);
+                if (r != 0)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Compression of input data before encryption failed! \"ccrush_compress\" returned: %d\n", r);
+                    r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
+                    goto exit;
+                }
+
+                bigendian = htonl((uint32_t)ccrushed_size);
+                memcpy(o, &bigendian, 4);
+                o += 4;
+
+                r = mbedtls_gcm_crypt_and_tag(&aes_ctx, MBEDTLS_GCM_ENCRYPT, ccrushed_size, o - 32 - 4, 16, NULL, 0, ccrushed, o, 16, o - 16 - 4);
+                if (r != 0)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_gcm_crypt_and_tag\" returned: %d\n", r);
+                    r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+                    goto exit;
+                }
+
+                o += ccrushed_size;
+                processed += n;
             }
+
             break;
         }
         case PWCRYPT_ALGO_ID_CHACHA20_POLY1305: {
@@ -425,13 +460,50 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
                 goto exit;
             }
 
-            r = mbedtls_chachapoly_encrypt_and_tag(&chachapoly_ctx, input_buffer_length, output_buffer + 64, NULL, 0, input_buffer, output_buffer + 96, output_buffer + 80);
-            if (r != 0)
+            while (processed < input_length)
             {
-                pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_chachapoly_encrypt_and_tag\" returned: %d\n", r);
-                r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
-                goto exit;
+                size_t n = PWCRYPT_FILE_BUFFER_SIZE;
+                size_t remaining = input_length - processed;
+
+                if (n > remaining)
+                {
+                    n = remaining;
+                }
+
+                if (ccrushed != NULL)
+                {
+                    ccrush_free(ccrushed);
+                    ccrushed = NULL;
+                }
+
+                // Generate random IV and fill tag with temporary random data:
+                dev_urandom(o, 32);
+                o += 32;
+
+                r = ccrush_compress(input + processed, n, PWCRYPT_CCRUSH_BUFFER_SIZE_KIB, (int)compress, &ccrushed, &ccrushed_size);
+                if (r != 0)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Compression of input data before encryption failed! \"ccrush_compress\" returned: %d\n", r);
+                    r = PWCRYPT_ERROR_COMPRESSION_FAILURE;
+                    goto exit;
+                }
+
+                bigendian = htonl((uint32_t)ccrushed_size);
+                memcpy(o, &bigendian, 4);
+                o += 4;
+
+                r = mbedtls_chachapoly_encrypt_and_tag(&chachapoly_ctx, ccrushed_size, o - 32 - 4, NULL, 0, ccrushed, o, o - 16 - 4);
+                if (r != 0)
+                {
+                    pwcrypt_fprintf(stderr, "pwcrypt: Encryption failure! \"mbedtls_chachapoly_encrypt_and_tag\" returned: %d\n", r);
+                    r = PWCRYPT_ERROR_ENCRYPTION_FAILURE;
+                    goto exit;
+                }
+
+                o += ccrushed_size;
+                processed += n;
             }
+
             break;
         }
         default: {
@@ -440,6 +512,8 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
             goto exit;
         }
     }
+
+    size_t output_buffer_length = o - output_buffer;
 
     if (output_base64)
     {
@@ -452,7 +526,8 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
         }
 
         output_buffer_base64_size = output_buffer_base64_length;
-        output_buffer_base64 = malloc(output_buffer_base64_size);
+        output_buffer_base64 = calloc(output_buffer_base64_size + 1, sizeof(uint8_t));
+
         if (output_buffer_base64 == NULL)
         {
             pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
@@ -460,24 +535,16 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
             goto exit;
         }
 
-        r = mbedtls_base64_encode(output_buffer_base64, output_buffer_base64_length, &output_buffer_base64_length, output_buffer, output_buffer_length);
+        r = mbedtls_base64_encode(output_buffer_base64, output_buffer_base64_size, &output_buffer_base64_length, output_buffer, output_buffer_length);
         if (r != 0)
         {
+            pwcrypt_free(output_buffer_base64);
             pwcrypt_fprintf(stderr, "pwcrypt: Base64-encoding failed! \"mbedtls_base64_encode\" returned: %d\n", r);
             r = PWCRYPT_ERROR_BASE64_FAILURE;
             goto exit;
         }
 
-        *output = malloc(output_buffer_base64_length + 1);
-        if (*output == NULL)
-        {
-            pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
-            r = PWCRYPT_ERROR_OOM;
-            goto exit;
-        }
-
-        memcpy(*output, output_buffer_base64, output_buffer_base64_length);
-        (*output)[output_buffer_base64_length] = '\0';
+        *output = output_buffer_base64;
 
         if (output_length != NULL)
         {
@@ -486,16 +553,9 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     }
     else
     {
-        *output = malloc(output_buffer_length + 1);
-        if (*output == NULL)
-        {
-            pwcrypt_fprintf(stderr, "pwcrypt: OUT OF MEMORY!\n");
-            r = PWCRYPT_ERROR_OOM;
-            goto exit;
-        }
+        free_output_buffer = 0;
 
-        memcpy(*output, output_buffer, output_buffer_length);
-        (*output)[output_buffer_length] = 0x00;
+        *output = output_buffer;
 
         if (output_length != NULL)
         {
@@ -510,22 +570,15 @@ exit:
 
     mbedtls_platform_zeroize(key, sizeof(key));
 
-    if (output_buffer != NULL)
+    if (ccrushed != NULL)
     {
-        mbedtls_platform_zeroize(output_buffer, output_buffer_length);
-        free(output_buffer);
+        ccrush_free(ccrushed);
     }
 
-    if (output_buffer_base64 != NULL)
+    if (free_output_buffer && output_buffer != NULL)
     {
-        mbedtls_platform_zeroize(output_buffer_base64, output_buffer_base64_size);
-        free(output_buffer_base64);
-    }
-
-    if (input_buffer != NULL)
-    {
-        mbedtls_platform_zeroize(input_buffer, input_buffer_length);
-        free(input_buffer);
+        mbedtls_platform_zeroize(output_buffer, output_buffer_size);
+        pwcrypt_free(output_buffer);
     }
 
     return (r);
@@ -940,7 +993,7 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
     {
         if (input_base64_encoded)
         {
-            free(input);
+            pwcrypt_free(input);
             pwcrypt_fprintf(stderr, "pwcrypt: Base64-decoding failed! \"mbedtls_base64_decode\" returned: %d\n", r);
             return PWCRYPT_ERROR_BASE64_FAILURE;
         }
@@ -1094,12 +1147,12 @@ exit:
     mbedtls_platform_zeroize(salt, sizeof(salt));
 
     mbedtls_platform_zeroize(input, input_length);
-    free(input);
+    pwcrypt_free(input);
 
     if (decrypted != NULL)
     {
         mbedtls_platform_zeroize(decrypted, decrypted_length);
-        free(decrypted);
+        pwcrypt_free(decrypted);
     }
 
     return (r);
@@ -1448,8 +1501,8 @@ exit:
     mbedtls_platform_zeroize(tag, sizeof(tag));
     mbedtls_platform_zeroize(salt, sizeof(salt));
 
-    free(temp_in_buffer);
-    free(temp_out_buffer);
+    pwcrypt_free(temp_in_buffer);
+    pwcrypt_free(temp_out_buffer);
 
     return (r);
 }
@@ -1503,7 +1556,7 @@ FILE* pwcrypt_fopen(const char* filename, const char* mode)
     MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, 256);
 
     FILE* file = _wfopen(wpath, wmode);
-    free(wpath);
+    pwcrypt_free(wpath);
     return file;
 #else // Hope that the fopen() implementation on whatever platform you're on accepts UTF-8 encoded strings. For most *nix environments, this holds true :)
     return fopen(filename, mode);
