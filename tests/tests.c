@@ -502,7 +502,7 @@ static void encrypt_with_invalid_params_fails()
     r = pwcrypt_encrypt(NULL, 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 77, 2, 16, 1, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
     TEST_CHECK(r == PWCRYPT_ERROR_INVALID_ARGS);
 
-    r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 2, 16, 1, 0, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
+    r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, (uint8_t*)"Extremely safe password WITH UPPER CASE LETTERS, $pec1aL $ymbOLz 'n' stuff ;D", 0, 2, 16, 1, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
     TEST_CHECK(r != 0);
 
     r = pwcrypt_encrypt((uint8_t*)"Lorem ipsum dolor sick fuck amend something something...........", 64, 6, NULL, 77, 2, 16, 1, PWCRYPT_ALGO_ID_AES256_GCM, &out, NULL, 1);
@@ -583,30 +583,30 @@ static void encrypt_and_decrypt_with_wrong_PW_fails()
 
 TEST_LIST = {
     //
-   { "nulltest", null_test_success }, //
-   { "test_pwcrypt_memcmp", test_pwcrypt_memcmp }, //
-   { "pwcrypt_fprintf_enables_and_disables_correctly", pwcrypt_fprintf_enables_and_disables_correctly }, //
-   { "pwcrypt_printvoid_returns_zero", pwcrypt_printvoid_returns_zero }, //
-   { "pw_strength_enforcing", pw_strength_enforcing }, //
-   { "encrypt_and_decrypt_aes256_gcm_string_success", encrypt_and_decrypt_aes256_gcm_string_success }, //
-   { "encrypt_and_decrypt_aes256_gcm_string_nobase64_success", encrypt_and_decrypt_aes256_gcm_string_nobase64_success }, //
-   { "encrypt_and_decrypt_aes256_gcm_string_nocompression_success", encrypt_and_decrypt_aes256_gcm_string_nocompression_success }, //
-   { "encrypt_and_decrypt_aes256_gcm_string_nocompression_nobase64_success", encrypt_and_decrypt_aes256_gcm_string_nocompression_nobase64_success }, //
-   { "encrypt_and_decrypt_chachapoly_string_success", encrypt_and_decrypt_chachapoly_string_success }, //
-   { "encrypt_and_decrypt_chachapoly_string_nobase64_success", encrypt_and_decrypt_chachapoly_string_nobase64_success }, //
-   { "encrypt_and_decrypt_chachapoly_string_nocompression_success", encrypt_and_decrypt_chachapoly_string_nocompression_success }, //
-   { "encrypt_and_decrypt_chachapoly_string_nocompression_nobase64_success", encrypt_and_decrypt_chachapoly_string_nocompression_nobase64_success }, //
-   { "encrypt_with_invalid_params_fails", encrypt_with_invalid_params_fails }, //
-   { "decrypt_with_invalid_params_fails", decrypt_with_invalid_params_fails }, //
-   { "decrypt_invalid_ciphertext_fails", decrypt_invalid_ciphertext_fails }, //
-   { "encrypt_and_decrypt_with_wrong_PW_fails", encrypt_and_decrypt_with_wrong_PW_fails }, //
-   { "encrypt_and_decrypt_aes256_gcm_file_success", encrypt_and_decrypt_aes256_gcm_file_success }, //
-   { "encrypt_and_decrypt_chachapoly_file_success", encrypt_and_decrypt_chachapoly_file_success }, //
-   { "encrypt_and_decrypt_aes256_gcm_file_wrong_pw_fail", encrypt_and_decrypt_aes256_gcm_file_wrong_pw_fail }, //
-   { "encrypt_and_decrypt_chachapoly_file_wrong_pw_fail", encrypt_and_decrypt_chachapoly_file_wrong_pw_fail }, //
-   { "decrypt_old_ciphertext_aes256_gcm_string_success", decrypt_old_ciphertext_aes256_gcm_string_success }, //
-   { "decrypt_old_ciphertext_chachapoly_string_success", decrypt_old_ciphertext_chachapoly_string_success }, //
-   { "encrypt_and_decrypt_file_wrong_args_fail", encrypt_and_decrypt_file_wrong_args_fail }, //
+ { "nulltest", null_test_success }, //
+ { "test_pwcrypt_memcmp", test_pwcrypt_memcmp }, //
+ { "pwcrypt_fprintf_enables_and_disables_correctly", pwcrypt_fprintf_enables_and_disables_correctly }, //
+ { "pwcrypt_printvoid_returns_zero", pwcrypt_printvoid_returns_zero }, //
+ { "pw_strength_enforcing", pw_strength_enforcing }, //
+ { "encrypt_and_decrypt_aes256_gcm_string_success", encrypt_and_decrypt_aes256_gcm_string_success }, //
+ { "encrypt_and_decrypt_aes256_gcm_string_nobase64_success", encrypt_and_decrypt_aes256_gcm_string_nobase64_success }, //
+ { "encrypt_and_decrypt_aes256_gcm_string_nocompression_success", encrypt_and_decrypt_aes256_gcm_string_nocompression_success }, //
+ { "encrypt_and_decrypt_aes256_gcm_string_nocompression_nobase64_success", encrypt_and_decrypt_aes256_gcm_string_nocompression_nobase64_success }, //
+ { "encrypt_and_decrypt_chachapoly_string_success", encrypt_and_decrypt_chachapoly_string_success }, //
+ { "encrypt_and_decrypt_chachapoly_string_nobase64_success", encrypt_and_decrypt_chachapoly_string_nobase64_success }, //
+ { "encrypt_and_decrypt_chachapoly_string_nocompression_success", encrypt_and_decrypt_chachapoly_string_nocompression_success }, //
+ { "encrypt_and_decrypt_chachapoly_string_nocompression_nobase64_success", encrypt_and_decrypt_chachapoly_string_nocompression_nobase64_success }, //
+ { "encrypt_with_invalid_params_fails", encrypt_with_invalid_params_fails }, //
+ { "decrypt_with_invalid_params_fails", decrypt_with_invalid_params_fails }, //
+ { "decrypt_invalid_ciphertext_fails", decrypt_invalid_ciphertext_fails }, //
+ { "encrypt_and_decrypt_with_wrong_PW_fails", encrypt_and_decrypt_with_wrong_PW_fails }, //
+ { "encrypt_and_decrypt_aes256_gcm_file_success", encrypt_and_decrypt_aes256_gcm_file_success }, //
+ { "encrypt_and_decrypt_chachapoly_file_success", encrypt_and_decrypt_chachapoly_file_success }, //
+ { "encrypt_and_decrypt_aes256_gcm_file_wrong_pw_fail", encrypt_and_decrypt_aes256_gcm_file_wrong_pw_fail }, //
+ { "encrypt_and_decrypt_chachapoly_file_wrong_pw_fail", encrypt_and_decrypt_chachapoly_file_wrong_pw_fail }, //
+ { "decrypt_old_ciphertext_aes256_gcm_string_success", decrypt_old_ciphertext_aes256_gcm_string_success }, //
+ { "decrypt_old_ciphertext_chachapoly_string_success", decrypt_old_ciphertext_chachapoly_string_success }, //
+ { "encrypt_and_decrypt_file_wrong_args_fail", encrypt_and_decrypt_file_wrong_args_fail }, //
     { "valgrind_test", valgrind_test }, //
     //
     // ----------------------------------------------------------------------------------------------------------
