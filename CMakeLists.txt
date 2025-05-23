@@ -89,10 +89,15 @@ if (NOT TARGET ccrush)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/ccrush ccrush)
 endif ()
 
+if (NOT TARGET chillbuff)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/chillbuff chillbuff)
+endif ()
+
 set_property(TARGET ccrush PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC ccrush
+        PUBLIC chillbuff
         PUBLIC mbedcrypto
         )
 

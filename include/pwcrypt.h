@@ -176,6 +176,11 @@ static const uint8_t EMPTY64[64] = {
 #define PWCRYPT_ERROR_FILE_FAILURE 9000
 
 /**
+ * Error code for failures concerning the output buffer (which uses the chillbuff lib to grow dynamically).
+ */
+#define PWCRYPT_ERROR_CHILLBUFF_FAILURE 10000
+
+/**
  * Picks the smaller of two numbers.
  */
 #define PWCRYPT_MIN(x, y) (((x) < (y)) ? (x) : (y))

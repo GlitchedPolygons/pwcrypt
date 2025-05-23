@@ -41,6 +41,8 @@
 #include <mbedtls/chachapoly.h>
 #include <mbedtls/platform_util.h>
 
+#include <chillbuff.h>
+
 #ifdef _WIN32
 #define WIN32_NO_STATUS
 #include <windows.h>
@@ -882,6 +884,10 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
     assert(sizeof(uint8_t) == 1);
     assert(sizeof(uint32_t) == 4);
 
+    int r = -1;
+
+    chillbuff output_buffer = { 0x00 };
+
     uint8_t* decrypted = NULL;
     size_t decrypted_length = 0;
 
@@ -909,7 +915,7 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
         return PWCRYPT_ERROR_OOM;
     }
 
-    int r = mbedtls_base64_decode(input, input_length, &input_length, encrypted_data, encrypted_data_length);
+    r = mbedtls_base64_decode(input, input_length, &input_length, encrypted_data, encrypted_data_length);
     if (r != 0)
     {
         if (input_base64_encoded)
@@ -989,6 +995,14 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
 
     if (pwcrypt_version_number >= 440)
     {
+        r = chillbuff_init(&output_buffer, encrypted_data_length, sizeof(uint8_t), CHILLBUFF_GROW_DUPLICATIVE);
+        if (r != 0)
+        {
+            pwcrypt_fprintf(stderr, "pwcrypt: Output buffer initialization failed! (out of memory?) \"chillbuff_init\" returned: %d\n", r);
+            r = PWCRYPT_ERROR_CHILLBUFF_FAILURE;
+            goto exit;
+        }
+
         uint8_t* i = input + 64;
 
         size_t processed = 0;
@@ -1030,11 +1044,6 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
                 r = PWCRYPT_ERROR_OOM;
                 goto exit;
             }
-
-            nk
-            // TODO: use chillbuff to grow output buffer here since it's impossible to know the decompressed size beforehand
-            uint8_t* output_buffer = calloc(encrypted_data_length * 2, sizeof(uint8_t));
-            size_t output_buffer_length = 0;
 
             switch (pwcrypt_algo_id)
             {
@@ -1098,11 +1107,24 @@ int pwcrypt_decrypt(const uint8_t* encrypted_data, size_t encrypted_data_length,
                 goto exit;
             }
 
+            r = chillbuff_push_back(&output_buffer, cuncrushed, cuncrushed_size);
+            if (r != 0)
+            {
+                pwcrypt_fprintf(stderr, "pwcrypt: Decryption and decompression succeeded but flush into output buffer failed! \"chillbuff_push_back\" returned: %d\n", r);
+                r = PWCRYPT_ERROR_CHILLBUFF_FAILURE;
+                goto exit;
+            }
+
             i += decrypted_length;
             processed += decrypted_length + 16 + 16 + 4;
         }
 
-        ffff
+        *output = (uint8_t*)output_buffer.array;
+
+        if (output_length != NULL)
+        {
+            *output_length = output_buffer.length;
+        }
     }
     else
     {
@@ -1198,6 +1220,11 @@ exit:
 
     mbedtls_platform_zeroize(input, input_length);
     pwcrypt_free(input);
+
+    if (r != 0 && pwcrypt_version_number >= 440 && output_buffer.capacity != 0)
+    {
+        chillbuff_free(&output_buffer);
+    }
 
     if (decrypted != NULL)
     {
