@@ -114,7 +114,14 @@ static const uint8_t EMPTY64[64] = {
 /**
  * The buffer size in bytes to use for reading/writing files.
  */
-#define PWCRYPT_FILE_BUFFER_SIZE (1024 * 256)
+#define PWCRYPT_FILE_BUFFER_SIZE (1024 * 512)
+#endif
+
+#ifndef PWCRYPT_CCRUSH_BUFFER_SIZE_KIB
+/**
+ * The buffer size in KiB to use for compressing/decompressing via ccrush.
+ */
+#define PWCRYPT_CCRUSH_BUFFER_SIZE_KIB 256
 #endif
 
 /**

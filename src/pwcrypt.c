@@ -318,14 +318,16 @@ int pwcrypt_encrypt(const uint8_t* input, size_t input_length, uint32_t compress
     // [4 - 7]      (4B)   uint32_t:     Pwcrypt Algo ID
     // [8 - 11]     (4B)   uint32_t:     Pwcrypt Compression Enabled
     // [12 - 15]    (4B)   uint32_t:     Pwcrypt Base64 Encoded
-    // [16 - 19]    (4B)   uint32_t:     Argon2 Version Number
-    // [20 - 23]    (4B)   uint32_t:     Argon2 Cost T
-    // [24 - 27]    (4B)   uint32_t:     Argon2 Cost M
-    // [28 - 31]    (4B)   uint32_t:     Argon2 Parallelism
-    // [32 - 63]    (32B)  uint8_t[32]:  Argon2 Salt
-    // [64 - 79]    (16B)  uint8_t[16]:  AES-256 GCM IV (or 12B ChaCha20-Poly1305 IV, zero-padded)
-    // [80 - 95]    (16B)  uint8_t[16]:  AES-256 GCM Tag (or ChaCha20-Poly1305 Tag)
-    // [96 - ...]   Ciphertext
+    // [16 - 19]\   (4B)   uint32_t:     Argon2 Version Number
+    // [20 - 23] |  (4B)   uint32_t:     Argon2 Cost T
+    // [24 - 27] |  (4B)   uint32_t:     Argon2 Cost M
+    // [28 - 31] |  (4B)   uint32_t:     Argon2 Parallelism
+    // [32 - 63]/   (32B)  uint8_t[32]:  Argon2 Salt
+    // [64 - 79]\   (16B)  uint8_t[16]:  AES-256 GCM IV (or 12B ChaCha20-Poly1305 IV, zero-padded)
+    // [80 - 95] |  (16B)  uint8_t[16]:  AES-256 GCM Tag (or ChaCha20-Poly1305 Tag)
+    // [96 - 99] |  (4B)   uint32_t:     Chunk length
+    // [100 - n]/   (n B)  uint8_t[n]:   Chunk content (compressed + encrypted ciphertext)
+    // [(n+1) - ...]                     (The last 4 sections make up a chunk; there can be as many chunks as needed)
 
     assert(sizeof(uint8_t) == 1);
     assert(sizeof(uint32_t) == 4);
@@ -553,9 +555,9 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
     }
 #endif
 
-    uint8_t key[32] = { 0x00 };
     uint8_t iv[16] = { 0x00 };
     uint8_t tag[16] = { 0x00 };
+    uint8_t key[32] = { 0x00 };
 
     mbedtls_gcm_context aes_ctx;
     mbedtls_gcm_init(&aes_ctx);
@@ -719,7 +721,7 @@ int pwcrypt_encrypt_file_raw(FILE* input_file, FILE* output_file, uint32_t compr
                     ccrushed = NULL;
                 }
 
-                r = ccrush_compress(temp_in_buffer, temp_counter, (PWCRYPT_FILE_BUFFER_SIZE / 1024), (int)compress, &ccrushed, &ccrushed_size);
+                r = ccrush_compress(temp_in_buffer, temp_counter, PWCRYPT_CCRUSH_BUFFER_SIZE_KIB, (int)compress, &ccrushed, &ccrushed_size);
                 if (r != 0)
                 {
                     pwcrypt_fprintf(stderr, "pwcrypt: Compression of input file before encryption failed! \"ccrush_compress\" returned: %d\n", r);
