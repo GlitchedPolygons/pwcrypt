@@ -116,8 +116,6 @@ Append `--algorithm=chachapoly` at the end to use the [ChaCha20-Poly1305](https:
 
 Since [v4.3.0](https://github.com/GlitchedPolygons/pwcrypt/releases/tag/4.3.0) it is now possible to make the pwcrypt CLI read the input from `stdin`.
 
-> ⚠️ Warning: encrypting [files larger than 64 GiB will fail miserably when using AES-GCM](https://crypto.stackexchange.com/a/31798): please use the ChaCha20-Poly1305 algorithm in that case (pass the `--algorithm=chachapoly` argument to the CLI to do so).
-
 To do so, just pass `-` as the input parameter after the `e` or `d` argument. The `--file=/output/file/path/here` still works (and if it's not set, the output will be written to `stdout`).
 
 For example, to compress and encrypt a whole directory you could pipe the result of `tar` into `pwcrypt`. Such a command would look like this:
