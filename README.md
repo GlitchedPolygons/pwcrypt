@@ -112,24 +112,6 @@ Append `--algorithm=chachapoly` at the end to use the [ChaCha20-Poly1305](https:
 
 ---
 
-#### stdin / stdout / pipes
-
-Since [v4.3.0](https://github.com/GlitchedPolygons/pwcrypt/releases/tag/4.3.0) it is now possible to make the pwcrypt CLI read the input from `stdin`.
-
-To do so, just pass `-` as the input parameter after the `e` or `d` argument. The `--file=/output/file/path/here` still works (and if it's not set, the output will be written to `stdout`).
-
-For example, to compress and encrypt a whole directory you could pipe the result of `tar` into `pwcrypt`. Such a command would look like this:
-
-`tar -czf - -C /my/directory/to/compress/and/encrypt . | pwcrypt e - "SuperSafeEncryptionPassword123" --file=result.tar.gz.pwcrypt --compression=0 --algorithm=chachapoly`
-
-The same thing can also be done using the `>` redirection (if you don't wanna type out the `--file=` argument).
-
-`tar -czf - -C /my/directory/to/compress/and/encrypt . | pwcrypt e - "SuperSafeEncryptionPassword123" --algorithm=chachapoly --compression=0 > result.tar.gz.pwcrypt`
-
-To decrypt the above example encrypted archive one would use the following command:
-
-`cat result.tar.gz.pwcrypt | pwcrypt d - "SuperSafeEncryptionPassword123" | tar -xzf -`
-
 ### Files instead of strings
 
 The pwcrypt CLI supports encrypting/decrypting files instead of strings too: <p>
@@ -150,6 +132,34 @@ pwcrypt e "/home/someuser/secret.png" \
 Please keep in mind: <br>
 The output string path is **definitive**: there will be no asking whether it's ok to overwrite existing files or not. 
 So make sure to only confirm commands that you know won't cause losses!
+
+#### stdin / stdout / pipes
+
+Since [v4.3.0](https://github.com/GlitchedPolygons/pwcrypt/releases/tag/4.3.0) it is now possible to make the pwcrypt CLI read the input from `stdin`.
+
+To do so, just pass `-` as the input parameter after the `e` or `d` argument. The `--file=/output/file/path/here` still works (and if it's not set, the output will be written to `stdout`).
+
+```bash
+# Encrypt file:
+
+cat myfile.txt | pwcrypt e - "SuperSafeEncryptionPassword123" > myfile.txt.pwcrypt
+
+# Decrypt file:
+
+cat myfile.txt.pwcrypt | pwcrypt d - "SuperSafeEncryptionPassword123" > myfile_decrypted.txt
+```
+
+For example, to compress and encrypt a whole directory you could pipe the result of `tar` into `pwcrypt`. Such a command would look like this:
+
+`tar -czf - -C /my/directory/to/compress/and/encrypt . | pwcrypt e - "SuperSafeEncryptionPassword123" --file=result.tar.gz.pwcrypt --compression=0 --algorithm=chachapoly`
+
+The same thing can also be done using the `>` redirection (if you don't wanna type out the `--file=` argument).
+
+`tar -czf - -C /my/directory/to/compress/and/encrypt . | pwcrypt e - "SuperSafeEncryptionPassword123" --algorithm=chachapoly --compression=0 > result.tar.gz.pwcrypt`
+
+To decrypt the above example encrypted archive one would use the following command:
+
+`cat result.tar.gz.pwcrypt | pwcrypt d - "SuperSafeEncryptionPassword123" | tar -xzf -`
 
 ### GUIs
 
