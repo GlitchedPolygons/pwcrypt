@@ -19,8 +19,8 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 set(${PROJECT_NAME}_MAJOR 4)
-set(${PROJECT_NAME}_MINOR 3)
-set(${PROJECT_NAME}_PATCH 1)
+set(${PROJECT_NAME}_MINOR 4)
+set(${PROJECT_NAME}_PATCH 0)
 set(${PROJECT_NAME}_VERSION_STRING "${${PROJECT_NAME}_MAJOR}.${${PROJECT_NAME}_MINOR}.${${PROJECT_NAME}_PATCH}")
 
 option(ENABLE_TESTING "Build MbedTLS tests." OFF)
@@ -89,10 +89,15 @@ if (NOT TARGET ccrush)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/ccrush ccrush)
 endif ()
 
+if (NOT TARGET chillbuff)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/ccrush/lib/chillbuff chillbuff)
+endif ()
+
 set_property(TARGET ccrush PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC ccrush
+        PUBLIC chillbuff
         PUBLIC mbedcrypto
         )
 

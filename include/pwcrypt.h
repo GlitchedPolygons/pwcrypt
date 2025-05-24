@@ -72,19 +72,12 @@ static const uint8_t EMPTY64[64] = {
 /**
  * Current version of the used pwcrypt library.
  */
-#define PWCRYPT_VERSION 431
+#define PWCRYPT_VERSION 440
 
 /**
  * Current version of the used pwcrypt library (nicely-formatted string).
  */
-#define PWCRYPT_VERSION_STR "4.3.1"
-
-#ifndef PWCRYPT_Z_CHUNKSIZE
-/**
- * Default chunksize to use for compressing and decompressing buffers.
- */
-#define PWCRYPT_Z_CHUNKSIZE (1024 * 256)
-#endif
+#define PWCRYPT_VERSION_STR "4.4.0"
 
 #ifndef PWCRYPT_ARGON2_T_COST
 /**
@@ -119,9 +112,16 @@ static const uint8_t EMPTY64[64] = {
 
 #ifndef PWCRYPT_FILE_BUFFER_SIZE
 /**
- * The size in bytes of the file's background buffer.
+ * The buffer size in bytes to use for reading/writing files.
  */
-#define PWCRYPT_FILE_BUFFER_SIZE (1024 * 256)
+#define PWCRYPT_FILE_BUFFER_SIZE (1024 * 512)
+#endif
+
+#ifndef PWCRYPT_CCRUSH_BUFFER_SIZE_KIB
+/**
+ * The buffer size in KiB to use for compressing/decompressing via ccrush.
+ */
+#define PWCRYPT_CCRUSH_BUFFER_SIZE_KIB 256
 #endif
 
 /**
@@ -174,6 +174,11 @@ static const uint8_t EMPTY64[64] = {
  * Error code for failures while handling files.
  */
 #define PWCRYPT_ERROR_FILE_FAILURE 9000
+
+/**
+ * Error code for failures concerning the output buffer (which uses the chillbuff lib to grow dynamically).
+ */
+#define PWCRYPT_ERROR_CHILLBUFF_FAILURE 10000
 
 /**
  * Picks the smaller of two numbers.
@@ -376,6 +381,15 @@ PWCRYPT_API void pwcrypt_free(void* ptr);
  * @return \c FILE* or \c null
  */
 PWCRYPT_API FILE* pwcrypt_fopen(const char* filename, const char* mode);
+
+/**
+ * Compares two blocks of memory against equality in a cryptographically safe manner (time-safe impl./constant-time comparison).
+ * @param mem1 Memory block 1 to compare.
+ * @param mem2 Memory block 2 to compare.
+ * @param n How many bytes to compare.
+ * @return Returns <code>0</code> if the two memory blocks are equal for the passed amount of bytes.
+ */
+PWCRYPT_API int pwcrypt_memcmp(const void* mem1, const void* mem2, size_t n);
 
 #ifdef __cplusplus
 } // extern "C"
