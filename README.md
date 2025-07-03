@@ -173,4 +173,4 @@ The desktop client is available for the x64 CPU architecture on Windows, Linux a
 
 ---
 
-[![Qt GUI Screenshot](https://api.files.glitchedpolygons.com/api/v1/files/gx9piwkhenm5n9c8)](https://glitchedpolygons.com/projects/software/psithyros)
+[![Qt GUI Screenshot](https://api-files.glitchedpolygons.com/api/v1/files/gx9piwkhenm5n9c8)](https://glitchedpolygons.com/projects/software/psithyros)
