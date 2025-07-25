@@ -251,7 +251,7 @@ namespace GlitchedPolygons.PwcryptSharp
                     _ => throw new PlatformNotSupportedException("CPU Architecture not supported!")
                 };
 
-                string path = Path.Combine(Path.GetFullPath(Path.GetDirectoryName(Assembly.GetCallingAssembly().Location) ?? "."), "lib", cpu, os);
+                string path = Path.Combine(Path.GetFullPath(Path.GetDirectoryName(AppContext.BaseDirectory) ?? "."), "lib", cpu, os);
 
                 if (!Directory.Exists(path))
                 {
