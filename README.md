@@ -1,31 +1,41 @@
+> [!IMPORTANT]
+>
+> # **NOTICE:**
+>
+> ## Development of this project has been migrated to: https://codeberg.org/GlitchedPolygons/pwcrypt
+>
+> ## All pull requests and issues on GitHub will be ignored from the 16th of August, 2025 onwards.
+
 # pwcrypt
+
 ## Easy peasy, password-based symmetric encryption squeezy
+
 ### Encrypt files and text messages with a password
 
 [![CircleCI](https://circleci.com/gh/GlitchedPolygons/pwcrypt/tree/master.svg?style=shield)](https://circleci.com/gh/GlitchedPolygons/pwcrypt/tree/master)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/addkmk08sytildbp/branch/master?svg=true)](https://ci.appveyor.com/project/GlitchedPolygons/pwcrypt/branch/master)
 [![Codecov](https://codecov.io/gh/GlitchedPolygons/pwcrypt/branch/master/graph/badge.svg)](https://codecov.io/gh/GlitchedPolygons/pwcrypt)
-[![License Shield](https://img.shields.io/badge/license-Apache--2.0-orange)](https://github.com/GlitchedPolygons/pwcrypt/blob/master/LICENSE)
+[![License Shield](https://img.shields.io/badge/license-Apache--2.0-orange)](https://codeberg.org/GlitchedPolygons/pwcrypt/src/branch/master/LICENSE)
 [![API Docs](https://img.shields.io/badge/api-docs-informational.svg)](https://glitchedpolygons.github.io/pwcrypt/files.html)
 
 ---
 
 ### How to clone
 
-`git clone --recursive https://github.com/GlitchedPolygons/pwcrypt.git`
+`git clone --recursive https://codeberg.org/GlitchedPolygons/pwcrypt.git`
 
 ### How to use the library
 
 Just add **pwcrypt** as a git submodule to your project (e.g. into some `lib/` or `deps/` folder inside your project's repo; `{repo_root}/lib/` is used here in the following example).
 
 ```
-git submodule add https://github.com/GlitchedPolygons/pwcrypt.git lib/pwcrypt
+git submodule add https://codeberg.org/GlitchedPolygons/pwcrypt.git lib/pwcrypt
 git submodule update --init --recursive
 ```
 
 If you don't want to use git submodules, you can also start vendoring a specific version of **pwcrypt** by copying its full repo content into the folder where you keep your project's external libraries/dependencies.
 
-Check out the [API docs](https://glitchedpolygons.github.io/pwcrypt/files.html) or the [`pwcrypt.h`](https://github.com/GlitchedPolygons/pwcrypt/blob/master/include/pwcrypt.h) header file to find out how to call the encrypt/decrypt functions in C.
+Check out the [API docs](https://glitchedpolygons.github.io/pwcrypt/files.html) or the [`pwcrypt.h`](https://codeberg.org/GlitchedPolygons/pwcrypt/src/branch/master/include/pwcrypt.h) header file to find out how to call the encrypt/decrypt functions in C.
 
 ### Building from source
 
@@ -97,7 +107,7 @@ You can append the following **optional** (integer) arguments for controlling ke
 - Sets the amount of parallel threads to be used by Argon2
 
 > Passing `0` to these optional args is equivalent to omitting them, thus using the default values 
-> as defined inside [pwcrypt.h](https://github.com/GlitchedPolygons/pwcrypt/blob/master/include/pwcrypt.h).
+> as defined inside [pwcrypt.h](https://codeberg.org/GlitchedPolygons/pwcrypt/src/branch/master/include/pwcrypt.h).
 
 `--compression=8`
 - This value between `0` and `9` determines the compression level to use when deflating the input data to encrypt: `0` does not compress at all, and `9` compresses the most (but can be slower). Default is `8`. 
@@ -135,7 +145,7 @@ So make sure to only confirm commands that you know won't cause losses!
 
 #### stdin / stdout / pipes
 
-Since [v4.3.0](https://github.com/GlitchedPolygons/pwcrypt/releases/tag/4.3.0) it is now possible to make the pwcrypt CLI read the input from `stdin`.
+Since [v4.3.0](https://codeberg.org/GlitchedPolygons/pwcrypt/releases/tag/4.3.0) it is now possible to make the pwcrypt CLI read the input from `stdin`.
 
 To do so, just pass `-` as the input parameter after the `e` or `d` argument. The `--file=/output/file/path/here` still works (and if it's not set, the output will be written to `stdout`).
 
